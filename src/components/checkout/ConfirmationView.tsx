@@ -7,6 +7,7 @@ import { CheckCircle2, Truck, XCircle } from "lucide-react";
 import { useCartStore } from "@/store/cart-store";
 import type { Order } from "@/lib/orders/types";
 import { buttonVariants } from "@/components/ui/Button";
+import { CreateAccountPrompt } from "@/components/checkout/CreateAccountPrompt";
 import { cn, formatPrice } from "@/lib/utils";
 
 function formatDate(iso: string): string {
@@ -162,6 +163,8 @@ export function ConfirmationView({ orderNumber }: { orderNumber: string }) {
         )}
 
         <p className="mt-6 text-xs text-stone">A confirmation email has been sent to {order.customerEmail}.</p>
+
+        {order.isGuest && <CreateAccountPrompt email={order.customerEmail} customerName={order.customerName} />}
       </div>
 
       <div className="mt-8 flex justify-center gap-3">

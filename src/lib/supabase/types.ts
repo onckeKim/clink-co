@@ -23,22 +23,67 @@ export interface Database {
       profiles: {
         Row: {
           id: string;
-          full_name: string | null;
+          first_name: string | null;
+          last_name: string | null;
+          phone: string | null;
+          date_of_birth: string | null;
+          marketing_consent: boolean;
+          /** "customer" for every shopper; "admin" is reserved for a future admin area — see src/lib/supabase/dal.ts. */
+          role: "customer" | "admin";
           avatar_url: string | null;
           created_at: string;
+          updated_at: string;
         };
         Insert: {
           id: string;
-          full_name?: string | null;
+          first_name?: string | null;
+          last_name?: string | null;
+          phone?: string | null;
+          date_of_birth?: string | null;
+          marketing_consent?: boolean;
+          role?: "customer" | "admin";
           avatar_url?: string | null;
           created_at?: string;
+          updated_at?: string;
         };
-        Update: {
+        Update: Partial<Database["public"]["Tables"]["profiles"]["Insert"]>;
+      };
+      addresses: {
+        Row: {
+          id: string;
+          user_id: string;
+          label: string | null;
+          full_name: string;
+          line1: string;
+          line2: string | null;
+          suburb: string;
+          city: string;
+          province: string;
+          postal_code: string;
+          phone: string;
+          is_default_delivery: boolean;
+          is_default_billing: boolean;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
           id?: string;
-          full_name?: string | null;
-          avatar_url?: string | null;
+          user_id: string;
+          label?: string | null;
+          full_name: string;
+          line1: string;
+          line2?: string | null;
+          suburb: string;
+          city: string;
+          province: string;
+          postal_code: string;
+          phone: string;
+          is_default_delivery?: boolean;
+          is_default_billing?: boolean;
           created_at?: string;
+          updated_at?: string;
         };
+        Update: Partial<Database["public"]["Tables"]["addresses"]["Insert"]>;
       };
       products: {
         Row: {

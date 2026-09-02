@@ -13,6 +13,7 @@ import { SearchModal } from "@/components/search/SearchModal";
 import { useCartCount, useCartStore } from "@/store/cart-store";
 import { useWishlistCount } from "@/store/wishlist-store";
 import { useUIStore } from "@/store/ui-store";
+import { useAuthUser } from "@/lib/hooks/use-auth-user";
 import { cn } from "@/lib/utils";
 
 const MENU_CLOSE_DELAY = 150;
@@ -31,6 +32,7 @@ export function Header() {
   const cartCount = useCartCount();
   const wishlistCount = useWishlistCount();
   const openCart = useCartStore((state) => state.open);
+  const { user } = useAuthUser();
 
   const cancelClose = React.useCallback(() => {
     if (closeTimer.current) {
@@ -89,7 +91,7 @@ export function Header() {
 
   return (
     <>
-      <header className="fixed inset-x-0 top-0 z-40 px-3 pt-3 sm:px-5 sm:pt-5">
+      <header className="fixed inset-x-0 top-0 z-40 px-3 pt-3 sm:px-5 sm:pt-5 print:hidden">
         <div className="relative mx-auto max-w-7xl">
           <div
             className={cn(
@@ -177,7 +179,11 @@ export function Header() {
               >
                 <SearchIcon className="h-[18px] w-[18px]" />
               </button>
-              <Link href="/account" aria-label="Account" className={iconButtonClass("hidden xl:flex")}>
+              <Link
+                href={user ? "/account" : "/login"}
+                aria-label={user ? "Account" : "Log in"}
+                className={iconButtonClass("hidden xl:flex")}
+              >
                 <User className="h-[18px] w-[18px]" />
               </Link>
               <Link

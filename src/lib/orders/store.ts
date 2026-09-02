@@ -78,6 +78,36 @@ export function getOrderByPaymentReference(reference: string): Order | undefined
   return undefined;
 }
 
+/** All orders placed by a signed-in customer, most recent first. */
+export function getOrdersByUserId(userId: string): Order[] {
+  return [...ordersById.values()]
+    .filter((order) => order.userId === userId)
+    .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+}
+
+/**
+ * Links every unclaimed guest order matching `email` to `userId` — called
+ * after login/sign-up so a customer's past guest checkouts show up in
+ * their order history. Only matches orders that don't already have a
+ * `userId` (never re-parents an order that belongs to someone else), and
+ * only ever by an exact, case-insensitive email match against the address
+ * Supabase Auth has already verified for this account. Returns how many
+ * orders were linked.
+ */
+export function linkGuestOrdersToUser(email: string, userId: string): number {
+  const normalizedEmail = email.trim().toLowerCase();
+  let linked = 0;
+  for (const order of ordersById.values()) {
+    if (order.userId) continue;
+    if (order.customerEmail.trim().toLowerCase() !== normalizedEmail) continue;
+    order.userId = userId;
+    order.isGuest = false;
+    order.updatedAt = new Date().toISOString();
+    linked += 1;
+  }
+  return linked;
+}
+
 export function updateOrder(
   orderNumber: string,
   patch: Partial<Pick<Order, "status" | "paymentReference" | "paymentRedirectUrl">>,

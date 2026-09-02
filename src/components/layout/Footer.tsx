@@ -19,7 +19,7 @@ const shopLinks: NavLink[] = categories.map((c) => ({ label: c.name, href: `/sho
 
 export function Footer() {
   return (
-    <footer className="mt-24 bg-charcoal text-warm-white">
+    <footer className="mt-24 bg-charcoal text-warm-white print:hidden">
       <div className="mx-auto max-w-7xl px-6 py-16 sm:px-8 lg:py-20">
         <div className="grid gap-x-8 gap-y-12 sm:grid-cols-2 lg:grid-cols-[1.3fr_0.85fr_0.85fr_0.85fr_0.85fr_1.15fr]">
           <div className="sm:col-span-2 lg:col-span-1 lg:pr-6">

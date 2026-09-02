@@ -6,18 +6,31 @@ export interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> 
 }
 
 const Input = React.forwardRef<HTMLInputElement, InputProps>(
-  ({ className, error, ...props }, ref) => {
+  ({ className, error, id, "aria-describedby": ariaDescribedBy, ...props }, ref) => {
+    const generatedId = React.useId();
+    const inputId = id ?? generatedId;
+    const errorId = `${inputId}-error`;
+
     return (
-      <input
-        ref={ref}
-        className={cn(
-          "focus-ring h-11 w-full rounded-full border bg-white px-5 text-sm text-charcoal placeholder:text-stone/60 transition-colors",
-          error ? "border-error" : "border-sand focus-visible:border-charcoal",
-          className,
+      <>
+        <input
+          ref={ref}
+          id={inputId}
+          className={cn(
+            "focus-ring h-11 w-full rounded-full border bg-white px-5 text-sm text-charcoal placeholder:text-stone/60 transition-colors",
+            error ? "border-error" : "border-sand focus-visible:border-charcoal",
+            className,
+          )}
+          aria-invalid={Boolean(error)}
+          aria-describedby={error ? [errorId, ariaDescribedBy].filter(Boolean).join(" ") : ariaDescribedBy}
+          {...props}
+        />
+        {error && (
+          <p id={errorId} className="mt-1.5 text-xs text-error">
+            {error}
+          </p>
         )}
-        aria-invalid={Boolean(error)}
-        {...props}
-      />
+      </>
     );
   },
 );

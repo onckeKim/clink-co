@@ -267,12 +267,18 @@ to "paid" (not on every retried webhook delivery — see "Duplicate orders").
 `GET /api/orders/[orderNumber]` then serves the finished order to the
 confirmation page.
 
-Because no sign-in UI exists yet in this build (see the Cart/wishlist
-section above and the roadmap below), every checkout today is a guest
-checkout — but `Order` already carries `isGuest`/`userId` fields, addresses
-support a "same as delivery" toggle, and `AddressFields.tsx` is shared
-between the delivery and billing steps, so wiring in saved addresses and
-`userId` once auth ships is additive, not a rewrite.
+Checkout works for both guests and signed-in customers. `POST /api/checkout`
+reads the current session (`getUser()` from `src/lib/supabase/dal.ts`) and
+sets `Order.userId`/`isGuest` accordingly — a signed-in customer's order is
+attached to their account the moment it's created, no separate claim step
+needed. A guest order stays unattached until either the customer signs in
+later with the same (verified) email — every login/sign-up auto-links any
+guest orders on that email, see `linkGuestOrdersToUser()` in
+`src/lib/orders/store.ts` — or they use the "Create an account" prompt
+shown on the confirmation page for a guest order (`CreateAccountPrompt.tsx`),
+which signs them up with that same email and gets the same auto-link for
+free. See [Authentication & account](#authentication--account) below for
+the full picture.
 
 ### Required payment credentials
 
@@ -351,6 +357,200 @@ etc.) — moving to Supabase means giving `idempotency_key` a UNIQUE
 constraint and doing the "does it already exist" check as an upsert, but the
 call sites in `checkout/route.ts` and the webhook route don't need to
 change.
+
+---
+
+## Authentication & account
+
+Authentication itself is real Supabase Auth — not a mock. Sign-up, login,
+logout, email verification, and password reset all call the genuine
+Supabase Auth API and produce genuine, cookie-based sessions via
+`@supabase/ssr`. What's *not* backed by a live database (for the same
+reason `orders` isn't — this environment has no access to the Supabase
+project's SQL editor/migrations) is the account *data* layered on top:
+profiles, the address book, and return requests live in in-memory stores
+(`src/lib/account/*.ts`) that mirror the exact shape of the real
+`profiles`/`addresses` tables documented in `src/lib/supabase/types.ts`, the
+same documented trade-off `src/lib/orders/store.ts` already makes. Swapping
+either store's function bodies for real Supabase queries later is a
+drop-in change — no call site changes.
+
+### Sign-up, verification, login
+
+- **Sign-up** — `SignupForm.tsx` posts to `POST /api/auth/signup`, which
+  calls `supabase.auth.signUp()` server-side (so the route can rate-limit
+  it and centralize error handling), creates the profile record
+  (`ensureProfile()`), and links any guest orders already placed under that
+  email (`linkGuestOrdersToUser()` — see below). If the Supabase project
+  has email confirmation on (the default), the account exists but has no
+  session until the link is clicked; the form shows a "check your inbox"
+  state rather than pretending sign-up is complete.
+- **Email verification** — Supabase emails a confirmation link. By default
+  that link goes to Supabase's own hosted verify endpoint; for the branded,
+  SSR-correct flow this build is written for, **customize the email
+  templates in the Supabase dashboard** (Authentication → Email Templates)
+  so the "Confirm signup" and "Reset password" templates link to this app
+  instead:
+  ```
+  {{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=signup
+  {{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=recovery
+  ```
+  `GET /auth/confirm/route.ts` calls `supabase.auth.verifyOtp({ type,
+  token_hash })`, which both verifies the link and establishes a real
+  session server-side, then redirects: `recovery` → `/reset-password`,
+  everything else → `/account?welcome=1`. Skipping this dashboard step
+  doesn't break the app — Supabase's default hosted redirect still works —
+  it just means the link doesn't land on this app's own confirm route.
+- **Login** — `LoginForm.tsx` posts to `POST /api/auth/login`
+  (`signInWithPassword`), which always returns the same generic "Invalid
+  email or password" on any failure (wrong password, unknown email,
+  unconfirmed email) — never revealing *which* — and is rate-limited both
+  per-IP and per-email (see below). On success it also runs
+  `linkGuestOrdersToUser()`, so a customer who checked out as a guest
+  before ever creating an account still gets those orders attached the
+  moment they first log in.
+- **Password visibility toggle** — `PasswordInput.tsx`, a drop-in
+  `Input` variant with an eye/eye-off button, used everywhere a password is
+  typed (login, sign-up, reset, change-password).
+- **Forgot / reset password** — `POST /api/auth/forgot-password` always
+  responds with the same message ("If an account exists for that email,
+  we've sent a link") whether or not the email is registered — the one
+  place in this flow where confirming an email is or isn't registered
+  would itself be the security leak. The recovery link lands on
+  `/auth/confirm?type=recovery`, which establishes a session and redirects
+  to `/reset-password`; that page is a Server Component that checks for a
+  session before rendering the form at all, so a stale or already-used link
+  shows "This link has expired" rather than a broken form.
+  `POST /api/auth/reset-password` sets the new password via
+  `updateUser()`, then **signs the session out** — the customer logs in
+  fresh with the new password rather than staying signed in on whatever
+  device happened to open the email link.
+- **Logout** — `POST /api/auth/logout` (`supabase.auth.signOut()`), wired
+  into `LogoutButton.tsx` (bottom of the account nav).
+- **Social login structure** — `SocialLoginButtons.tsx` renders a "Continue
+  with Google" button that calls `signInWithOAuth()` (a real, working PKCE
+  flow via `/auth/callback/route.ts`), but only when
+  `NEXT_PUBLIC_ENABLE_SOCIAL_LOGIN=true` **and** the Google provider is
+  turned on in the Supabase dashboard (Authentication → Providers) — a step
+  this codebase can't perform for you. Leave the flag unset and login/
+  sign-up stay email/password-only.
+- **Guest checkout + account creation after** — checkout never requires an
+  account (see [Checkout & payments](#checkout--payments)). On the order
+  confirmation page, a guest order shows `CreateAccountPrompt.tsx`: the
+  email is pre-filled from the order (read-only) and locked in, so the
+  customer only sets a password. Signing up this way runs the exact same
+  `/api/auth/signup` route, which means the order that was just placed —
+  and any other past guest order under that email — is linked immediately.
+
+### Account dashboard
+
+`/account` and everything under it is guarded twice: optimistically by
+`src/proxy.ts` (redirects to `/login?redirect=<path>` on the cookie-level
+check) and, the check that actually matters, by `requireUser()`
+(`src/lib/supabase/dal.ts`) in `src/app/account/layout.tsx`, which
+re-verifies the session against the Supabase Auth server (`getUser()`, not
+a cookie read) before rendering anything. Every `/api/account/**` route
+independently calls the same `getUser()` again — the layout guard is a nice
+UX shortcut, not the security boundary.
+
+- **`DashboardView.tsx`** — welcome message (first name from the profile),
+  a "we linked N previous orders" banner (fires `POST
+  /api/account/claim-orders` once per visit — safe to call repeatedly,
+  already-linked orders are just skipped), the 3 most recent orders, and
+  quick links to orders/addresses/profile/wishlist.
+- **Order history** — `/account/orders` lists every order with status
+  filter tabs (all/processing/fulfilled/cancelled); `/account/orders/
+  [orderNumber]` shows the full detail (items, delivery + billing address,
+  payment status and fulfilment status as two separate badges — see
+  `src/lib/orders/status.ts` — tracking, payment reference); `/account/
+  orders/[orderNumber]/invoice` is a print-styled tax invoice
+  (`window.print()` → "Save as PDF" is the download mechanism, no PDF
+  library needed). "Buy again" (`src/lib/buy-again.ts`) re-adds every line
+  at *current* price/stock via a live product lookup, skipping and naming
+  anything discontinued or out of stock rather than adding it at a stale
+  price. "Request a return" opens a reason + notes modal
+  (`POST .../return-request`, one open request per order, stored in
+  `src/lib/account/returns-store.ts`); "Contact support" is a `mailto:`
+  link pre-filled with the order number.
+- **Address book** — `/account/addresses`: add/edit (one shared modal,
+  `AddressFormModal.tsx`, keyed by address id so switching which address
+  it edits always mounts fresh default values instead of needing a
+  reset-on-prop-change effect), delete (two-click confirm), and one
+  "default delivery" + one "default billing" flag per customer — setting a
+  new default automatically clears the previous one
+  (`src/lib/account/addresses-store.ts`).
+- **Profile** — `/account/profile`: first/last name, email (changing it
+  goes through Supabase's own re-verification — the new address only takes
+  effect once its confirmation link is clicked, so the UI says so rather
+  than claiming an instant change), mobile number, date of birth
+  (optional), marketing consent.
+- **Password & security** — `/account/security`: changing a password
+  re-authenticates with the *current* password first
+  (`signInWithPassword`) before calling `updateUser()` — an active session
+  alone (e.g. a device left logged in) isn't enough to take over the
+  account's credentials.
+- **Preferences** — `/account/preferences`: the marketing-email toggle
+  (same field as Profile's, shown here as its own settings page per the
+  brief) plus an always-on, non-toggleable "order & shipping updates" row —
+  transactional email can't be switched off, and the UI says why.
+- **Payment methods** — `/account/payment-methods`: read-only, and
+  deliberately so. It lists the *reference* from each past order's payment
+  (e.g. `TEST-a1b2…`, `EFT-CC-260902-0001`) with an explanation that card/
+  bank details themselves are never stored here — they live only with the
+  PCI-DSS-compliant gateway (PayFast/Peach/Yoco/Ozow) that processed them.
+  This is what "saved payment references where legally appropriate" means
+  in practice: a reference, never a card number.
+- **Role-based access** — `profiles.role` (`"customer" | "admin"`, default
+  `"customer"`) and `requireRole("admin")` in `src/lib/supabase/dal.ts` are
+  real and ready, but nothing sets a profile to `"admin"` and no admin
+  surface calls `requireRole()` yet — there's no admin area in this build.
+  Wired now so that surface doesn't need to retrofit authorization later.
+
+### Security
+
+- **Protected routes** — the full list is at the end of this section.
+- **Server-side session validation** — every protected page and API route
+  calls `getUser()`, which round-trips to the Supabase Auth server rather
+  than trusting the session cookie's contents — the same distinction
+  Supabase's own docs draw between `getSession()` (fast, optimistic) and
+  `getUser()` (slow, authoritative). `proxy.ts` uses it for the fast
+  redirect; the DAL and every `/api/account/**` route use it again for the
+  real check.
+- **Preventing cross-customer order access** — `GET /api/orders/
+  [orderNumber]` (used by the just-checked-out confirmation page) is
+  intentionally keyed by the order number alone, the standard pattern for
+  a guest-checkout redirect. `GET /api/account/orders/[orderNumber]` (used
+  by the account area) is the authenticated counterpart and is what
+  actually enforces ownership: it 404s — the same response whether the
+  order doesn't exist or belongs to someone else — unless
+  `order.userId === session.user.id`. Knowing an order number is never
+  sufficient by itself inside the account area.
+- **Rate-limiting structure** — `src/lib/rate-limit.ts` is an in-memory
+  fixed-window limiter, documented (like `orders/store.ts`) as a dev/demo
+  substitute for a shared store (Upstash Redis, or similar) a real
+  multi-instance deployment would need. Applied per-IP to sign-up and
+  per-IP-*and*-per-email to login, forgot-password and change-password, so
+  neither one attacker IP hammering many accounts nor a distributed attack
+  hammering one account gets unlimited guesses.
+- **Generic login errors** — covered above; login never distinguishes
+  "wrong password" from "no such account" from "email unconfirmed".
+- **Secure password reset** — covered above; the reset flow signs the
+  session out after success rather than leaving the email-link session
+  logged in.
+
+### Protected routes
+
+Every route under `/account/**` (`/account`, `/account/orders`,
+`/account/orders/[orderNumber]`, `/account/orders/[orderNumber]/invoice`,
+`/account/addresses`, `/account/profile`, `/account/security`,
+`/account/preferences`, `/account/payment-methods`) and every route under
+`/api/account/**` require a signed-in session — enforced twice, as
+described above. `/login` and `/signup` redirect *away* to `/account` if
+you're already signed in. `/reset-password` requires the session
+established by a recovery link (or an existing session) rather than a
+separate token. Everything else — `/`, `/shop`, `/products/**`, `/cart`,
+`/checkout`, `/wishlist`, `/forgot-password` — stays open to guests, by
+design.
 
 ---
 
@@ -462,14 +662,24 @@ CSS-native config) — there is no `tailwind.config.ts`.
 
 `Button` (variants: `primary` / `secondary` / `inverse` / `ghost` / `link`,
 sizes `sm`/`md`/`lg`/`icon`), `Badge` (variants: `dark`/`light`/`sale`/
-`outline`/`champagne`/`green`/`success`), `Card` (+ Header/Title/Description/
-Content/Footer), `Input`, `Textarea`, `Label`, `Modal`, `Switch` (accessible
+`outline`/`champagne`/`green`/`success`/`warning`/`error`/`neutral` — the
+last three added for order-status badges, see [Authentication &
+account](#authentication--account)), `Card` (+ Header/Title/Description/
+Content/Footer), `Input`, `PasswordInput` (an `Input` variant with a
+show/hide toggle), `Textarea`, `Label`, `Modal`, `Switch` (accessible
 toggle, `role="switch"`), `Checkbox` (accessible, `role="checkbox"`),
 `Carousel` (prev/next + pagination dots, autoplay, keyboard, one slide per
 view — see below), `Rating` (star display with an `inverse` variant for dark
 sections). All are built with `class-variance-authority` and `tailwind-merge`
 (via the `cn()` helper), so they compose cleanly with extra `className`s from
 call sites.
+
+`Input`, `PasswordInput` and `Textarea` all render their `error` message as
+visible text (an `id`-linked `<p>`, wired to the input via
+`aria-describedby`) whenever a truthy `error` prop is passed, on top of the
+red border/`aria-invalid` styling — every call site across every phase
+already passes `error={errors.field?.message}` from react-hook-form, so this
+was a from-the-source fix rather than a per-form one.
 
 ### Carousels
 
@@ -548,10 +758,10 @@ safe default (solid) from the start.
 ## Cart, wishlist, recently viewed & cookie consent
 
 `src/store/cart-store.ts` and `wishlist-store.ts` are Zustand stores
-persisted to `localStorage` — this is the "guest cart/wishlist" storage the
-brief asks for, and it's what every customer uses today, since no sign-in UI
-exists yet (see [Checkout & payments](#checkout--payments)). `Header` reads
-their counts for the bag/heart badges; `ProductCard`'s "Quick add" and heart
+persisted to `localStorage` — this is the guest cart/wishlist storage the
+brief asks for, and it's what every visitor uses right up until they sign
+in (see [Authentication & account](#authentication--account) for what
+happens then). `Header` reads their counts for the bag/heart badges; `ProductCard`'s "Quick add" and heart
 button call them directly; `CartDrawer` (mounted once in `Header`) renders
 the slide-in mini-cart, and `/cart` (`CartPageView.tsx`) is the full page.
 No page-level integration is needed — `useCartStore()` / `useCartCount()` /
@@ -583,11 +793,16 @@ No page-level integration is needed — `useCartStore()` / `useCartCount()` /
   to matching account lines rather than overwrite them; wishlist items
   de-duplicate by product id). `src/lib/hooks/use-auth-cart-sync.ts` wires
   these to Supabase's `onAuthStateChange`, mounted globally via
-  `AuthCartSync.tsx` in `layout.tsx`. This is real, mountable code, but
-  since no sign-in UI exists yet, `SIGNED_IN` never actually fires in this
-  build — the merge logic itself is unit-testable independent of that, and
-  `fetchAccountCart`/`fetchAccountWishlist` are stubbed to return `[]` until
-  real `cart_items`/`wishlist_items` Supabase tables exist to fetch from.
+  `AuthCartSync.tsx` in `layout.tsx`. `SIGNED_IN` now genuinely fires (email
+  login, sign-up, and — if enabled — OAuth all trigger it), so on every
+  sign-in the guest cart/wishlist held in `localStorage` merges into the
+  account's copy in place. `fetchAccountCart`/`fetchAccountWishlist` inside
+  that hook are still stubbed to return `[]`, though — there's no real
+  `cart_items`/`wishlist_items` Supabase table yet for a *second device* to
+  restore an account's saved cart/wishlist from, so today the merge is
+  effectively "the guest cart survives sign-in unchanged" rather than a true
+  cross-device merge. Wiring those two fetches is the one remaining step
+  once those tables exist; the merge algorithm itself doesn't change.
 
 `src/store/recently-viewed-store.ts` records a lightweight product snapshot
 whenever a `ProductCard` link is clicked (capped at 8, most-recent-first).
@@ -701,9 +916,10 @@ cp .env.local.example .env.local
 | Variable                             | Required for                          |
 | ------------------------------------- | -------------------------------------- |
 | `NEXT_PUBLIC_SUPABASE_URL`            | Auth, database, storage                |
-| `NEXT_PUBLIC_SUPABASE_ANON_KEY`       | Auth, database, storage                |
-| `SUPABASE_SERVICE_ROLE_KEY`           | Server-only admin operations           |
-| `NEXT_PUBLIC_SITE_URL`                | Metadata / OpenGraph canonical URLs / JSON-LD |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY`       | Auth, database, storage — this alone is enough for full sign-up/login/logout/reset |
+| `SUPABASE_SERVICE_ROLE_KEY`           | Server-only admin operations (not currently used by anything in this build) |
+| `NEXT_PUBLIC_SITE_URL`                | Metadata / OpenGraph canonical URLs / JSON-LD / auth email redirect links |
+| `NEXT_PUBLIC_ENABLE_SOCIAL_LOGIN`     | Shows the "Continue with Google" button (also requires enabling Google in the Supabase dashboard) |
 | `ENABLE_TEST_PAYMENTS`                | Test payment provider in production (always on outside production) |
 | `TEST_PAYMENT_WEBHOOK_SECRET`         | Test payment provider webhook signing  |
 | `EFT_ENABLED`                         | EFT / bank transfer payment method (defaults on) |

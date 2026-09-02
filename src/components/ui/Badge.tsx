@@ -14,6 +14,9 @@ const badgeVariants = cva(
         champagne: "bg-champagne/25 text-charcoal",
         green: "bg-green/12 text-green",
         success: "bg-success/10 text-success",
+        warning: "bg-champagne/25 text-charcoal",
+        error: "bg-error/10 text-error",
+        neutral: "bg-soft-grey text-stone",
       },
     },
     defaultVariants: {

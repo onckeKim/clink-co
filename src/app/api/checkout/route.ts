@@ -8,6 +8,7 @@ import { createOrder, findOrderByIdempotencyKey, updateOrder } from "@/lib/order
 import { getPaymentProvider } from "@/lib/payments";
 import { sendAdminOrderNotification, sendOrderConfirmationEmail } from "@/lib/email";
 import type { OrderLineItem } from "@/lib/orders/types";
+import { getUser } from "@/lib/supabase/dal";
 
 /**
  * Creates an order and initiates payment for it. This is the one route
@@ -31,6 +32,11 @@ export async function POST(request: Request) {
     );
   }
   const data = parsed.data;
+
+  // A signed-in customer's order is attached to their account from the
+  // moment it's created — no separate "claim this order" step needed later,
+  // unlike a guest order (see linkGuestOrdersToUser in src/lib/orders/store.ts).
+  const user = await getUser();
 
   const existingOrder = findOrderByIdempotencyKey(data.idempotencyKey);
   if (existingOrder) {
@@ -107,7 +113,8 @@ export async function POST(request: Request) {
     idempotencyKey: data.idempotencyKey,
     customerEmail: data.customer.email,
     customerName: customerFullName,
-    isGuest: true,
+    isGuest: !user,
+    userId: user?.id,
     lines: orderLines,
     couponCode: data.couponCode,
     deliveryAddress: { ...data.deliveryAddress, fullName: data.deliveryAddress.fullName || customerFullName },

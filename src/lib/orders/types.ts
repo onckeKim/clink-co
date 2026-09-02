@@ -66,4 +66,9 @@ export interface Order {
   paymentMethod: PaymentMethodId;
   paymentReference?: string;
   paymentRedirectUrl?: string;
+
+  /** Populated once a courier handoff exists — no fulfilment/admin workflow sets these yet, so they stay undefined for every order today. See the account order-detail view for the honest empty state this produces. */
+  trackingCarrier?: string;
+  trackingNumber?: string;
+  trackingUrl?: string;
 }

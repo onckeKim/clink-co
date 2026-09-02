@@ -68,7 +68,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
           HeroWaypoint) cancels this with a matching negative margin so the
           hero renders full-bleed behind the transparent/tinted header.
         */}
-        <main id="main-content" className="flex-1 pt-24">
+        <main id="main-content" className="flex-1 pt-24 print:pt-0">
           {children}
         </main>
         <Footer />
