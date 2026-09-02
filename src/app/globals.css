@@ -1,0 +1,154 @@
+@import "tailwindcss";
+
+/* ---------------------------------------------------------------------- */
+/* Clink & Co — design tokens                                             */
+/* A warm, editorial palette: ivory / sand / taupe / stone with deep ink  */
+/* black for high-contrast sections, plus a brass accent for gifting.     */
+/* ---------------------------------------------------------------------- */
+
+:root {
+  /* Neutrals */
+  --color-ivory: #faf7f1;
+  --color-linen: #f3ede2;
+  --color-sand: #e8dfcd;
+  --color-stone: #c9bfa9;
+  --color-taupe: #a9917a;
+  --color-clay: #7a6a56;
+  --color-ink: #17150f;
+  --color-ink-soft: #26231a;
+  --color-grey: #eeece7;
+
+  /* Brand accent — warm brass, used sparingly for gifting / highlights */
+  --color-brass: #b08a4e;
+  --color-brass-light: #d7b787;
+
+  /* Signal */
+  --color-success: #4b6a4d;
+  --color-error: #a8452f;
+
+  --radius-sm: 0.5rem;
+  --radius-md: 0.875rem;
+  --radius-lg: 1.25rem;
+  --radius-xl: 1.75rem;
+  --radius-pill: 999px;
+
+  --shadow-soft: 0 2px 20px rgba(23, 21, 15, 0.06);
+  --shadow-card: 0 8px 30px rgba(23, 21, 15, 0.08);
+  --shadow-lifted: 0 20px 60px rgba(23, 21, 15, 0.16);
+}
+
+@theme inline {
+  --color-ivory: var(--color-ivory);
+  --color-linen: var(--color-linen);
+  --color-sand: var(--color-sand);
+  --color-stone: var(--color-stone);
+  --color-taupe: var(--color-taupe);
+  --color-clay: var(--color-clay);
+  --color-ink: var(--color-ink);
+  --color-ink-soft: var(--color-ink-soft);
+  --color-grey: var(--color-grey);
+  --color-brass: var(--color-brass);
+  --color-brass-light: var(--color-brass-light);
+  --color-success: var(--color-success);
+  --color-error: var(--color-error);
+
+  --color-background: var(--color-ivory);
+  --color-foreground: var(--color-ink);
+
+  --radius-sm: var(--radius-sm);
+  --radius-md: var(--radius-md);
+  --radius-lg: var(--radius-lg);
+  --radius-xl: var(--radius-xl);
+  --radius-pill: var(--radius-pill);
+
+  --shadow-soft: var(--shadow-soft);
+  --shadow-card: var(--shadow-card);
+  --shadow-lifted: var(--shadow-lifted);
+
+  --font-sans: var(--font-inter);
+  --font-display: var(--font-fraunces);
+
+  --animate-fade-up: fade-up 0.6s cubic-bezier(0.16, 1, 0.3, 1) both;
+  --animate-fade-in: fade-in 0.5s ease-out both;
+
+  @keyframes fade-up {
+    from {
+      opacity: 0;
+      transform: translateY(16px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+  @keyframes fade-in {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+}
+
+* {
+  border-color: var(--color-sand);
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background: var(--color-ivory);
+  color: var(--color-ink);
+  font-family: var(--font-sans), ui-sans-serif, system-ui, sans-serif;
+  font-feature-settings: "ss01" 1, "cv01" 1;
+  -webkit-font-smoothing: antialiased;
+}
+
+::selection {
+  background: var(--color-ink);
+  color: var(--color-ivory);
+}
+
+/* Editorial display type — used sparingly for hero + section headlines */
+.font-display {
+  font-family: var(--font-display), ui-serif, Georgia, serif;
+  letter-spacing: -0.01em;
+}
+
+/* Thin, refined scrollbar for a premium feel */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--color-stone);
+  border-radius: var(--radius-pill);
+  border: 3px solid var(--color-ivory);
+}
+
+/* Consistent focus ring across custom controls */
+.focus-ring {
+  outline: none;
+}
+.focus-ring:focus-visible {
+  outline: 2px solid var(--color-ink);
+  outline-offset: 2px;
+}
+
+/* Utility for the subtle underline-on-hover link style used across the site */
+.link-underline {
+  background-image: linear-gradient(currentColor, currentColor);
+  background-position: 0 100%;
+  background-repeat: no-repeat;
+  background-size: 0% 1px;
+  transition: background-size 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.link-underline:hover {
+  background-size: 100% 1px;
+}

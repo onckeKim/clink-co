@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1000" height="1200" viewBox="0 0 1000 1200">
+  <defs>
+    <linearGradient id="g-249919266-2" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#faf7f1" />
+      <stop offset="100%" stop-color="#c9bfa9" />
+    </linearGradient>
+  </defs>
+  <rect width="1000" height="1200" fill="url(#g-249919266-2)" />
+  
+  <g transform="translate(500 540) scale(2.8)" fill="none" stroke="#17150f" stroke-width="2.2" opacity="0.2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M -34 -70 L -22 40 C -22 58 22 58 22 40 L 34 -70 Z" />
+    <path d="M -34 -70 L 34 -70" />
+    <path d="M -28 -50 L 28 -50" />
+  </g>
+  <text x="500" y="1046" text-anchor="middle" font-family="Georgia, 'Times New Roman', serif" font-size="30" fill="#17150f" fill-opacity="0.55" letter-spacing="0.5">Toast Champagne</text>
+  <text x="500" y="1080" text-anchor="middle" font-family="Georgia, 'Times New Roman', serif" font-size="30" fill="#17150f" fill-opacity="0.55" letter-spacing="0.5">Flutes</text>
+</svg>
