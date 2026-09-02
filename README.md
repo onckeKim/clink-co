@@ -216,6 +216,144 @@ requirement is in the chat write-up for this phase; in short:
 
 ---
 
+## Checkout & payments
+
+### Architecture
+
+Cart totals shown to the customer (`src/lib/cart.ts`, `src/lib/promotions.ts`,
+`src/lib/delivery.ts`) are **advisory only**. The single source of truth is
+`POST /api/checkout` (`src/app/api/checkout/route.ts`), which re-derives
+everything server-side before an order is ever created:
+
+1. Zod-validates the payload (`src/lib/validations/checkout.ts`).
+2. Looks up `findOrderByIdempotencyKey()` — if this exact checkout attempt
+   already created an order, that order is returned as-is and nothing new is
+   created (see "Duplicate orders" below).
+3. Re-validates every cart line against live product data
+   (`validateCartLines()` in `src/lib/cart-validation.ts`) — price, stock,
+   discontinued status. A client can send stale prices/quantities; the server
+   never trusts them.
+4. Re-validates any coupon code (`validateCoupon()`) against the same
+   scoping/date/usage-limit/minimum-spend rules the client already checked —
+   redundantly, but authoritatively.
+5. Re-quotes delivery (`quoteDelivery()`) for the chosen method/province/
+   postal code, including the coupon's free-delivery flag if applicable.
+6. Computes final totals (`computeCartTotals()`) and creates the order
+   (`createOrder()` in `src/lib/orders/store.ts`).
+7. Initiates payment via the chosen provider's `initiate()` and returns a
+   `redirectUrl` for the client to navigate to.
+8. Fires an admin new-order email in the background (`sendAdminOrderNotification()`)
+   for every order; for EFT specifically it also fires the customer
+   confirmation email immediately, since EFT has no webhook to trigger it
+   later.
+
+`src/lib/payments/` implements a single `PaymentProvider` interface
+(`isConfigured()`, `initiate()`, `parseWebhook()`) per gateway
+(`providers/{test,eft,payfast,peach,yoco,ozow}.ts`), registered in
+`src/lib/payments/index.ts`. `getAvailablePaymentMethods()` filters to only
+providers whose `isConfigured()` returns true — this is what "if enabled by
+the administrator" means in practice: set a provider's env vars and it
+appears at checkout, leave them unset and it doesn't. `GET
+/api/payments/methods` exposes only `{id, label, description}` to the
+client — never credentials.
+
+Once the customer completes payment on the gateway's hosted page, the
+gateway calls back to `POST /api/webhooks/payments/[provider]/route.ts`
+server-to-server. That route calls the provider's `parseWebhook()` (which
+verifies the request's signature and returns `null` — a 400 — if it doesn't
+check out), maps the gateway's status to an internal `OrderStatus`, updates
+the order, and sends the customer confirmation email on a fresh transition
+to "paid" (not on every retried webhook delivery — see "Duplicate orders").
+`GET /api/orders/[orderNumber]` then serves the finished order to the
+confirmation page.
+
+Because no sign-in UI exists yet in this build (see the Cart/wishlist
+section above and the roadmap below), every checkout today is a guest
+checkout — but `Order` already carries `isGuest`/`userId` fields, addresses
+support a "same as delivery" toggle, and `AddressFields.tsx` is shared
+between the delivery and billing steps, so wiring in saved addresses and
+`userId` once auth ships is additive, not a rewrite.
+
+### Required payment credentials
+
+| Provider | Env vars | Where to get them |
+| --- | --- | --- |
+| Test (mock gateway) | `ENABLE_TEST_PAYMENTS`, `TEST_PAYMENT_WEBHOOK_SECRET` | None — built in, for demos/dev/staging |
+| EFT / bank transfer | `EFT_ENABLED` | None — manually reconciled, no gateway account |
+| PayFast | `PAYFAST_MERCHANT_ID`, `PAYFAST_MERCHANT_KEY`, `PAYFAST_PASSPHRASE`, `PAYFAST_SANDBOX` | PayFast merchant dashboard → Settings → Integration |
+| Peach Payments | `PEACH_ENTITY_ID`, `PEACH_ACCESS_TOKEN`, `PEACH_API_BASE_URL`, `PEACH_WEBHOOK_SECRET` | Peach dashboard → Checkout API credentials |
+| Yoco | `YOCO_SECRET_KEY`, `YOCO_WEBHOOK_SECRET` | Yoco portal → Online → API Keys |
+| Ozow | `OZOW_SITE_CODE`, `OZOW_PRIVATE_KEY`, `OZOW_SANDBOX` | Ozow business portal → Settings → API |
+
+All of the above are read only in server-side modules
+(`src/lib/payments/providers/*.ts`, imported only from route handlers) —
+never in a `"use client"` component, and never sent to the browser.
+`src/config/payments.ts` is a deliberately separate, client-safe module that
+holds only the *public* EFT bank-details display data, so `PaymentMethodStep.tsx`
+can render it without pulling in the server-only provider code (which uses
+Node's `crypto` module and cannot be bundled for the browser).
+
+### Test vs. production settings
+
+- The **test provider** (`src/lib/payments/providers/test.ts`) is available
+  automatically outside production, or in production only if
+  `ENABLE_TEST_PAYMENTS=true` is explicitly set — so a staging deploy can
+  demo the full flow, but a real production deploy doesn't accidentally ship
+  a fake "always succeeds" payment method. Its `/checkout/pay/[orderNumber]`
+  page (`PaymentSimulatorView.tsx`) lets you pick Paid / Failed / Cancelled,
+  which triggers a real signed webhook call from the server to
+  `/api/webhooks/payments/test` — exercising the exact same webhook code
+  path a live gateway would use, just without needing real merchant
+  credentials to test it.
+- **PayFast** and **Ozow** each expose a sandbox flag (`PAYFAST_SANDBOX`,
+  `OZOW_SANDBOX`) that points `initiate()` at the gateway's sandbox host
+  instead of production — flip it once real (non-sandbox) merchant
+  credentials are issued.
+- **Peach Payments** switches environment via `PEACH_API_BASE_URL` itself
+  (defaults to Peach's test API host; set it to the production API host once
+  live).
+- **Yoco** doesn't have a separate sandbox — Yoco issues distinct test and
+  live secret keys from the same dashboard, so switching environments is
+  just swapping which key is in `YOCO_SECRET_KEY`.
+- The PayFast, Peach, Yoco and Ozow provider implementations follow each
+  gateway's public API/signature documentation but are **not yet verified
+  against a live merchant account** — treat them as a correct-by-the-docs
+  starting point to validate against sandbox credentials before going live,
+  the same way you'd review any payment integration before launch.
+
+### How duplicate orders are prevented
+
+Two independent guards, matching the two ways a duplicate could happen:
+
+1. **Duplicate order creation** (double-click "Place order", a network
+   retry, browser back/forward after payment) — `CheckoutView.tsx` generates
+   one `idempotencyKey` (`crypto.randomUUID()`) per checkout attempt and
+   persists it in `sessionStorage` for the duration of that attempt, sending
+   it on every `POST /api/checkout` call. The server checks
+   `findOrderByIdempotencyKey()` *before* creating anything — if an order
+   already exists for that key, it's returned unchanged rather than a second
+   order being created. The key is only cleared from `sessionStorage` once
+   the request actually succeeds.
+2. **Duplicate webhook processing** (every real gateway retries webhook
+   delivery until it gets a 200 — PayFast/Ozow/Yoco/Peach will all resend
+   the same event) — `src/lib/orders/store.ts` tracks processed webhook
+   events by a normalized `eventId` (`hasProcessedWebhookEvent()` /
+   `markWebhookEventProcessed()`). The webhook route checks this before
+   touching the order or sending any email, so a retried delivery for an
+   already-processed event returns 200 immediately without reprocessing —
+   which also means the confirmation email only ever fires once, on the
+   first transition into `paid`.
+
+`src/lib/orders/store.ts` is an in-memory store standing in for a real
+`orders` table (its functions mirror what real Supabase queries would look
+like: `findOrderByIdempotencyKey` ≈ `SELECT ... WHERE idempotency_key = $1`,
+etc.) — moving to Supabase means giving `idempotency_key` a UNIQUE
+constraint and doing the "does it already exist" check as an upsert, but the
+call sites in `checkout/route.ts` and the webhook route don't need to
+change.
+
+---
+
 ## Folder structure
 
 ```
@@ -410,11 +548,46 @@ safe default (solid) from the start.
 ## Cart, wishlist, recently viewed & cookie consent
 
 `src/store/cart-store.ts` and `wishlist-store.ts` are Zustand stores
-persisted to `localStorage`. `Header` reads their counts for the bag/heart
-badges; `ProductCard`'s "Quick add" and heart button call them directly;
-`CartDrawer` (mounted once in `Header`) renders the slide-in bag. No
-page-level integration is needed — `useCartStore()` / `useCartCount()` /
+persisted to `localStorage` — this is the "guest cart/wishlist" storage the
+brief asks for, and it's what every customer uses today, since no sign-in UI
+exists yet (see [Checkout & payments](#checkout--payments)). `Header` reads
+their counts for the bag/heart badges; `ProductCard`'s "Quick add" and heart
+button call them directly; `CartDrawer` (mounted once in `Header`) renders
+the slide-in mini-cart, and `/cart` (`CartPageView.tsx`) is the full page.
+No page-level integration is needed — `useCartStore()` / `useCartCount()` /
 `useWishlistStore()` work from any client component.
+
+- **Stock-aware quantities** — `addItem`/`updateQuantity` clamp against
+  `product.stockQuantity`; `CartLineItem.tsx` also does a live
+  `getProductBySlug()` lookup per line to show low-stock/out-of-stock/
+  exceeds-available-stock messaging, since the store's own snapshot can go
+  stale between visits.
+- **Coupons** — `cart-store.ts` holds `coupon`/`couponError`; `applyCoupon()`/
+  `removeCoupon()` call into `src/lib/promotions.ts` (`validateCoupon()`),
+  which checks active/date-range/usage-limit/minimum-spend/product- or
+  collection-scoping against `src/data/coupons.ts`. Every add/remove/quantity
+  change re-validates the applied coupon (`revalidateCoupon()`) and silently
+  drops it with an explanatory `couponError` if it's no longer eligible (e.g.
+  the only matching line was removed). This is client-side UX only — see
+  below for why the server never trusts it.
+- **Wishlist** — `toggle(product)` (used by `ProductCard`'s heart button) and
+  a separate `add(item)` (used to move a denormalized cart line to the
+  wishlist without needing the full `Product` record) both live in
+  `wishlist-store.ts`. `/wishlist` (`WishlistPageView.tsx`) shows live stock
+  status per item and a "Share wishlist" button (Web Share API, clipboard
+  fallback) that builds a `/wishlist/shared?items=slug1,slug2,...` link,
+  resolved by `SharedWishlistView.tsx` for anyone who opens it (own account
+  not required).
+- **Guest/account merge** — `src/lib/merge.ts` has pure, store-agnostic
+  `mergeCartLines()`/`mergeWishlistItems()` functions (guest quantities add
+  to matching account lines rather than overwrite them; wishlist items
+  de-duplicate by product id). `src/lib/hooks/use-auth-cart-sync.ts` wires
+  these to Supabase's `onAuthStateChange`, mounted globally via
+  `AuthCartSync.tsx` in `layout.tsx`. This is real, mountable code, but
+  since no sign-in UI exists yet, `SIGNED_IN` never actually fires in this
+  build — the merge logic itself is unit-testable independent of that, and
+  `fetchAccountCart`/`fetchAccountWishlist` are stubbed to return `[]` until
+  real `cart_items`/`wishlist_items` Supabase tables exist to fetch from.
 
 `src/store/recently-viewed-store.ts` records a lightweight product snapshot
 whenever a `ProductCard` link is clicked (capped at 8, most-recent-first).
@@ -531,16 +704,23 @@ cp .env.local.example .env.local
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY`       | Auth, database, storage                |
 | `SUPABASE_SERVICE_ROLE_KEY`           | Server-only admin operations           |
 | `NEXT_PUBLIC_SITE_URL`                | Metadata / OpenGraph canonical URLs / JSON-LD |
-| `STRIPE_SECRET_KEY`                   | Checkout (not yet implemented)         |
-| `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY`  | Checkout (not yet implemented)         |
-| `STRIPE_WEBHOOK_SECRET`               | Checkout (not yet implemented)         |
-| `RESEND_API_KEY`                      | Transactional email / newsletter       |
+| `ENABLE_TEST_PAYMENTS`                | Test payment provider in production (always on outside production) |
+| `TEST_PAYMENT_WEBHOOK_SECRET`         | Test payment provider webhook signing  |
+| `EFT_ENABLED`                         | EFT / bank transfer payment method (defaults on) |
+| `PAYFAST_MERCHANT_ID` / `_MERCHANT_KEY` / `_PASSPHRASE` / `_SANDBOX` | PayFast payment method |
+| `PEACH_ENTITY_ID` / `_ACCESS_TOKEN` / `_API_BASE_URL` / `_WEBHOOK_SECRET` | Peach Payments payment method |
+| `YOCO_SECRET_KEY` / `YOCO_WEBHOOK_SECRET` | Yoco payment method                |
+| `OZOW_SITE_CODE` / `_PRIVATE_KEY` / `_SANDBOX` | Ozow payment method              |
+| `RESEND_API_KEY`                      | Transactional email / newsletter / order confirmations |
 
 The app runs without any of these set — Supabase calls are structured to no-op
-gracefully in `src/proxy.ts`, and both newsletter forms currently simulate
-their network call (marked with a `TODO` pointing at a `subscribers`
-table/edge function) so their success/error states are real without a
-backend wired up yet.
+gracefully in `src/proxy.ts`, both newsletter forms currently simulate their
+network call (marked with a `TODO` pointing at a `subscribers` table/edge
+function) so their success/error states are real without a backend wired up
+yet, and checkout always has at least one working payment method (Test and
+EFT are on by default outside production) even with none of the payments vars
+set. See [Checkout & payments](#checkout--payments) below for how each
+gateway's credentials are used and how to enable/disable a method.
 
 ---
 

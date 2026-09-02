@@ -2,19 +2,19 @@
 
 import * as React from "react";
 import { createPortal } from "react-dom";
-import Image from "next/image";
 import Link from "next/link";
 import { AnimatePresence, motion } from "framer-motion";
-import { Minus, Plus, ShoppingBag, X } from "lucide-react";
-import { useCartStore, useCartSubtotal } from "@/store/cart-store";
+import { ShoppingBag, X } from "lucide-react";
+import { useCartStore } from "@/store/cart-store";
+import { CartLineItem } from "@/components/cart/CartLineItem";
+import { CartSummary } from "@/components/cart/CartSummary";
 import { buttonVariants } from "@/components/ui/Button";
-import { cn, formatPrice } from "@/lib/utils";
+import { cn } from "@/lib/utils";
 import { useMounted } from "@/lib/hooks/use-mounted";
 
 export function CartDrawer() {
   const mounted = useMounted();
-  const { isOpen, close, lines, updateQuantity, removeLine } = useCartStore();
-  const subtotal = useCartSubtotal();
+  const { isOpen, close, lines } = useCartStore();
 
   React.useEffect(() => {
     if (!isOpen) return;
@@ -80,76 +80,28 @@ export function CartDrawer() {
               <>
                 <ul className="flex-1 divide-y divide-sand overflow-y-auto px-6">
                   {lines.map((line) => (
-                    <li key={line.lineId} className="flex gap-4 py-5">
-                      <div className="relative h-24 w-20 shrink-0 overflow-hidden rounded-xl bg-sand/50">
-                        <Image
-                          src={line.image}
-                          alt={line.name}
-                          fill
-                          sizes="80px"
-                          className="object-cover"
-                        />
-                      </div>
-                      <div className="flex flex-1 flex-col justify-between">
-                        <div className="flex items-start justify-between gap-2">
-                          <div>
-                            <p className="text-sm font-medium text-charcoal">{line.name}</p>
-                            {line.variant && (
-                              <p className="text-xs text-stone">{line.variant.label}</p>
-                            )}
-                          </div>
-                          <p className="text-sm font-medium text-charcoal">
-                            {formatPrice(line.price * line.quantity)}
-                          </p>
-                        </div>
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-3 rounded-full border border-sand px-2 py-1">
-                            <button
-                              type="button"
-                              aria-label="Decrease quantity"
-                              onClick={() => updateQuantity(line.lineId, line.quantity - 1)}
-                              className="focus-ring flex h-6 w-6 items-center justify-center rounded-full hover:bg-sand"
-                            >
-                              <Minus className="h-3 w-3" />
-                            </button>
-                            <span className="w-4 text-center text-xs">{line.quantity}</span>
-                            <button
-                              type="button"
-                              aria-label="Increase quantity"
-                              onClick={() => updateQuantity(line.lineId, line.quantity + 1)}
-                              className="focus-ring flex h-6 w-6 items-center justify-center rounded-full hover:bg-sand"
-                            >
-                              <Plus className="h-3 w-3" />
-                            </button>
-                          </div>
-                          <button
-                            type="button"
-                            onClick={() => removeLine(line.lineId)}
-                            className="focus-ring text-xs text-stone underline-offset-2 hover:underline"
-                          >
-                            Remove
-                          </button>
-                        </div>
-                      </div>
-                    </li>
+                    <CartLineItem key={line.lineId} line={line} compact />
                   ))}
                 </ul>
 
-                <div className="border-t border-sand px-6 py-6">
-                  <div className="mb-4 flex items-center justify-between text-sm">
-                    <span className="text-stone">Subtotal</span>
-                    <span className="font-medium text-charcoal">{formatPrice(subtotal)}</span>
+                <div className="flex flex-col gap-4 border-t border-sand px-6 py-6">
+                  <CartSummary compact />
+                  <div className="flex flex-col gap-2">
+                    <Link
+                      href="/checkout"
+                      onClick={close}
+                      className={cn(buttonVariants({ size: "lg" }), "w-full")}
+                    >
+                      Checkout
+                    </Link>
+                    <Link
+                      href="/cart"
+                      onClick={close}
+                      className={cn(buttonVariants({ variant: "ghost", size: "sm" }), "w-full")}
+                    >
+                      View full bag
+                    </Link>
                   </div>
-                  <p className="mb-4 text-xs text-stone">
-                    Shipping and taxes calculated at checkout.
-                  </p>
-                  <Link
-                    href="/checkout"
-                    onClick={close}
-                    className={cn(buttonVariants({ size: "lg" }), "w-full")}
-                  >
-                    Checkout
-                  </Link>
                 </div>
               </>
             )}

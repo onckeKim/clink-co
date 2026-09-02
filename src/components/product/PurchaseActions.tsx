@@ -1,11 +1,13 @@
 "use client";
 
 import * as React from "react";
+import { useRouter } from "next/navigation";
 import { Check, Heart, Share2, ShoppingBag, Zap } from "lucide-react";
 import type { Product, ProductVariant } from "@/types/product";
 import { Button } from "@/components/ui/Button";
 import { useCartStore } from "@/store/cart-store";
 import { useWishlistStore } from "@/store/wishlist-store";
+import { useMounted } from "@/lib/hooks/use-mounted";
 import { cn } from "@/lib/utils";
 
 export function PurchaseActions({
@@ -17,9 +19,14 @@ export function PurchaseActions({
   variant?: ProductVariant;
   quantity: number;
 }) {
+  const router = useRouter();
   const addItem = useCartStore((state) => state.addItem);
-  const openCart = useCartStore((state) => state.open);
-  const wishlisted = useWishlistStore((state) => state.has(product.id));
+  const mounted = useMounted();
+  // Wishlist state is persisted to localStorage, which isn't available
+  // during SSR — reporting "not wishlisted" until mounted avoids a
+  // hydration mismatch on the heart icon for a product added on a
+  // previous visit.
+  const wishlisted = useWishlistStore((state) => state.has(product.id)) && mounted;
   const toggleWishlist = useWishlistStore((state) => state.toggle);
   const [justShared, setJustShared] = React.useState(false);
 
@@ -28,12 +35,8 @@ export function PurchaseActions({
   const handleAddToCart = () => addItem(product, { variant, quantity });
 
   const handleBuyNow = () => {
-    // No dedicated checkout flow exists yet (see README's roadmap) — Buy
-    // Now adds the item and opens the cart drawer as today's fastest path
-    // to purchase; swap this for a router.push("/checkout") once that
-    // route ships.
     addItem(product, { variant, quantity });
-    openCart();
+    router.push("/checkout");
   };
 
   const handleShare = async () => {

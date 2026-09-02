@@ -1,4 +1,13 @@
 import { siteConfig } from "@/config/site";
+import {
+  deliveryMethods,
+  PICKUP_POSTAL_PREFIXES,
+  PROVINCE_ZONE,
+  ZONE_ADJUSTMENT,
+  type DeliveryMethodConfig,
+  type DeliveryMethodId,
+} from "@/config/delivery";
+import type { SouthAfricanProvince } from "@/data/provinces";
 
 /**
  * A lightweight, illustrative South African delivery estimator. Real courier
@@ -91,6 +100,107 @@ export function estimateDelivery(postalCode: string, orderValue: number): Delive
       fee: freeDeliveryEligible ? 0 : zone.fee,
       freeDeliveryEligible,
       freeDeliveryThreshold: siteConfig.freeDeliveryThreshold,
+    },
+  };
+}
+
+// ---------------------------------------------------------------------------
+// Checkout-time delivery quoting — method + province + postal code aware.
+// The PDP estimator above stays postal-code-only (a quick "will this ship
+// fast" gut check before a method is chosen); this is the fuller quote used
+// once a delivery address and method are on the table at checkout.
+// ---------------------------------------------------------------------------
+
+export function isPickupPostalCode(postalCode: string): boolean {
+  return PICKUP_POSTAL_PREFIXES.some((prefix) => postalCode.startsWith(prefix));
+}
+
+/** Which of the configured delivery methods can actually be offered for this address. */
+export function getAvailableDeliveryMethods(
+  province: SouthAfricanProvince,
+  postalCode: string,
+): DeliveryMethodConfig[] {
+  const zone = PROVINCE_ZONE[province];
+  return deliveryMethods.filter((method) => {
+    if (method.id === "express") return zone === "metro";
+    if (method.id === "pickup") return isPickupPostalCode(postalCode);
+    return true;
+  });
+}
+
+function addBusinessDays(from: Date, days: number): Date {
+  const result = new Date(from);
+  let added = 0;
+  while (added < days) {
+    result.setDate(result.getDate() + 1);
+    const day = result.getDay();
+    if (day !== 0 && day !== 6) added += 1;
+  }
+  return result;
+}
+
+export interface DeliveryQuote {
+  methodId: DeliveryMethodId;
+  label: string;
+  fee: number;
+  minDays: number;
+  maxDays: number;
+  /** ISO date strings — the earliest/latest calendar date the order is expected to arrive, skipping weekends. */
+  earliestDate: string;
+  latestDate: string;
+  freeDeliveryApplied: boolean;
+}
+
+export type DeliveryQuoteResult = { ok: true; quote: DeliveryQuote } | { ok: false; error: string };
+
+export function quoteDelivery({
+  methodId,
+  province,
+  postalCode,
+  orderValue,
+  freeDeliveryOverride = false,
+}: {
+  methodId: DeliveryMethodId;
+  province: SouthAfricanProvince;
+  postalCode: string;
+  /** Cart subtotal after discounts — used for the free-delivery threshold. */
+  orderValue: number;
+  /** True when an applied coupon grants free delivery regardless of threshold. */
+  freeDeliveryOverride?: boolean;
+}): DeliveryQuoteResult {
+  if (!isValidSAPostalCode(postalCode)) {
+    return { ok: false, error: "Enter a valid 4-digit postal code." };
+  }
+
+  const method = deliveryMethods.find((m) => m.id === methodId);
+  if (!method) return { ok: false, error: "Select a delivery method." };
+
+  const available = getAvailableDeliveryMethods(province, postalCode);
+  if (!available.some((m) => m.id === methodId)) {
+    return { ok: false, error: `${method.label} isn't available for this address.` };
+  }
+
+  const zone = PROVINCE_ZONE[province];
+  const adjustment = ZONE_ADJUSTMENT[zone];
+  const freeDeliveryApplied =
+    method.id === "pickup" || freeDeliveryOverride || orderValue >= siteConfig.freeDeliveryThreshold;
+
+  const fee = freeDeliveryApplied ? 0 : Math.round(method.baseFee * adjustment.feeMultiplier);
+  const minDays = method.minDays + adjustment.extraDays;
+  const maxDays = method.maxDays + adjustment.extraDays;
+  const now = new Date();
+
+  return {
+    ok: true,
+    quote: {
+      methodId: method.id,
+      label: method.label,
+      fee,
+      minDays,
+      maxDays,
+      earliestDate: addBusinessDays(now, minDays).toISOString(),
+      latestDate: addBusinessDays(now, maxDays).toISOString(),
+      freeDeliveryApplied,
     },
   };
 }

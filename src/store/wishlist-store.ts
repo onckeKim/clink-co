@@ -13,6 +13,8 @@ export interface WishlistItem {
 interface WishlistState {
   items: WishlistItem[];
   toggle: (product: Product) => void;
+  /** Adds a pre-built item directly — used when moving a cart line to the wishlist, where only denormalized cart data (not a full Product) is on hand. No-ops if already present. */
+  add: (item: WishlistItem) => void;
   remove: (productId: string) => void;
   has: (productId: string) => boolean;
   clear: () => void;
@@ -41,6 +43,11 @@ export const useWishlistStore = create<WishlistState>()(
             ],
           });
         }
+      },
+
+      add: (item) => {
+        if (get().items.some((existing) => existing.productId === item.productId)) return;
+        set({ items: [...get().items, item] });
       },
 
       remove: (productId) =>

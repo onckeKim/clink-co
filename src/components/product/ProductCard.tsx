@@ -10,6 +10,7 @@ import { useCartStore } from "@/store/cart-store";
 import { useWishlistStore } from "@/store/wishlist-store";
 import { useRecentlyViewedStore } from "@/store/recently-viewed-store";
 import { getCategoryBySlug } from "@/data/categories";
+import { useMounted } from "@/lib/hooks/use-mounted";
 import { cn, formatPrice } from "@/lib/utils";
 
 export function ProductCard({
@@ -28,7 +29,12 @@ export function ProductCard({
   onQuickView?: (product: Product) => void;
 }) {
   const addItem = useCartStore((state) => state.addItem);
-  const wishlisted = useWishlistStore((state) => state.has(product.id));
+  const mounted = useMounted();
+  // Wishlist state is persisted to localStorage, which isn't available
+  // during SSR — reporting "not wishlisted" until mounted avoids a
+  // hydration mismatch on the heart icon for a product added on a
+  // previous visit.
+  const wishlisted = useWishlistStore((state) => state.has(product.id)) && mounted;
   const toggleWishlist = useWishlistStore((state) => state.toggle);
   const recordView = useRecentlyViewedStore((state) => state.add);
   const secondImage = product.images[1] ?? product.images[0];

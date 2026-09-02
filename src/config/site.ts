@@ -32,4 +32,6 @@ export const siteConfig = {
   },
 
   contactEmail: "hello@clinkandco.com",
+  /** Where new-order notifications are sent — see src/lib/email.ts. */
+  orderNotificationEmail: "orders@clinkandco.com",
 } as const;

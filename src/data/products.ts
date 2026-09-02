@@ -927,3 +927,27 @@ export function getPairedProducts(product: Product, limit = 3) {
     )
     .slice(0, limit);
 }
+
+/**
+ * Cart-aware cross-sell: pools `getPairedProducts()` across every product
+ * already in the cart, excludes anything already in the cart, and dedupes —
+ * used for the cart page/drawer's "You might also like" rail.
+ */
+export function getComplementaryProducts(cartProductSlugs: string[], limit = 4) {
+  const excluded = new Set(cartProductSlugs);
+  const seen = new Set<string>();
+  const suggestions: Product[] = [];
+
+  for (const slug of cartProductSlugs) {
+    const product = getProductBySlug(slug);
+    if (!product) continue;
+    for (const candidate of getPairedProducts(product, limit)) {
+      if (excluded.has(candidate.slug) || seen.has(candidate.slug)) continue;
+      seen.add(candidate.slug);
+      suggestions.push(candidate);
+      if (suggestions.length >= limit) return suggestions;
+    }
+  }
+
+  return suggestions;
+}
