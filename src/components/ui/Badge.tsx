@@ -7,11 +7,12 @@ const badgeVariants = cva(
   {
     variants: {
       variant: {
-        dark: "bg-ink text-ivory",
-        light: "bg-ivory text-ink border border-ink/10",
-        sale: "bg-error text-ivory",
-        outline: "border border-current text-ink bg-transparent",
-        brass: "bg-brass-light/40 text-clay",
+        dark: "bg-charcoal text-warm-white",
+        light: "bg-warm-white text-charcoal border border-charcoal/10",
+        sale: "bg-error text-warm-white",
+        outline: "border border-current text-charcoal bg-transparent",
+        champagne: "bg-champagne/25 text-charcoal",
+        green: "bg-green/12 text-green",
         success: "bg-success/10 text-success",
       },
     },

@@ -5,3 +5,4 @@ export * from "./Input";
 export * from "./Textarea";
 export * from "./Label";
 export * from "./Modal";
+export * from "./Switch";

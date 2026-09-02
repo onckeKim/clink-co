@@ -1,12 +1,12 @@
 "use client";
 
-import * as React from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { Heart, ShoppingBag } from "lucide-react";
 import type { Product } from "@/types/product";
 import { Badge } from "@/components/ui/Badge";
 import { useCartStore } from "@/store/cart-store";
+import { useWishlistStore } from "@/store/wishlist-store";
 import { cn, formatPrice } from "@/lib/utils";
 
 export function ProductCard({
@@ -19,13 +19,14 @@ export function ProductCard({
   inverse?: boolean;
 }) {
   const addItem = useCartStore((state) => state.addItem);
-  const [wishlisted, setWishlisted] = React.useState(false);
+  const wishlisted = useWishlistStore((state) => state.has(product.id));
+  const toggleWishlist = useWishlistStore((state) => state.toggle);
   const secondImage = product.images[1] ?? product.images[0];
 
   return (
     <div className={cn("group flex flex-col", className)}>
       <div className="relative aspect-[4/5] overflow-hidden rounded-2xl bg-sand/40">
-        <Link href={`/product/${product.slug}`} className="focus-ring block h-full w-full">
+        <Link href={`/product/${product.slug}`} className="focus-ring relative block h-full w-full">
           <Image
             src={product.images[0]}
             alt={product.name}
@@ -47,7 +48,7 @@ export function ProductCard({
           {!product.inStock && <Badge variant="light">Out of stock</Badge>}
           {product.compareAtPrice && <Badge variant="sale">Sale</Badge>}
           {product.badges?.map((badge) => (
-            <Badge key={badge} variant={badge === "Bestseller" ? "dark" : "brass"}>
+            <Badge key={badge} variant={badge === "Bestseller" ? "dark" : "champagne"}>
               {badge}
             </Badge>
           ))}
@@ -55,12 +56,12 @@ export function ProductCard({
 
         <button
           type="button"
-          onClick={() => setWishlisted((v) => !v)}
+          onClick={() => toggleWishlist(product)}
           aria-label={wishlisted ? "Remove from wishlist" : "Add to wishlist"}
           aria-pressed={wishlisted}
-          className="focus-ring absolute right-3 top-3 flex h-9 w-9 items-center justify-center rounded-full bg-ivory/90 text-ink opacity-0 backdrop-blur transition-all duration-300 group-hover:opacity-100 sm:opacity-100"
+          className="focus-ring absolute right-3 top-3 flex h-9 w-9 items-center justify-center rounded-full bg-warm-white/90 text-charcoal opacity-0 backdrop-blur transition-all duration-300 group-hover:opacity-100 sm:opacity-100"
         >
-          <Heart className={cn("h-4 w-4", wishlisted && "fill-ink")} />
+          <Heart className={cn("h-4 w-4", wishlisted && "fill-charcoal")} />
         </button>
 
         <button
@@ -69,7 +70,7 @@ export function ProductCard({
           onClick={() => addItem(product)}
           className={cn(
             "focus-ring absolute inset-x-3 bottom-3 flex translate-y-14 items-center justify-center gap-2 rounded-full py-2.5 text-xs font-semibold uppercase tracking-wide opacity-0 transition-all duration-300 ease-out group-hover:translate-y-0 group-hover:opacity-100 disabled:cursor-not-allowed sm:translate-y-14",
-            inverse ? "bg-ivory text-ink disabled:bg-ivory/40" : "bg-ink text-ivory disabled:bg-clay",
+            inverse ? "bg-warm-white text-charcoal disabled:bg-warm-white/40" : "bg-charcoal text-warm-white disabled:bg-stone",
           )}
         >
           <ShoppingBag className="h-3.5 w-3.5" />
@@ -79,21 +80,21 @@ export function ProductCard({
 
       <Link href={`/product/${product.slug}`} className="focus-ring mt-4 flex flex-col gap-1">
         <div className="flex items-start justify-between gap-2">
-          <h3 className={cn("text-sm font-medium", inverse ? "text-ivory" : "text-ink")}>
+          <h3 className={cn("text-sm font-medium", inverse ? "text-warm-white" : "text-charcoal")}>
             {product.name}
           </h3>
           <div className="flex shrink-0 items-baseline gap-1.5">
             {product.compareAtPrice && (
-              <span className={cn("text-xs line-through", inverse ? "text-ivory/40" : "text-clay")}>
+              <span className={cn("text-xs line-through", inverse ? "text-warm-white/40" : "text-stone")}>
                 {formatPrice(product.compareAtPrice)}
               </span>
             )}
-            <span className={cn("text-sm font-medium", inverse ? "text-ivory" : "text-ink")}>
+            <span className={cn("text-sm font-medium", inverse ? "text-warm-white" : "text-charcoal")}>
               {formatPrice(product.price)}
             </span>
           </div>
         </div>
-        <p className={cn("text-xs", inverse ? "text-ivory/50" : "text-clay")}>{product.tagline}</p>
+        <p className={cn("text-xs", inverse ? "text-warm-white/50" : "text-stone")}>{product.tagline}</p>
       </Link>
     </div>
   );

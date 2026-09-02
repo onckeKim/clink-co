@@ -35,7 +35,7 @@ export function CartDrawer() {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.25 }}
-            className="absolute inset-0 bg-ink/50 backdrop-blur-sm"
+            className="absolute inset-0 bg-charcoal/50 backdrop-blur-sm"
             onClick={close}
             aria-hidden
           />
@@ -47,10 +47,10 @@ export function CartDrawer() {
             animate={{ x: 0 }}
             exit={{ x: "100%" }}
             transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
-            className="relative flex h-full w-full max-w-md flex-col bg-ivory shadow-lifted"
+            className="relative flex h-full w-full max-w-md flex-col bg-warm-white shadow-lifted"
           >
             <div className="flex items-center justify-between border-b border-sand px-6 py-5">
-              <h2 className="font-display text-xl text-ink">Your bag</h2>
+              <h2 className="font-display text-xl text-charcoal">Your bag</h2>
               <button
                 type="button"
                 onClick={close}
@@ -63,8 +63,8 @@ export function CartDrawer() {
 
             {lines.length === 0 ? (
               <div className="flex flex-1 flex-col items-center justify-center gap-4 px-8 text-center">
-                <ShoppingBag className="h-8 w-8 text-clay" />
-                <p className="text-sm text-clay">
+                <ShoppingBag className="h-8 w-8 text-stone" />
+                <p className="text-sm text-stone">
                   Your bag is empty — for now. Browse the shop to find something worth raising a
                   glass to.
                 </p>
@@ -93,12 +93,12 @@ export function CartDrawer() {
                       <div className="flex flex-1 flex-col justify-between">
                         <div className="flex items-start justify-between gap-2">
                           <div>
-                            <p className="text-sm font-medium text-ink">{line.name}</p>
+                            <p className="text-sm font-medium text-charcoal">{line.name}</p>
                             {line.variant && (
-                              <p className="text-xs text-clay">{line.variant.label}</p>
+                              <p className="text-xs text-stone">{line.variant.label}</p>
                             )}
                           </div>
-                          <p className="text-sm font-medium text-ink">
+                          <p className="text-sm font-medium text-charcoal">
                             {formatPrice(line.price * line.quantity)}
                           </p>
                         </div>
@@ -125,7 +125,7 @@ export function CartDrawer() {
                           <button
                             type="button"
                             onClick={() => removeLine(line.lineId)}
-                            className="focus-ring text-xs text-clay underline-offset-2 hover:underline"
+                            className="focus-ring text-xs text-stone underline-offset-2 hover:underline"
                           >
                             Remove
                           </button>
@@ -137,10 +137,10 @@ export function CartDrawer() {
 
                 <div className="border-t border-sand px-6 py-6">
                   <div className="mb-4 flex items-center justify-between text-sm">
-                    <span className="text-clay">Subtotal</span>
-                    <span className="font-medium text-ink">{formatPrice(subtotal)}</span>
+                    <span className="text-stone">Subtotal</span>
+                    <span className="font-medium text-charcoal">{formatPrice(subtotal)}</span>
                   </div>
-                  <p className="mb-4 text-xs text-clay">
+                  <p className="mb-4 text-xs text-stone">
                     Shipping and taxes calculated at checkout.
                   </p>
                   <Link

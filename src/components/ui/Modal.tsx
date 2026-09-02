@@ -42,7 +42,7 @@ export function Modal({ open, onClose, title, children, className }: ModalProps)
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.25 }}
-            className="absolute inset-0 bg-ink/50 backdrop-blur-sm"
+            className="absolute inset-0 bg-charcoal/50 backdrop-blur-sm"
             onClick={onClose}
             aria-hidden
           />
@@ -55,7 +55,7 @@ export function Modal({ open, onClose, title, children, className }: ModalProps)
             exit={{ opacity: 0, y: 12, scale: 0.98 }}
             transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
             className={cn(
-              "relative w-full max-w-lg rounded-3xl bg-ivory p-8 shadow-lifted",
+              "relative w-full max-w-lg rounded-3xl bg-warm-white p-8 shadow-lifted",
               className,
             )}
           >
@@ -63,12 +63,12 @@ export function Modal({ open, onClose, title, children, className }: ModalProps)
               type="button"
               onClick={onClose}
               aria-label="Close"
-              className="focus-ring absolute right-5 top-5 flex h-9 w-9 items-center justify-center rounded-full text-ink transition-colors hover:bg-sand"
+              className="focus-ring absolute right-5 top-5 flex h-9 w-9 items-center justify-center rounded-full text-charcoal transition-colors hover:bg-sand"
             >
               <X className="h-4 w-4" />
             </button>
             {title && (
-              <h2 className="font-display mb-4 pr-8 text-2xl text-ink">{title}</h2>
+              <h2 className="font-display mb-4 pr-8 text-display-lg text-charcoal">{title}</h2>
             )}
             {children}
           </motion.div>

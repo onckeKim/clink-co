@@ -11,8 +11,8 @@ const Textarea = React.forwardRef<HTMLTextAreaElement, TextareaProps>(
       <textarea
         ref={ref}
         className={cn(
-          "focus-ring min-h-32 w-full rounded-2xl border bg-white px-5 py-4 text-sm text-ink placeholder:text-clay/60 transition-colors",
-          error ? "border-error" : "border-sand focus-visible:border-ink",
+          "focus-ring min-h-32 w-full rounded-2xl border bg-white px-5 py-4 text-sm text-charcoal placeholder:text-stone/60 transition-colors",
+          error ? "border-error" : "border-sand focus-visible:border-charcoal",
           className,
         )}
         aria-invalid={Boolean(error)}

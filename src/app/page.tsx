@@ -50,7 +50,7 @@ export default function Home() {
         imageAlt="Clink & Co glassware arranged on a linen-covered table"
       />
 
-      <section className="bg-ink py-20">
+      <section className="bg-charcoal py-20">
         <div className="mx-auto max-w-7xl px-6 sm:px-8">
           <Reveal>
             <SectionHeading
@@ -85,13 +85,13 @@ export default function Home() {
       <section className="mx-auto max-w-7xl px-6 pb-24 sm:px-8">
         <Reveal>
           <div className="relative overflow-hidden rounded-3xl bg-sand px-8 py-16 text-center sm:py-20">
-            <p className="mx-auto max-w-xl text-xs font-semibold uppercase tracking-[0.2em] text-clay">
+            <p className="mx-auto max-w-xl text-xs font-semibold uppercase tracking-[0.2em] text-stone">
               Heimsight House Promise
             </p>
-            <h2 className="font-display mx-auto mt-4 max-w-2xl text-3xl leading-tight text-ink sm:text-4xl">
+            <h2 className="font-display mx-auto mt-4 max-w-2xl text-display-xl text-charcoal">
               Made for moments worth raising a glass to.
             </h2>
-            <p className="mx-auto mt-4 max-w-lg text-sm text-clay">
+            <p className="mx-auto mt-4 max-w-lg text-sm text-stone">
               Every Clink & Co piece ships with our lifetime breakage guarantee — because the
               things you gather around should last as long as the memories.
             </p>

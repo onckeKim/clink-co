@@ -24,7 +24,7 @@ export function SectionHeading({
           <p
             className={cn(
               "mb-3 text-xs font-semibold uppercase tracking-[0.2em]",
-              inverse ? "text-ivory/50" : "text-clay",
+              inverse ? "text-warm-white/50" : "text-stone",
             )}
           >
             {eyebrow}
@@ -32,14 +32,14 @@ export function SectionHeading({
         )}
         <h2
           className={cn(
-            "font-display text-3xl font-medium sm:text-4xl",
-            inverse ? "text-ivory" : "text-ink",
+            "font-display text-display-xl font-medium",
+            inverse ? "text-warm-white" : "text-charcoal",
           )}
         >
           {title}
         </h2>
         {description && (
-          <p className={cn("mt-3 text-sm leading-relaxed", inverse ? "text-ivory/60" : "text-clay")}>
+          <p className={cn("mt-3 text-sm leading-relaxed", inverse ? "text-warm-white/60" : "text-stone")}>
             {description}
           </p>
         )}
@@ -51,8 +51,8 @@ export function SectionHeading({
           className={cn(
             "focus-ring group inline-flex shrink-0 items-center gap-1.5 rounded-full border px-5 py-2.5 text-sm font-medium transition-colors",
             inverse
-              ? "border-ivory/30 text-ivory hover:bg-ivory hover:text-ink"
-              : "border-ink/20 text-ink hover:bg-ink hover:text-ivory",
+              ? "border-warm-white/30 text-warm-white hover:bg-warm-white hover:text-charcoal"
+              : "border-charcoal/20 text-charcoal hover:bg-charcoal hover:text-warm-white",
           )}
         >
           {cta.label}

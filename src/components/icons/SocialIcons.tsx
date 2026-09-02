@@ -39,3 +39,31 @@ export function YoutubeIcon(props: SVGProps<SVGSVGElement>) {
     </svg>
   );
 }
+
+export function TikTokIcon(props: SVGProps<SVGSVGElement>) {
+  return (
+    <svg {...base} {...props}>
+      <path d="M14 3v10.8a2.9 2.9 0 1 1-2.2-2.8" />
+      <path d="M14 3c.4 2.2 2 3.9 4.2 4.2" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+export function PinterestIcon(props: SVGProps<SVGSVGElement>) {
+  return (
+    <svg {...base} {...props}>
+      <circle cx="12" cy="12" r="9" />
+      <path d="M9.5 18c.8-2.4 1.6-5.2 2.1-7.2a2.3 2.3 0 0 1 4.5.7c0 2-1.1 3.8-2.9 3.8-.7 0-1.3-.3-1.6-.9" />
+      <path d="M11.6 10.8c-.2-1.4.8-2.8 2.4-2.8" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+export function WhatsAppIcon(props: SVGProps<SVGSVGElement>) {
+  return (
+    <svg {...base} {...props}>
+      <path d="M7 17.5 5.5 21l3.6-1.4A8 8 0 1 0 6 13.5" strokeLinejoin="round" />
+      <path d="M9.2 9.7c-.2 1 .6 2.7 1.4 3.5.8.8 2.5 1.7 3.5 1.4.4-.1.9-.7 1-1.1.1-.3 0-.4-.2-.6l-1.4-.9c-.2-.1-.3-.1-.5 0l-.5.5c-.2.2-.4.2-.6 0-.5-.3-1-.8-1.4-1.4-.2-.2-.2-.4 0-.6l.5-.5c.1-.2.2-.3 0-.5l-.9-1.4c-.1-.2-.3-.3-.6-.2-.4.1-1 .6-1.1 1Z" />
+    </svg>
+  );
+}
