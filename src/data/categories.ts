@@ -1,5 +1,5 @@
 import type { Category } from "@/types/category";
-import { products } from "@/data/products";
+import { activeProducts } from "@/data/products";
 
 /**
  * Temporary seed data. Once Supabase is connected, categories should be
@@ -50,10 +50,10 @@ const baseCategories: Omit<Category, "itemCount">[] = [
   },
 ];
 
-/** itemCount is derived from the live product list so it can never drift out of sync. */
+/** itemCount is derived from the live, active product list so it can never drift out of sync (and excludes discontinued items). */
 export const categories: Category[] = baseCategories.map((category) => ({
   ...category,
-  itemCount: products.filter((product) => product.categorySlug === category.slug).length,
+  itemCount: activeProducts.filter((product) => product.categorySlug === category.slug).length,
 }));
 
 export function getCategoryBySlug(slug: string) {

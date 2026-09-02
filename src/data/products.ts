@@ -30,6 +30,11 @@ export const products: Product[] = [
     colors: ["Clear"],
     capacity: "180 ml",
     setSize: "Set of 4",
+    setSizeOptions: [
+      { id: "set-2", label: "Set of 2", priceDelta: -700 },
+      { id: "set-4", label: "Set of 4" },
+      { id: "set-6", label: "Set of 6", priceDelta: 700 },
+    ],
     stockQuantity: 42,
     inStock: true,
     featured: true,
@@ -44,6 +49,17 @@ export const products: Product[] = [
     ],
     dimensions: { heightCm: 13, widthCm: 9, depthCm: 9 },
     weightGrams: 620,
+    keyBenefits: [
+      "Mouth-blown by hand, so every glass carries faint, one-of-a-kind variation",
+      "Wide, shallow bowl releases sparkling wine's aroma better than a flute",
+      "Slender stem keeps the wine cool without warming it in your hand",
+      "Dishwasher-safe on a gentle cycle despite the delicate look",
+    ],
+    lifestyleImage: "/images/lifestyle-glass.svg",
+    lifestyleCaption: "Poured for a Tuesday-night toast or a proper celebration.",
+    pairsWithSlugs: ["willow-champagne-bucket", "stonewell-marble-coasters", "wilder-linen-napkins"],
+    packagingInfo:
+      "Arrives in a rigid, magnetic-close gift box with a fitted foam insert per glass — ready to give as-is, no extra wrapping required.",
   },
   {
     id: "prod-harbor-rocks",
@@ -80,6 +96,13 @@ export const products: Product[] = [
     ],
     dimensions: { heightCm: 9, widthCm: 8.5, depthCm: 8.5 },
     weightGrams: 980,
+    keyBenefits: [
+      "Weighted base holds steady on a bar cart and feels substantial in hand",
+      "Wide mouth fits a single oversized ice cube without crowding the pour",
+      "Lead-free crystal — brilliant clarity without the health concerns of old crystal",
+      "Our most-reordered glass: built to survive nightly use, not just special occasions",
+    ],
+    pairsWithSlugs: ["almanac-brass-jigger", "meridian-cocktail-shaker", "stonewell-marble-coasters"],
   },
   {
     id: "prod-meridian-shaker",
@@ -115,6 +138,15 @@ export const products: Product[] = [
     ],
     dimensions: { heightCm: 24, widthCm: 9, depthCm: 9 },
     weightGrams: 410,
+    keyBenefits: [
+      "Built-in strainer means no separate Hawthorne strainer to lose or rinse",
+      "Cap doubles as a 30 ml jigger — one less tool on the counter",
+      "Brushed finish resists fingerprints, unlike polished stainless",
+      "Weighted for an even, splash-free shake every time",
+    ],
+    lifestyleImage: "/images/hero-bar-cart.svg",
+    lifestyleCaption: "The first pour of the evening, made properly.",
+    pairsWithSlugs: ["almanac-brass-jigger", "cove-copper-bar-tools", "harbor-rocks-glasses"],
   },
   {
     id: "prod-aldine-decanter",
@@ -150,6 +182,15 @@ export const products: Product[] = [
     ],
     dimensions: { heightCm: 24, widthCm: 14, depthCm: 14 },
     weightGrams: 910,
+    keyBenefits: [
+      "Ground glass stopper seals tight enough to slow oxidation on an open bottle",
+      "Wide base lowers the centre of gravity — steadier on a moving bar cart",
+      "Generous 1 L capacity holds a full bottle plus a measure of water or bitters",
+      "Sculptural enough to double as a display piece even when empty",
+    ],
+    pairsWithSlugs: ["ridgeline-whisky-tumblers", "cove-copper-bar-tools", "gathering-serving-tray"],
+    packagingInfo:
+      "Ships in a fitted double-wall box with the stopper individually wrapped and taped in place — it will not rattle loose in transit.",
   },
   {
     id: "prod-wilder-napkins",
@@ -176,8 +217,14 @@ export const products: Product[] = [
     variants: [
       { id: "ivory", label: "Ivory", swatch: "#F7F5F0" },
       { id: "sage", label: "Sage", swatch: "#8A9683" },
-      { id: "clay", label: "Clay", swatch: "#B08A6B" },
+      {
+        id: "clay",
+        label: "Clay",
+        swatch: "#B08A6B",
+        images: ["/images/products/aldine-decanter-1.svg", "/images/products/aldine-decanter-2.svg"],
+      },
     ],
+    pairsWithSlugs: ["hearth-dinner-plates", "drift-linen-table-runner", "gathering-serving-tray"],
     rating: 4.6,
     reviewCount: 74,
     tags: ["linen", "napkins", "table setting", "dinner party", "housewarming gift"],
@@ -214,7 +261,12 @@ export const products: Product[] = [
     featured: true,
     variants: [
       { id: "sand", label: "Sand", swatch: "#D8CBBB" },
-      { id: "charcoal", label: "Charcoal", swatch: "#1C1C1A" },
+      {
+        id: "charcoal",
+        label: "Charcoal",
+        swatch: "#1C1C1A",
+        images: ["/images/products/tidewater-ice-bucket-1.svg", "/images/products/tidewater-ice-bucket-2.svg"],
+      },
     ],
     badges: ["Bestseller"],
     rating: 4.8,
@@ -223,6 +275,17 @@ export const products: Product[] = [
     careInstructions: ["Dishwasher and microwave safe", "Avoid abrasive scouring pads"],
     dimensions: { heightCm: 2, widthCm: 27, depthCm: 27 },
     weightGrams: 1450,
+    keyBenefits: [
+      "Dishwasher and microwave safe — no special handling despite the handmade finish",
+      "Hand-glazed, so no two plates catch the light quite the same way",
+      "Stackable, chip-resistant stoneware built for nightly use, not just guests",
+      "Neutral glaze pairs with every collection in the range, not just this one",
+    ],
+    lifestyleImage: "/images/hero-table.svg",
+    lifestyleCaption: "Set for guests on Saturday, back in rotation by Tuesday.",
+    pairsWithSlugs: ["wilder-linen-napkins", "drift-linen-table-runner", "gathering-serving-tray"],
+    packagingInfo:
+      "Each plate is individually sleeved and boxed in a divided carton so they arrive without chips or rim contact.",
   },
   {
     id: "prod-nightcap-gift-set",
@@ -253,6 +316,17 @@ export const products: Product[] = [
     careInstructions: ["Hand wash all pieces", "Dry immediately to prevent water spots"],
     dimensions: { heightCm: 12, widthCm: 28, depthCm: 20 },
     weightGrams: 1780,
+    keyBenefits: [
+      "Everything needed for a first cocktail cabinet — nothing extra to buy separately",
+      "Arrives gift-ready — no wrapping paper, tape or last-minute trip to the shop",
+      "Each piece also sold separately, so a lost jigger doesn't strand the set",
+      "Fits most standard gift budgets while still feeling considered, not generic",
+    ],
+    lifestyleImage: "/images/lifestyle-gift.svg",
+    lifestyleCaption: "Ribboned, boxed, and ready before you've found the card.",
+    pairsWithSlugs: ["almanac-brass-jigger", "cove-copper-bar-tools", "stonewell-marble-coasters"],
+    packagingInfo:
+      "Arrives in signature Clink & Co packaging — a ribboned, magnetic-close box with a printed gift note slot, ready to hand over as-is.",
   },
   {
     id: "prod-ember-taper-candles",
@@ -512,7 +586,12 @@ export const products: Product[] = [
     badges: ["New"],
     variants: [
       { id: "clear", label: "Clear", swatch: "#F7F5F0" },
-      { id: "smoke", label: "Smoke Grey", swatch: "#746C62" },
+      {
+        id: "smoke",
+        label: "Smoke Grey",
+        swatch: "#746C62",
+        images: ["/images/products/aldine-decanter-1.svg", "/images/products/aldine-decanter-2.svg"],
+      },
     ],
     rating: 4.6,
     reviewCount: 21,
@@ -622,7 +701,7 @@ export const products: Product[] = [
     material: "Hammered copper, oak stand",
     colors: ["Copper"],
     setSize: "3-piece set",
-    stockQuantity: 19,
+    stockQuantity: 4,
     inStock: true,
     featured: false,
     badges: ["New"],
@@ -662,7 +741,12 @@ export const products: Product[] = [
     badges: ["New"],
     variants: [
       { id: "clear", label: "Clear", swatch: "#F7F5F0" },
-      { id: "smoke", label: "Smoke Grey", swatch: "#746C62" },
+      {
+        id: "smoke",
+        label: "Smoke Grey",
+        swatch: "#746C62",
+        images: ["/images/products/stonewell-marble-coasters-1.svg", "/images/products/stonewell-marble-coasters-2.svg"],
+      },
     ],
     rating: 4.5,
     reviewCount: 14,
@@ -732,6 +816,7 @@ export const products: Product[] = [
     setSize: "Set of 6",
     stockQuantity: 41,
     inStock: true,
+    discontinued: true,
     featured: false,
     rating: 4.5,
     reviewCount: 19,
@@ -776,6 +861,15 @@ export const products: Product[] = [
   },
 ];
 
+/**
+ * Every non-discontinued product — the set that should ever appear in shop/
+ * collection listings, search, or cross-sell rails. `products` itself stays
+ * the full catalogue (discontinued included) so `getProductBySlug` can still
+ * resolve an old, shared PDP link and show the discontinued state rather
+ * than a 404.
+ */
+export const activeProducts: Product[] = products.filter((product) => !product.discontinued);
+
 export function getProductBySlug(slug: string) {
   return products.find((product) => product.slug === slug);
 }
@@ -785,27 +879,51 @@ export function getProductBySku(sku: string) {
 }
 
 export function getProductsByCategory(categorySlug: string) {
-  return products.filter((product) => product.categorySlug === categorySlug);
+  return activeProducts.filter((product) => product.categorySlug === categorySlug);
 }
 
 export function getProductsByCollection(collectionSlug: string) {
-  return products.filter((product) => product.collectionSlugs.includes(collectionSlug));
+  return activeProducts.filter((product) => product.collectionSlugs.includes(collectionSlug));
 }
 
 export function getBestsellers() {
-  return products.filter((product) => product.badges?.includes("Bestseller"));
+  return activeProducts.filter((product) => product.badges?.includes("Bestseller"));
 }
 
 export function getNewArrivals() {
-  return products.filter((product) => product.badges?.includes("New"));
+  return activeProducts.filter((product) => product.badges?.includes("New"));
 }
 
 export function getRelatedProducts(product: Product, limit = 4) {
-  return products
+  return activeProducts
     .filter(
       (p) =>
         p.id !== product.id &&
         (p.categorySlug === product.categorySlug || p.productType === product.productType),
+    )
+    .slice(0, limit);
+}
+
+/**
+ * Resolves `Product.pairsWithSlugs` to full product records; when a product
+ * hasn't been curated with explicit pairings, falls back to active products
+ * that share a collection but sit in a different category — a reasonable
+ * cross-sell default ("other pieces from the same edit").
+ */
+export function getPairedProducts(product: Product, limit = 3) {
+  if (product.pairsWithSlugs?.length) {
+    return product.pairsWithSlugs
+      .map((slug) => getProductBySlug(slug))
+      .filter((p): p is Product => Boolean(p) && !p!.discontinued)
+      .slice(0, limit);
+  }
+
+  return activeProducts
+    .filter(
+      (p) =>
+        p.id !== product.id &&
+        p.categorySlug !== product.categorySlug &&
+        p.collectionSlugs.some((slug) => product.collectionSlugs.includes(slug)),
     )
     .slice(0, limit);
 }

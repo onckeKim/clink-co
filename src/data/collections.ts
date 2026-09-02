@@ -1,4 +1,4 @@
-import { products } from "@/data/products";
+import { activeProducts } from "@/data/products";
 
 export interface CuratedCollection {
   /** Also doubles as the /collections/[id] route slug and the value stored in Product.collectionSlugs. */
@@ -48,5 +48,5 @@ export function getCollectionBySlug(slug: string) {
 }
 
 export function getCollectionProductCount(slug: string) {
-  return products.filter((product) => product.collectionSlugs.includes(slug)).length;
+  return activeProducts.filter((product) => product.collectionSlugs.includes(slug)).length;
 }

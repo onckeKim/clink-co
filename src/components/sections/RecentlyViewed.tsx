@@ -9,9 +9,10 @@ import { useMounted } from "@/lib/hooks/use-mounted";
 import { formatPrice } from "@/lib/utils";
 
 /** Only renders once the visitor has actually viewed a product this session. */
-export function RecentlyViewed() {
+export function RecentlyViewed({ excludeProductId }: { excludeProductId?: string } = {}) {
   const mounted = useMounted();
-  const items = useRecentlyViewedStore((state) => state.items);
+  const allItems = useRecentlyViewedStore((state) => state.items);
+  const items = excludeProductId ? allItems.filter((item) => item.productId !== excludeProductId) : allItems;
 
   if (!mounted || items.length === 0) return null;
 

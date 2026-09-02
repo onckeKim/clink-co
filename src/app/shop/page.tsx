@@ -1,6 +1,6 @@
 import { Suspense } from "react";
 import type { Metadata } from "next";
-import { products } from "@/data/products";
+import { activeProducts } from "@/data/products";
 import { ShopExperience } from "@/components/catalogue/ShopExperience";
 import { ShopSkeleton } from "@/components/catalogue/ShopSkeleton";
 
@@ -14,7 +14,7 @@ export default function ShopPage() {
   return (
     <Suspense fallback={<ShopSkeleton />}>
       <ShopExperience
-        products={products}
+        products={activeProducts}
         title="Shop All"
         description="Every piece in the Clink & Co range, from everyday glassware to considered gifting."
         breadcrumbs={[{ label: "Home", href: "/" }, { label: "Shop" }]}

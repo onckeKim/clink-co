@@ -1,245 +1,215 @@
 "use client";
 
 import * as React from "react";
-import Image from "next/image";
-import { Heart, RotateCcw, ShoppingBag, Truck } from "lucide-react";
+import Link from "next/link";
 import type { Product } from "@/types/product";
+import type { Review } from "@/data/reviews";
+import type { QAEntry } from "@/data/qa";
 import { Badge } from "@/components/ui/Badge";
 import { Rating } from "@/components/ui/Rating";
-import { Button } from "@/components/ui/Button";
-import { Disclosure } from "@/components/ui/Disclosure";
 import { Breadcrumbs, type BreadcrumbItem } from "@/components/catalogue/Breadcrumbs";
 import { ProductGrid } from "@/components/catalogue/ProductGrid";
+import { ProductGallery } from "@/components/product/ProductGallery";
+import { StockStatus } from "@/components/product/StockStatus";
+import { ColorSelector, SetSizeSelector } from "@/components/product/VariantSelectors";
+import { QuantitySelector } from "@/components/product/QuantitySelector";
+import { PurchaseActions } from "@/components/product/PurchaseActions";
+import { NotifyWhenAvailable } from "@/components/product/NotifyWhenAvailable";
+import { DiscontinuedNotice } from "@/components/product/DiscontinuedNotice";
+import { DeliveryEstimator } from "@/components/product/DeliveryEstimator";
+import { ProductAccordions } from "@/components/product/ProductAccordions";
+import { KeyBenefits } from "@/components/product/KeyBenefits";
+import { ProductLifestyleSection } from "@/components/product/ProductLifestyleSection";
+import { PairsWellWith } from "@/components/product/PairsWellWith";
+import { TrustBadges } from "@/components/product/TrustBadges";
+import { ReviewsSection } from "@/components/product/ReviewsSection";
+import { QandASection } from "@/components/product/QandASection";
+import { StickyAddToCart } from "@/components/product/StickyAddToCart";
 import { QuickView } from "@/components/product/QuickView";
-import { useCartStore } from "@/store/cart-store";
-import { useWishlistStore } from "@/store/wishlist-store";
+import { RecentlyViewed } from "@/components/sections/RecentlyViewed";
 import { useRecentlyViewedStore } from "@/store/recently-viewed-store";
+import { getCategoryBySlug } from "@/data/categories";
+import { getCollectionBySlug } from "@/data/collections";
+import { getDiscountPercent } from "@/lib/catalogue";
 import { siteConfig } from "@/config/site";
-import { cn, formatPrice } from "@/lib/utils";
+import { formatPrice } from "@/lib/utils";
 
 export function ProductDetailView({
   product,
   relatedProducts,
+  pairedProducts,
+  seedReviews,
+  qaEntries,
   breadcrumbs,
 }: {
   product: Product;
+  /** "You may also like" — same category/type, broader net. */
   relatedProducts: Product[];
+  /** "Pairs well with" — curated or same-collection cross-sell. */
+  pairedProducts: Product[];
+  seedReviews: Review[];
+  qaEntries: QAEntry[];
   breadcrumbs: BreadcrumbItem[];
 }) {
-  const addItem = useCartStore((state) => state.addItem);
-  const wishlisted = useWishlistStore((state) => state.has(product.id));
-  const toggleWishlist = useWishlistStore((state) => state.toggle);
   const recordView = useRecentlyViewedStore((state) => state.add);
-  const [activeImageIndex, setActiveImageIndex] = React.useState(0);
-  const [selectedVariantId, setSelectedVariantId] = React.useState(product.variants?.[0]?.id);
+
+  const [activeVariantId, setActiveVariantId] = React.useState(product.variants?.[0]?.id);
+  const [activeSetSizeId, setActiveSetSizeId] = React.useState(product.setSizeOptions?.[0]?.id);
+  const [quantity, setQuantity] = React.useState(1);
   const [quickViewProduct, setQuickViewProduct] = React.useState<Product | null>(null);
+  const purchaseAnchorRef = React.useRef<HTMLDivElement>(null);
+
+  // Reset all purchase-option state when a different product is shown — App
+  // Router can reuse this component instance across a client-side
+  // navigation between two /products/[slug] routes. Adjusted during render
+  // (not an effect) per React's "resetting state when a prop changes"
+  // pattern.
+  const [lastProductId, setLastProductId] = React.useState(product.id);
+  if (product.id !== lastProductId) {
+    setLastProductId(product.id);
+    setActiveVariantId(product.variants?.[0]?.id);
+    setActiveSetSizeId(product.setSizeOptions?.[0]?.id);
+    setQuantity(1);
+  }
 
   React.useEffect(() => {
     recordView(product);
   }, [product, recordView]);
 
-  const selectedVariant = product.variants?.find((v) => v.id === selectedVariantId);
-  const displayPrice = product.price + (selectedVariant?.priceDelta ?? 0);
-  const discountPercent = product.compareAtPrice
-    ? Math.round((1 - product.price / product.compareAtPrice) * 100)
-    : null;
-  const activeImage = product.images[activeImageIndex] ?? product.images[0];
+  const activeVariant = product.variants?.find((v) => v.id === activeVariantId);
+  const activeSetSizeOption = product.setSizeOptions?.find((o) => o.id === activeSetSizeId);
+  const displayPrice =
+    product.price + (activeVariant?.priceDelta ?? 0) + (activeSetSizeOption?.priceDelta ?? 0);
+  const discountPercent = product.compareAtPrice ? getDiscountPercent(product) : null;
+  const resolvedImages = activeVariant?.images ?? product.images;
+
+  const category = getCategoryBySlug(product.categorySlug);
+  const collectionNames = product.collectionSlugs
+    .map((slug) => getCollectionBySlug(slug))
+    .filter((c): c is NonNullable<typeof c> => Boolean(c));
+
+  const purchasable = product.inStock && !product.discontinued;
 
   return (
-    <div className="mx-auto max-w-7xl px-6 py-10 sm:px-8">
-      <Breadcrumbs items={breadcrumbs} className="mb-8" />
+    <div className="mx-auto max-w-7xl px-6 py-10 pb-24 sm:px-8 sm:pb-10">
+      <Breadcrumbs items={breadcrumbs} className="mb-6" />
+
+      {product.discontinued && (
+        <div className="mb-8">
+          <DiscontinuedNotice productName={product.name} />
+        </div>
+      )}
 
       <div className="grid gap-10 lg:grid-cols-2 lg:gap-14">
-        <div className="flex flex-col gap-3">
-          <div className="relative aspect-square overflow-hidden rounded-3xl bg-sand/40">
-            <Image
-              src={activeImage}
-              alt={product.name}
-              fill
-              priority
-              sizes="(min-width: 1024px) 45vw, 90vw"
-              className="object-cover"
-            />
-            <div className="absolute left-4 top-4 flex flex-col gap-1.5">
-              {!product.inStock && <Badge variant="light">Out of stock</Badge>}
-              {discountPercent !== null && <Badge variant="sale">-{discountPercent}%</Badge>}
-              {product.badges?.map((badge) => (
-                <Badge key={badge} variant={badge === "Bestseller" ? "dark" : "champagne"}>
-                  {badge}
-                </Badge>
-              ))}
-            </div>
+        <div className="relative">
+          <ProductGallery images={resolvedImages} videoUrl={product.videoUrl} productName={product.name} />
+          <div className="pointer-events-none absolute left-4 top-4 z-10 flex flex-col gap-1.5">
+            {product.discontinued && <Badge variant="light">Discontinued</Badge>}
+            {!product.discontinued && !product.inStock && <Badge variant="light">Out of stock</Badge>}
+            {discountPercent !== null && discountPercent > 0 && <Badge variant="sale">-{discountPercent}%</Badge>}
+            {product.badges?.map((badge) => (
+              <Badge key={badge} variant={badge === "Bestseller" ? "dark" : "champagne"}>
+                {badge}
+              </Badge>
+            ))}
           </div>
-          {product.images.length > 1 && (
-            <div className="flex gap-3">
-              {product.images.map((image, i) => (
-                <button
-                  key={image}
-                  type="button"
-                  onClick={() => setActiveImageIndex(i)}
-                  aria-label={`Show image ${i + 1} of ${product.name}`}
-                  aria-pressed={activeImageIndex === i}
-                  className={cn(
-                    "focus-ring relative h-20 w-20 shrink-0 overflow-hidden rounded-xl border-2 bg-sand/40 transition-colors",
-                    activeImageIndex === i ? "border-charcoal" : "border-transparent",
-                  )}
-                >
-                  <Image src={image} alt="" fill sizes="80px" className="object-cover" />
-                </button>
-              ))}
-            </div>
-          )}
         </div>
 
         <div className="flex flex-col gap-5">
           <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.14em] text-stone">
-              {product.productType}
-            </p>
+            <div className="flex flex-wrap items-center gap-2 text-xs font-semibold uppercase tracking-[0.14em] text-stone">
+              {category && <span>{category.name}</span>}
+              {collectionNames.map((collection) => (
+                <React.Fragment key={collection.id}>
+                  <span aria-hidden>·</span>
+                  <Link href={collection.href} className="hover:text-charcoal">
+                    {collection.name}
+                  </Link>
+                </React.Fragment>
+              ))}
+            </div>
             <h1 className="font-display mt-2 text-display-lg text-charcoal">{product.name}</h1>
-            {product.rating !== undefined && (
-              <Rating value={product.rating} count={product.reviewCount} size="sm" className="mt-3" />
-            )}
+            <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm">
+              {product.rating !== undefined && (
+                <a href="#reviews" className="focus-ring rounded">
+                  <Rating value={product.rating} count={product.reviewCount} size="sm" />
+                </a>
+              )}
+              <span className="text-stone">SKU: {product.sku}</span>
+            </div>
           </div>
 
-          <div className="flex items-baseline gap-3">
-            {product.compareAtPrice && (
-              <span className="text-base text-stone line-through">{formatPrice(product.compareAtPrice)}</span>
-            )}
-            <span className="text-2xl font-medium text-charcoal">{formatPrice(displayPrice)}</span>
+          <div>
+            <div className="flex items-baseline gap-3">
+              {product.compareAtPrice && (
+                <span className="text-base text-stone line-through">{formatPrice(product.compareAtPrice)}</span>
+              )}
+              <span className="text-2xl font-medium text-charcoal">{formatPrice(displayPrice)}</span>
+            </div>
+            <p className="mt-1 text-xs text-stone">
+              Inclusive of {siteConfig.taxRatePercent}% VAT. Delivery calculated below.
+            </p>
           </div>
 
-          <p className="text-sm leading-relaxed text-stone">{product.description}</p>
+          <StockStatus stockQuantity={product.stockQuantity} inStock={product.inStock} />
+
+          <p className="text-sm leading-relaxed text-stone">{product.shortDescription}</p>
 
           {product.variants && product.variants.length > 0 && (
-            <div>
-              <p className="mb-2 text-xs font-medium uppercase tracking-wide text-stone">
-                Colour{selectedVariant ? `: ${selectedVariant.label}` : ""}
-              </p>
-              <div className="flex flex-wrap gap-2">
-                {product.variants.map((variant) => (
-                  <button
-                    key={variant.id}
-                    type="button"
-                    onClick={() => setSelectedVariantId(variant.id)}
-                    aria-label={variant.label}
-                    aria-pressed={selectedVariantId === variant.id}
-                    className={cn(
-                      "focus-ring flex h-9 w-9 items-center justify-center rounded-full border-2 transition-colors",
-                      selectedVariantId === variant.id ? "border-charcoal" : "border-transparent",
-                    )}
-                  >
-                    <span
-                      className="h-7 w-7 rounded-full border border-charcoal/15"
-                      style={{ backgroundColor: variant.swatch }}
-                    />
-                  </button>
-                ))}
-              </div>
-            </div>
+            <ColorSelector
+              variants={product.variants}
+              selectedId={activeVariantId}
+              onChange={setActiveVariantId}
+            />
           )}
 
-          <dl className="grid grid-cols-2 gap-x-4 gap-y-3 border-y border-sand py-5 text-sm sm:grid-cols-3">
-            {product.material && (
-              <div>
-                <dt className="text-xs uppercase tracking-wide text-stone">Material</dt>
-                <dd className="mt-1 text-charcoal">{product.material}</dd>
-              </div>
-            )}
-            {product.capacity && (
-              <div>
-                <dt className="text-xs uppercase tracking-wide text-stone">Capacity</dt>
-                <dd className="mt-1 text-charcoal">{product.capacity}</dd>
-              </div>
-            )}
-            {product.setSize && (
-              <div>
-                <dt className="text-xs uppercase tracking-wide text-stone">Set size</dt>
-                <dd className="mt-1 text-charcoal">{product.setSize}</dd>
-              </div>
-            )}
-            {!product.variants?.length && product.colors && product.colors.length > 0 && (
-              <div>
-                <dt className="text-xs uppercase tracking-wide text-stone">Colour</dt>
-                <dd className="mt-1 text-charcoal">{product.colors.join(", ")}</dd>
-              </div>
-            )}
-            <div>
-              <dt className="text-xs uppercase tracking-wide text-stone">SKU</dt>
-              <dd className="mt-1 text-charcoal">{product.sku}</dd>
-            </div>
-          </dl>
+          {product.setSizeOptions && product.setSizeOptions.length > 0 && (
+            <SetSizeSelector
+              options={product.setSizeOptions}
+              selectedId={activeSetSizeId}
+              onChange={setActiveSetSizeId}
+            />
+          )}
 
-          <div className="flex items-center gap-3">
-            <Button
-              type="button"
-              size="lg"
-              disabled={!product.inStock}
-              onClick={() => addItem(product, { variant: selectedVariant })}
-              className="flex-1"
-            >
-              <ShoppingBag className="h-4 w-4" />
-              {product.inStock ? "Add to cart" : "Notify me"}
-            </Button>
-            <Button
-              type="button"
-              variant="secondary"
-              size="icon"
-              onClick={() => toggleWishlist(product)}
-              aria-label={wishlisted ? "Remove from wishlist" : "Add to wishlist"}
-              aria-pressed={wishlisted}
-              className="h-13 w-13"
-            >
-              <Heart className={cn("h-4 w-4", wishlisted && "fill-charcoal")} />
-            </Button>
+          {purchasable && (
+            <QuantitySelector
+              value={quantity}
+              onChange={setQuantity}
+              max={Math.min(product.stockQuantity, 10)}
+            />
+          )}
+
+          <div ref={purchaseAnchorRef}>
+            <PurchaseActions product={product} variant={activeVariant} quantity={quantity} />
           </div>
 
-          <div className="flex flex-col gap-2 text-xs text-stone">
-            <span className="flex items-center gap-2">
-              <Truck className="h-3.5 w-3.5" />
-              Free delivery on orders over {formatPrice(siteConfig.freeDeliveryThreshold)}
-            </span>
-            <span className="flex items-center gap-2">
-              <RotateCcw className="h-3.5 w-3.5" />
-              {siteConfig.returnWindowDays}-day returns
-            </span>
-          </div>
+          {!product.inStock && !product.discontinued && <NotifyWhenAvailable productName={product.name} />}
 
-          <div className="mt-2 flex flex-col">
-            <Disclosure title="Description" defaultOpen>
-              <p className="text-sm leading-relaxed text-stone">{product.description}</p>
-            </Disclosure>
-            <Disclosure title="Care Instructions">
-              <ul className="flex flex-col gap-2 text-sm leading-relaxed text-stone">
-                {product.careInstructions.map((instruction) => (
-                  <li key={instruction}>{instruction}</li>
-                ))}
-              </ul>
-            </Disclosure>
-            {(product.dimensions || product.weightGrams) && (
-              <Disclosure title="Dimensions & Weight">
-                <dl className="flex flex-col gap-2 text-sm text-stone">
-                  {product.dimensions && (
-                    <div className="flex justify-between">
-                      <dt>Dimensions</dt>
-                      <dd>
-                        {product.dimensions.heightCm} × {product.dimensions.widthCm} ×{" "}
-                        {product.dimensions.depthCm} cm
-                      </dd>
-                    </div>
-                  )}
-                  {product.weightGrams && (
-                    <div className="flex justify-between">
-                      <dt>Weight</dt>
-                      <dd>{product.weightGrams} g</dd>
-                    </div>
-                  )}
-                </dl>
-              </Disclosure>
-            )}
-          </div>
+          {purchasable && <DeliveryEstimator orderValue={displayPrice * quantity} />}
+
+          {product.keyBenefits && product.keyBenefits.length > 0 && (
+            <KeyBenefits benefits={product.keyBenefits} />
+          )}
         </div>
       </div>
+
+      <div className="mt-16 max-w-3xl">
+        <ProductAccordions product={product} />
+      </div>
+
+      <div className="mt-10 max-w-3xl">
+        <TrustBadges />
+      </div>
+
+      <div className="mt-20 -mx-6 sm:-mx-8">
+        <ProductLifestyleSection product={product} />
+      </div>
+
+      {pairedProducts.length > 0 && (
+        <div className="mt-20">
+          <PairsWellWith products={pairedProducts} onQuickView={setQuickViewProduct} />
+        </div>
+      )}
 
       {relatedProducts.length > 0 && (
         <div className="mt-20">
@@ -250,7 +220,29 @@ export function ProductDetailView({
         </div>
       )}
 
+      <div className="mt-20">
+        <RecentlyViewed excludeProductId={product.id} />
+      </div>
+
+      <div className="mt-20 max-w-3xl border-t border-sand pt-16">
+        <ReviewsSection product={product} seedReviews={seedReviews} />
+      </div>
+
+      <div className="mt-16 max-w-3xl border-t border-sand pt-16">
+        <QandASection product={product} seedEntries={qaEntries} />
+      </div>
+
       <QuickView product={quickViewProduct} onClose={() => setQuickViewProduct(null)} />
+
+      {purchasable && (
+        <StickyAddToCart
+          anchorRef={purchaseAnchorRef}
+          product={product}
+          variant={activeVariant}
+          quantity={quantity}
+          price={displayPrice}
+        />
+      )}
     </div>
   );
 }

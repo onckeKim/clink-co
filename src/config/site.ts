@@ -14,6 +14,9 @@ export const siteConfig = {
   currency: "ZAR" as const,
   locale: "en-ZA",
 
+  /** South African VAT rate, as a whole percent. All displayed prices are VAT-inclusive, per local retail convention. */
+  taxRatePercent: 15,
+
   /** Free delivery threshold, in the site currency's minor-free units (Rand). */
   freeDeliveryThreshold: 950,
 

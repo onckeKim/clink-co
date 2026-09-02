@@ -1,5 +1,5 @@
 import type { Product } from "@/types/product";
-import { products } from "@/data/products";
+import { activeProducts } from "@/data/products";
 import { getCategoryBySlug } from "@/data/categories";
 import { getCollectionBySlug } from "@/data/collections";
 
@@ -357,7 +357,7 @@ export interface CatalogueFacets {
 }
 
 /** Computes the available option lists for the filter UI from whichever product set it's given (e.g. a single locked category). */
-export function getFacetValues(list: Product[] = products): CatalogueFacets {
+export function getFacetValues(list: Product[] = activeProducts): CatalogueFacets {
   const productTypes = new Set<string>();
   const colors = new Set<string>();
   const materials = new Set<string>();

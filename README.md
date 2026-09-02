@@ -175,6 +175,47 @@ screen.
 
 ---
 
+## Product detail page
+
+`/products/[slug]` (`src/app/products/[slug]/page.tsx`) composes ~20 focused
+components under `src/components/product/`, orchestrated by
+`ProductDetailView.tsx`. A full breakdown of every state, component and data
+requirement is in the chat write-up for this phase; in short:
+
+- **Media** — `ProductGallery.tsx`: main image with hover-zoom, thumbnail
+  rail, prev/next, a full-screen lightbox (its own zoom toggle, keyboard
+  nav), an HTML5 `<video>` slide when `Product.videoUrl` is set, drag-to-swipe
+  (Framer Motion), and variant-aware images (`ProductVariant.images`).
+- **Purchase panel** — `StockStatus.tsx` (in-stock/low-stock/out-of-stock),
+  `VariantSelectors.tsx` (colour + set-size, the latter via the new
+  `Product.setSizeOptions`), `QuantitySelector.tsx`, `PurchaseActions.tsx`
+  (add to cart / buy now / wishlist / share), `DeliveryEstimator.tsx`
+  (`src/lib/delivery.ts` — an illustrative SA postal-code → zone/fee/ETA
+  estimator with a checkout-confirms-final-cost disclaimer).
+- **Details & trust** — `ProductAccordions.tsx` (description, specs,
+  material, dimensions, capacity, care, delivery & returns, packaging),
+  `KeyBenefits.tsx`, `ProductLifestyleSection.tsx` (reuses the homepage's
+  `LifestyleSplit`, falling back to the category image), `PairsWellWith.tsx`
+  and `TrustBadges.tsx`.
+- **Social proof** — `ReviewsSection.tsx` (rating histogram, filter by
+  star, sort, verified-purchase badge, photo thumbnails) and
+  `WriteReviewForm.tsx` (rating/title/body/photos, persisted per-device via
+  `submitted-reviews-store.ts` — no reviews API exists yet, see the
+  write-up); `QandASection.tsx` mirrors the same pattern for questions via
+  `submitted-questions-store.ts`.
+- **States** — `ProductDetailSkeleton.tsx` (`loading.tsx`'s fallback),
+  `error.tsx` (a real Next.js error boundary, not simulated),
+  `NotifyWhenAvailable.tsx` (out of stock) and `DiscontinuedNotice.tsx`
+  (`Product.discontinued` — excluded from shop/search listings via
+  `activeProducts`, but its own PDP stays reachable and shows this instead
+  of purchase actions).
+- **Mobile** — `StickyAddToCart.tsx` appears once the main add-to-cart
+  button scrolls out of view, via `IntersectionObserver`.
+- **SEO** — `page.tsx` injects `Product` JSON-LD (offers, availability,
+  aggregateRating, reviews).
+
+---
+
 ## Folder structure
 
 ```
@@ -646,17 +687,27 @@ Verified at phone (390px), tablet (834px) and desktop (1440px) widths:
       `/shop/[category]`, `/collections`, `/collections/[collection]`)
       with full filtering, sorting, search and load-more pagination, all
       reflected in shareable URL query parameters
-- [x] Product detail page (`/products/[slug]`) with variant selection,
-      spec sheet, care instructions, dimensions and related products
+- [x] Product detail page (`/products/[slug]`) built out in full: zoomable/
+      swipeable/full-screen gallery with variant images and video support,
+      colour + set-size selectors, quantity, buy now, share, a South
+      African delivery estimator, an 8-section spec accordion, key
+      benefits, a lifestyle section, "Pairs well with"/"You may also
+      like"/Recently Viewed rails, reviews (filter/sort/write/photo
+      upload/verified badge) and Q&A, a mobile sticky add-to-cart bar,
+      loading/error/out-of-stock/discontinued states, and Product JSON-LD
 - [x] Quick-view modal from the shop grid; enhanced global search (SKU/
       tags/collection matching, result highlighting, typo tolerance,
       recent searches, no-result suggestions)
 - [x] 22-product seed catalogue with the full commerce schema (SKU,
-      pricing, variants, stock, badges, ratings, tags, care, dimensions)
+      pricing, variants, stock, badges, ratings, tags, care, dimensions,
+      benefits, pairings, set-size options — one flagged `discontinued`
+      to exercise that PDP state end-to-end)
 - [x] Production build, lint and typecheck all passing for the shop/
-      catalogue build; filter/sort/search flows, mobile filter drawer,
-      quick view and PDP manually verified in a real browser against both
-      `next dev` and a production `next build`
+      catalogue and PDP builds; filter/sort/search flows, mobile filter
+      drawer, gallery zoom/lightbox/swipe, delivery estimator, reviews
+      (including a submit-with-photo round trip that survives reload) and
+      the mobile sticky bar all manually verified in a real browser
+      against both `next dev` and a production `next build`
 - [ ] Cart page / full checkout flow (Stripe)
 - [ ] Account pages (Supabase Auth: sign in, sign up, order history)
 - [ ] Real product photography and the placeholder assets listed above
