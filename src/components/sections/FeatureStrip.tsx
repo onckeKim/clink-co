@@ -1,10 +1,15 @@
-import { Truck, ShieldCheck, PackageOpen, MessageCircleQuestion } from "lucide-react";
+import { Truck, Lock, Gem, RotateCcw } from "lucide-react";
+import { siteConfig } from "@/config/site";
+import { formatPrice } from "@/lib/utils";
 
 const features = [
-  { icon: Truck, label: "Free shipping over $75" },
-  { icon: ShieldCheck, label: "Lifetime breakage guarantee" },
-  { icon: PackageOpen, label: "Complimentary gift wrapping" },
-  { icon: MessageCircleQuestion, label: "Support seven days a week" },
+  {
+    icon: Truck,
+    label: `Free delivery over ${formatPrice(siteConfig.freeDeliveryThreshold)}`,
+  },
+  { icon: Lock, label: "Secure online payment" },
+  { icon: Gem, label: "Quality, carefully selected" },
+  { icon: RotateCcw, label: `Easy returns within ${siteConfig.returnWindowDays} days` },
 ];
 
 export function FeatureStrip() {

@@ -3,68 +3,93 @@
 import Image from "next/image";
 import Link from "next/link";
 import { motion } from "framer-motion";
+import { Carousel } from "@/components/ui/Carousel";
 import { buttonVariants } from "@/components/ui/Button";
 import { HeroWaypoint } from "@/components/sections/HeroWaypoint";
+import { heroSlides, type HeroSlide } from "@/data/hero-slides";
 import { cn } from "@/lib/utils";
 
+const EASE = [0.16, 1, 0.3, 1] as const;
+
+function HeroSlideContent({ slide, animate }: { slide: HeroSlide; animate: boolean }) {
+  return (
+    <div className="relative min-h-[560px] w-full shrink-0 overflow-hidden sm:min-h-[640px]">
+      <Image
+        src={slide.image}
+        alt={slide.imageAlt}
+        fill
+        priority={animate}
+        sizes="100vw"
+        className="object-cover opacity-90"
+      />
+      <div className="absolute inset-0 bg-gradient-to-t from-charcoal/80 via-charcoal/10 to-charcoal/5" />
+
+      <div className="relative flex h-full w-full flex-col justify-end gap-6 px-6 pb-6 pt-24 sm:px-12 sm:pb-12 sm:pt-28 lg:px-16 lg:pb-16 lg:pt-32">
+        <motion.p
+          initial={animate ? { opacity: 0, y: 20 } : false}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, ease: EASE }}
+          className="text-xs font-semibold uppercase tracking-[0.3em] text-warm-white/70"
+        >
+          {slide.eyebrow}
+        </motion.p>
+        <motion.h1
+          initial={animate ? { opacity: 0, y: 20 } : false}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.7, delay: 0.1, ease: EASE }}
+          className="font-display max-w-2xl text-display-2xl text-warm-white"
+        >
+          {slide.heading}
+        </motion.h1>
+        <motion.p
+          initial={animate ? { opacity: 0, y: 20 } : false}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.7, delay: 0.2, ease: EASE }}
+          className="max-w-md text-sm text-warm-white/75 sm:text-base"
+        >
+          {slide.copy}
+        </motion.p>
+        <motion.div
+          initial={animate ? { opacity: 0, y: 20 } : false}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.7, delay: 0.3, ease: EASE }}
+          className="flex flex-wrap gap-3 pt-2"
+        >
+          <Link
+            href={slide.primaryCta.href}
+            className={cn(buttonVariants({ variant: "inverse", size: "lg" }))}
+          >
+            {slide.primaryCta.label}
+          </Link>
+          <Link
+            href={slide.secondaryCta.href}
+            className={cn(
+              buttonVariants({ variant: "secondary", size: "lg" }),
+              "border-warm-white/40 text-warm-white hover:bg-warm-white hover:text-charcoal",
+            )}
+          >
+            {slide.secondaryCta.label}
+          </Link>
+        </motion.div>
+      </div>
+    </div>
+  );
+}
+
 export function Hero() {
+  const slides = heroSlides.map((slide, i) => (
+    <HeroSlideContent key={slide.id} slide={slide} animate={i === 0} />
+  ));
+
   return (
     <section className="-mt-24 px-3 pt-3 sm:px-5">
-      <div className="relative mx-auto flex min-h-[560px] max-w-7xl items-end overflow-hidden rounded-3xl bg-charcoal sm:min-h-[640px]">
-        <Image
-          src="/images/hero-table.svg"
-          alt="A table set with Clink & Co glassware, catching warm evening light"
-          fill
-          priority
-          sizes="100vw"
-          className="object-cover opacity-90"
+      <div className="relative mx-auto max-w-7xl overflow-hidden rounded-3xl bg-charcoal">
+        <Carousel
+          slides={slides}
+          autoplayInterval={7000}
+          inverse
+          ariaLabel="Featured collections"
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-charcoal/80 via-charcoal/10 to-charcoal/5" />
-
-        <div className="relative flex w-full flex-col gap-6 p-6 sm:p-12 lg:p-16">
-          <motion.p
-            initial={{ opacity: 0, y: 16 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
-            className="text-xs font-semibold uppercase tracking-[0.3em] text-warm-white/70"
-          >
-            The Autumn Edit
-          </motion.p>
-          <motion.h1
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.7, delay: 0.1, ease: [0.16, 1, 0.3, 1] }}
-            className="font-display max-w-2xl text-display-2xl text-warm-white"
-          >
-            Made for moments worth raising a glass to.
-          </motion.h1>
-          <motion.p
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.7, delay: 0.2, ease: [0.16, 1, 0.3, 1] }}
-            className="max-w-md text-sm text-warm-white/75 sm:text-base"
-          >
-            Considered glassware, barware and tableware — designed for the dinners that run late
-            and the Tuesdays that deserve a little ceremony too.
-          </motion.p>
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.7, delay: 0.3, ease: [0.16, 1, 0.3, 1] }}
-            className="flex flex-wrap gap-3 pt-2"
-          >
-            <Link href="/shop" className={cn(buttonVariants({ variant: "inverse", size: "lg" }))}>
-              Shop the Edit
-            </Link>
-            <Link
-              href="/our-story"
-              className={cn(buttonVariants({ variant: "secondary", size: "lg" }), "border-warm-white/40 text-warm-white hover:bg-warm-white hover:text-charcoal")}
-            >
-              Our Story
-            </Link>
-          </motion.div>
-        </div>
-
         <HeroWaypoint />
       </div>
     </section>

@@ -48,6 +48,7 @@ export function SectionHeading({
       {cta && (
         <Link
           href={cta.href}
+          {...(cta.href.startsWith("http") ? { target: "_blank", rel: "noreferrer" } : {})}
           className={cn(
             "focus-ring group inline-flex shrink-0 items-center gap-1.5 rounded-full border px-5 py-2.5 text-sm font-medium transition-colors",
             inverse

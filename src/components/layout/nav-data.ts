@@ -76,20 +76,22 @@ export const policyLinks: NavLink[] = [
   { label: "Accessibility", href: "/accessibility" },
 ];
 
+import { siteConfig } from "@/config/site";
+
 export interface SocialLink {
   label: string;
   href: string;
 }
 
+/** Derived from siteConfig so there's one place to update social handles. */
 export const socialLinks: SocialLink[] = [
-  { label: "Instagram", href: "https://instagram.com" },
-  { label: "Facebook", href: "https://facebook.com" },
-  { label: "TikTok", href: "https://tiktok.com" },
-  { label: "Pinterest", href: "https://pinterest.com" },
+  { label: "Instagram", href: siteConfig.social.instagram },
+  { label: "Facebook", href: siteConfig.social.facebook },
+  { label: "TikTok", href: siteConfig.social.tiktok },
+  { label: "Pinterest", href: siteConfig.social.pinterest },
 ];
 
 export const contactInfo = {
-  email: "hello@clinkandco.com",
-  whatsapp: "+1 (555) 010-2024",
-  whatsappHref: "https://wa.me/15550102024",
+  email: siteConfig.contactEmail,
+  whatsappHref: siteConfig.social.whatsapp,
 };

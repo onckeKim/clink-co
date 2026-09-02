@@ -108,22 +108,42 @@ function escapeXml(str) {
   return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 }
 
+// Text-free scene placeholder — gradient + vessel glyph only, no baked-in
+// label. Used for hero/editorial/collection/social imagery, where any
+// visible copy must be real, accessible HTML rendered by the page, not
+// pixels inside the image asset.
+function sceneSvg({ seedKey, width = 1600, height = 1000 }) {
+  const seed = hashSeed(seedKey);
+  const [from, to] = gradients[seed % gradients.length];
+  const gradId = `g-${seed}`;
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}">
+  <defs>
+    <linearGradient id="${gradId}" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="${from}" />
+      <stop offset="100%" stop-color="${to}" />
+    </linearGradient>
+  </defs>
+  <rect width="${width}" height="${height}" fill="url(#${gradId})" />
+  ${vesselGlyph(width / 2, height / 2 - 40, Math.min(width, height) / 380, 0.16)}
+</svg>`;
+}
+
 const categories = [
   "Glassware",
   "Barware",
   "Tableware",
-  "Serving",
+  "Serveware",
   "Gift Sets",
-  "Entertaining Accents",
+  "Accessories",
 ];
 
 const categorySlugs = {
   Glassware: "glassware",
   Barware: "barware",
   Tableware: "tableware",
-  Serving: "serving",
+  Serveware: "serveware",
   "Gift Sets": "gift-sets",
-  "Entertaining Accents": "accents",
+  Accessories: "accessories",
 };
 
 for (const name of categories) {
@@ -173,15 +193,29 @@ for (const slug of products) {
   }
 }
 
-// Hero + lifestyle editorial images
+// Hero + lifestyle editorial images — text-free (see sceneSvg): any copy
+// shown over these is rendered as real HTML by the page, never baked into
+// the image itself.
 const editorial = [
-  { file: "hero-table", label: "The Autumn Edit" },
-  { file: "lifestyle-glass", label: "Entertaining, Well" },
-  { file: "lifestyle-gift", label: "Gifting" },
+  { file: "hero-table", width: 1800, height: 1100 },
+  { file: "hero-bar-cart", width: 1800, height: 1100 },
+  { file: "hero-gifting", width: 1800, height: 1100 },
+  { file: "lifestyle-glass", width: 1800, height: 1100 },
+  { file: "lifestyle-gift", width: 1800, height: 1100 },
+  { file: "editorial-hosting", width: 1400, height: 1600 },
+  { file: "collection-home-bar", width: 1000, height: 1250 },
+  { file: "collection-everyday-elegance", width: 1000, height: 1250 },
+  { file: "collection-gifts-worth-giving", width: 1000, height: 1250 },
+  { file: "social-1", width: 900, height: 900 },
+  { file: "social-2", width: 900, height: 900 },
+  { file: "social-3", width: 900, height: 900 },
+  { file: "social-4", width: 900, height: 900 },
+  { file: "social-5", width: 900, height: 900 },
+  { file: "social-6", width: 900, height: 900 },
 ];
 
-for (const { file, label } of editorial) {
-  const svg = productSvg({ name: label, width: 1800, height: 1100, variant: 9 });
+for (const { file, width, height } of editorial) {
+  const svg = sceneSvg({ seedKey: file, width, height });
   writeFileSync(join(ROOT, `${file}.svg`), svg, "utf8");
 }
 

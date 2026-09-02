@@ -6,3 +6,6 @@ export * from "./Textarea";
 export * from "./Label";
 export * from "./Modal";
 export * from "./Switch";
+export * from "./Checkbox";
+export * from "./Carousel";
+export * from "./Rating";

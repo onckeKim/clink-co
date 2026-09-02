@@ -5,28 +5,41 @@ import Link from "next/link";
 import { Heart, ShoppingBag } from "lucide-react";
 import type { Product } from "@/types/product";
 import { Badge } from "@/components/ui/Badge";
+import { Rating } from "@/components/ui/Rating";
 import { useCartStore } from "@/store/cart-store";
 import { useWishlistStore } from "@/store/wishlist-store";
+import { useRecentlyViewedStore } from "@/store/recently-viewed-store";
 import { cn, formatPrice } from "@/lib/utils";
 
 export function ProductCard({
   product,
   className,
   inverse = false,
+  detailed = false,
 }: {
   product: Product;
   className?: string;
   inverse?: boolean;
+  /** Adds rating, colour/style swatches and a discount badge — used in the Bestsellers carousel. */
+  detailed?: boolean;
 }) {
   const addItem = useCartStore((state) => state.addItem);
   const wishlisted = useWishlistStore((state) => state.has(product.id));
   const toggleWishlist = useWishlistStore((state) => state.toggle);
+  const recordView = useRecentlyViewedStore((state) => state.add);
   const secondImage = product.images[1] ?? product.images[0];
+  const discountPercent = product.compareAtPrice
+    ? Math.round((1 - product.price / product.compareAtPrice) * 100)
+    : null;
 
   return (
     <div className={cn("group flex flex-col", className)}>
       <div className="relative aspect-[4/5] overflow-hidden rounded-2xl bg-sand/40">
-        <Link href={`/product/${product.slug}`} className="focus-ring relative block h-full w-full">
+        <Link
+          href={`/product/${product.slug}`}
+          onClick={() => recordView(product)}
+          className="focus-ring relative block h-full w-full"
+        >
           <Image
             src={product.images[0]}
             alt={product.name}
@@ -46,7 +59,7 @@ export function ProductCard({
 
         <div className="absolute left-3 top-3 flex flex-col gap-1.5">
           {!product.inStock && <Badge variant="light">Out of stock</Badge>}
-          {product.compareAtPrice && <Badge variant="sale">Sale</Badge>}
+          {discountPercent !== null && <Badge variant="sale">-{discountPercent}%</Badge>}
           {product.badges?.map((badge) => (
             <Badge key={badge} variant={badge === "Bestseller" ? "dark" : "champagne"}>
               {badge}
@@ -78,7 +91,11 @@ export function ProductCard({
         </button>
       </div>
 
-      <Link href={`/product/${product.slug}`} className="focus-ring mt-4 flex flex-col gap-1">
+      <Link
+        href={`/product/${product.slug}`}
+        onClick={() => recordView(product)}
+        className="focus-ring mt-4 flex flex-col gap-1"
+      >
         <div className="flex items-start justify-between gap-2">
           <h3 className={cn("text-sm font-medium", inverse ? "text-warm-white" : "text-charcoal")}>
             {product.name}
@@ -95,6 +112,29 @@ export function ProductCard({
           </div>
         </div>
         <p className={cn("text-xs", inverse ? "text-warm-white/50" : "text-stone")}>{product.tagline}</p>
+
+        {detailed && product.rating !== undefined && (
+          <Rating value={product.rating} count={product.reviewCount} size="xs" inverse={inverse} className="mt-1" />
+        )}
+
+        {detailed && product.variants && product.variants.length > 0 && (
+          <div className="mt-1.5 flex items-center gap-1.5" aria-hidden>
+            {product.variants.map((variant) => (
+              <span
+                key={variant.id}
+                title={variant.label}
+                className={cn(
+                  "h-3.5 w-3.5 rounded-full border",
+                  inverse ? "border-warm-white/30" : "border-charcoal/15",
+                )}
+                style={{ backgroundColor: variant.swatch }}
+              />
+            ))}
+            <span className={cn("text-[11px]", inverse ? "text-warm-white/50" : "text-stone")}>
+              {product.variants.length} {product.variants.length === 1 ? "colour" : "colours"}
+            </span>
+          </div>
+        )}
       </Link>
     </div>
   );

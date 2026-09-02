@@ -30,11 +30,11 @@ export const categories: Category[] = [
     itemCount: 21,
   },
   {
-    id: "cat-serving",
-    slug: "serving",
-    name: "Serving",
+    id: "cat-serveware",
+    slug: "serveware",
+    name: "Serveware",
     description: "Decanters, trays and ice buckets that carry the evening.",
-    image: "/images/categories/serving.svg",
+    image: "/images/categories/serveware.svg",
     itemCount: 15,
   },
   {
@@ -46,11 +46,11 @@ export const categories: Category[] = [
     itemCount: 12,
   },
   {
-    id: "cat-accents",
-    slug: "accents",
-    name: "Entertaining Accents",
+    id: "cat-accessories",
+    slug: "accessories",
+    name: "Accessories",
     description: "Candles, coasters and small objects that finish a room.",
-    image: "/images/categories/accents.svg",
+    image: "/images/categories/accessories.svg",
     itemCount: 16,
   },
 ];

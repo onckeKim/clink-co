@@ -1,16 +1,20 @@
 # Clink & Co by HEIMSIGHT
 
 Premium drinkware, glassware, barware, tableware and gifting — a Next.js
-e-commerce foundation built for a refined, editorial retail brand.
+e-commerce site for a refined, editorial retail brand, priced in South
+African Rand (ZAR).
 
 > "Made for moments worth raising a glass to."
 
-This repository is currently a **project foundation**: a full design system,
-shared layout (header, mega menus, mobile drawer, search, footer, cookie
-consent), reusable UI primitives, and a homepage that demonstrates them
-together. Catalog, product detail, cart and checkout *pages* are the next
-phase — the pieces above (cart/wishlist state, types, seed data) are already
-built to support them.
+The homepage (`src/app/page.tsx`) is a complete, production-quality build:
+hero carousel, benefit strip, category showcase, editorial feature, a
+bestsellers carousel, new arrivals, curated collections, brand story,
+customer reviews, a social gallery, a newsletter section and a
+recently-viewed rail — all backed by the shared design system, layout
+(header/mega menus/mobile drawer/search/footer/cookie consent) and cart/
+wishlist state built in earlier passes. Catalog listing, product detail,
+cart and checkout *pages* are the next phase; the data layer, types and
+client state here are already shaped to support them.
 
 ---
 
@@ -22,11 +26,39 @@ built to support them.
 | Language            | TypeScript                                  |
 | Styling             | Tailwind CSS v4 (CSS-based design tokens)  |
 | Backend / Auth / DB | Supabase (`@supabase/ssr`)                 |
-| Client state        | Zustand (cart, wishlist, cookie consent, UI — persisted to `localStorage` where relevant) |
+| Client state        | Zustand (cart, wishlist, recently viewed, cookie consent, UI — persisted to `localStorage` where relevant) |
 | Forms               | React Hook Form + Zod                      |
 | Icons               | lucide-react + a few hand-drawn marks (see below) |
 | Animation           | Framer Motion                               |
 | Images              | `next/image`                                |
+| Currency            | ZAR (South African Rand) — see `src/config/site.ts` |
+
+---
+
+## Homepage sections → source files
+
+| # | Section | Component | Backing data |
+| - | ------- | --------- | ------------- |
+| 1 | Hero (rotating carousel) | `src/components/sections/Hero.tsx` (+ `HeroWaypoint.tsx`) | `src/data/hero-slides.ts` |
+| 2 | Customer benefit strip | `src/components/sections/FeatureStrip.tsx` | `src/config/site.ts` (delivery threshold, return window) |
+| 3 | Shop by category | `src/components/sections/CategoryShowcase.tsx` (+ `product/CategoryCard.tsx`) | `src/data/categories.ts` |
+| 4 | Editorial feature ("The Art of Hosting Well") | `src/components/sections/LifestyleSplit.tsx` (invoked from `page.tsx`) | copy inline in `page.tsx` |
+| 5 | Bestsellers carousel | `src/components/sections/Bestsellers.tsx` (+ `product/ProductCard.tsx`) | `src/data/products.ts` (`getBestsellers()`) |
+| 6 | New Arrivals grid | `src/components/sections/NewArrivals.tsx` | `src/data/products.ts` (`getNewArrivals()`) |
+| 7 | Curated collections | `src/components/sections/CuratedCollections.tsx` | `src/data/collections.ts` |
+| 8 | Brand story | `src/components/sections/BrandStory.tsx` | copy inline |
+| 9 | Customer reviews carousel | `src/components/sections/ReviewsCarousel.tsx` | `src/data/reviews.ts` |
+| 10 | Social gallery | `src/components/sections/SocialGallery.tsx` | inline list + `siteConfig.social` |
+| 11 | Newsletter | `src/components/sections/NewsletterSection.tsx` | `src/lib/validations/newsletter.ts` |
+| 12 | Recently viewed (conditional) | `src/components/sections/RecentlyViewed.tsx` | `src/store/recently-viewed-store.ts` |
+
+Shared primitives these sections lean on: `src/components/ui/Carousel.tsx`
+(prev/next + pagination-dot carousel, used by Hero and Reviews),
+`src/lib/hooks/use-horizontal-scroll.ts` (the scroll-snap engine behind both
+`Carousel` and the Bestsellers/category rows), `src/components/ui/Rating.tsx`
+(star rating, used on `ProductCard` and reviews), and
+`src/components/product/ProductCard.tsx`'s `detailed` prop (adds rating,
+colour/style swatches and a discount badge — used by Bestsellers).
 
 ---
 
@@ -41,28 +73,33 @@ clink-co/
 ├─ src/
 │  ├─ app/
 │  │  ├─ layout.tsx                Root layout: fonts, metadata, Header/Footer/CookieBanner
-│  │  ├─ page.tsx                  Homepage (assembles the sections below)
+│  │  ├─ page.tsx                  Homepage (assembles all 12 sections + JSON-LD)
 │  │  └─ globals.css               Design tokens (@theme) + base styles
 │  ├─ components/
-│  │  ├─ ui/                       Button, Badge, Card, Input, Textarea, Label, Modal, Switch
+│  │  ├─ ui/                       Button, Badge, Card, Input, Textarea, Label, Modal, Switch,
+│  │  │                            Checkbox, Carousel, Rating
 │  │  ├─ layout/                   Header, MegaMenu, MobileDrawer, Footer, Logo, NewsletterForm,
 │  │  │                            CookieBanner, CookieSettingsLink, nav-data.ts (shared nav/footer data)
 │  │  ├─ search/                   SearchModal (full-screen search overlay)
 │  │  ├─ product/                  ProductCard, CategoryCard
-│  │  ├─ sections/                 Hero, HeroWaypoint, FeatureStrip, SectionHeading, LifestyleSplit
+│  │  ├─ sections/                 All 12 homepage sections — see table above
 │  │  ├─ cart/                     CartDrawer
 │  │  ├─ motion/                   Reveal (scroll-triggered fade-up)
 │  │  └─ icons/                    SocialIcons, PaymentIcons — lucide-react dropped brand/payment marks
-│  ├─ data/                        Seed data: products.ts, categories.ts
+│  ├─ data/                        Seed data: products.ts, categories.ts, hero-slides.ts,
+│  │                                collections.ts, reviews.ts
 │  ├─ types/                       Product, Category domain types
+│  ├─ config/
+│  │  └─ site.ts                   Currency, locale, free-delivery threshold, social links, contact info
 │  ├─ lib/
 │  │  ├─ supabase/                 client.ts (browser), server.ts (RSC/actions), types.ts (DB schema)
-│  │  ├─ validations/              Zod schemas: auth.ts, newsletter.ts
-│  │  ├─ hooks/                    use-mounted.ts
+│  │  ├─ validations/              Zod schemas: auth.ts, newsletter.ts (+ newsletterSectionSchema)
+│  │  ├─ hooks/                    use-mounted.ts, use-horizontal-scroll.ts
 │  │  └─ utils.ts                  cn(), formatPrice(), slugify()
 │  ├─ store/
 │  │  ├─ cart-store.ts             Zustand cart (add/remove/update, persisted)
 │  │  ├─ wishlist-store.ts         Zustand wishlist (toggle/has, persisted)
+│  │  ├─ recently-viewed-store.ts  Tracks viewed products, persisted, capped at 8
 │  │  ├─ consent-store.ts          Cookie consent decision (persisted)
 │  │  └─ ui-store.ts               Cross-component UI signals (header-over-hero tracking)
 │  └─ proxy.ts                     Supabase session refresh (Next.js "proxy"/middleware)
@@ -108,7 +145,8 @@ CSS-native config) — there is no `tailwind.config.ts`.
   `sm:`/`lg:` stacking needed for hero and section headings).
 - **Motion** — `<Reveal>` wraps a section in a scroll-triggered fade-up
   (Framer Motion `whileInView`); Header, MegaMenu, MobileDrawer, SearchModal,
-  CartDrawer and CookieBanner each use their own enter/exit transitions.
+  CartDrawer, CookieBanner and the Hero/Reviews `Carousel` each use their own
+  enter/exit transitions.
 - **Accessibility** — a global `:focus-visible` outline (charcoal, 2px) is
   applied to every interactive element via `globals.css`, independent of
   each component's own styling; a "Skip to content" link is the first
@@ -121,9 +159,48 @@ CSS-native config) — there is no `tailwind.config.ts`.
 sizes `sm`/`md`/`lg`/`icon`), `Badge` (variants: `dark`/`light`/`sale`/
 `outline`/`champagne`/`green`/`success`), `Card` (+ Header/Title/Description/
 Content/Footer), `Input`, `Textarea`, `Label`, `Modal`, `Switch` (accessible
-toggle, `role="switch"`). All are built with `class-variance-authority` and
-`tailwind-merge` (via the `cn()` helper), so they compose cleanly with extra
-`className`s from call sites.
+toggle, `role="switch"`), `Checkbox` (accessible, `role="checkbox"`),
+`Carousel` (prev/next + pagination dots, autoplay, keyboard, one slide per
+view — see below), `Rating` (star display with an `inverse` variant for dark
+sections). All are built with `class-variance-authority` and `tailwind-merge`
+(via the `cn()` helper), so they compose cleanly with extra `className`s from
+call sites.
+
+### Carousels
+
+Three different carousel needs, two implementations, sharing one hook:
+
+- **`Carousel`** (`src/components/ui/Carousel.tsx`) — one slide fills the
+  viewport at a time; prev/next arrows, dot pagination, optional autoplay
+  (pauses on hover/focus), `ArrowLeft`/`ArrowRight` keyboard support. Used
+  by the **Hero** and **Reviews**.
+- **Multi-item rows** (Bestsellers, the category showcase) use
+  `useHorizontalScroll` (`src/lib/hooks/use-horizontal-scroll.ts`) directly
+  with their own prev/next arrows and no dots, since "how many items are
+  visible" varies by breakpoint — a dot-per-page doesn't generalise cleanly
+  there. Mobile relies on native swipe (`overflow-x-auto` + scroll-snap);
+  desktop gets the arrows.
+
+Both are built on native CSS scroll-snap rather than a carousel library —
+no extra dependency, and swipe support comes for free from the browser.
+
+## Currency & site configuration
+
+`src/config/site.ts` centralises the things an admin dashboard would
+eventually expose as editable settings: currency/locale, the free-delivery
+threshold, the return window, social links and the contact email/WhatsApp
+number. `formatPrice()` (`src/lib/utils.ts`) reads `siteConfig.currency`
+(ZAR) by default.
+
+**Note on `formatPrice`:** it's deliberately *not* built on
+`Intl.NumberFormat(locale, { style: "currency" })`. Node's default
+(`small-icu`) build only ships full ICU data for English locales, so
+`en-ZA` grouping can render differently server-side (Node, at build/request
+time) than client-side (the browser, which always ships full ICU) — a real
+hydration mismatch (`"R 1,450"` server vs. `"R 1 450"` client), caught while
+QA-ing the Bestsellers carousel. The fix groups digits via the
+always-available `en-US` locale and swaps the separator manually, so output
+is byte-identical on both sides regardless of the runtime's ICU data.
 
 ## Header, navigation & the "over hero" effect
 
@@ -158,7 +235,7 @@ safe default (solid) from the start.
   social links and contact info so Header/MegaMenu/MobileDrawer/Footer never
   drift out of sync.
 
-## Cart, wishlist & cookie consent
+## Cart, wishlist, recently viewed & cookie consent
 
 `src/store/cart-store.ts` and `wishlist-store.ts` are Zustand stores
 persisted to `localStorage`. `Header` reads their counts for the bag/heart
@@ -167,6 +244,14 @@ badges; `ProductCard`'s "Quick add" and heart button call them directly;
 page-level integration is needed — `useCartStore()` / `useCartCount()` /
 `useWishlistStore()` work from any client component.
 
+`src/store/recently-viewed-store.ts` records a lightweight product snapshot
+whenever a `ProductCard` link is clicked (capped at 8, most-recent-first).
+`RecentlyViewed.tsx` renders nothing until it's non-empty and the component
+has mounted client-side (avoids a hydration mismatch against the
+`localStorage`-backed state) — so on a first visit the section simply isn't
+there, per the "only show if the customer has recently viewed products"
+requirement.
+
 `src/store/consent-store.ts` backs `CookieBanner` (Accept all / Reject
 non-essential / Manage preferences, the last opening a `Modal` with
 per-category `Switch` toggles). The decision persists to `localStorage`;
@@ -174,16 +259,21 @@ per-category `Switch` toggles). The decision persists to `localStorage`;
 
 ## Seed data & placeholder imagery
 
-`src/data/products.ts` and `src/data/categories.ts` contain realistic,
-Clink & Co–specific copy (14 products across 6 categories) typed against
-`src/types/product.ts` / `category.ts`. Swap these for Supabase queries once
-the `products` / `categories` tables exist — the shapes already match
-`src/lib/supabase/types.ts`.
+`src/data/products.ts` (18 products across 6 categories, priced in ZAR,
+several with colour/style `variants`) and `src/data/categories.ts`
+(Glassware, Barware, Tableware, Serveware, Gift Sets, Accessories) contain
+realistic, Clink & Co–specific copy typed against `src/types/product.ts` /
+`category.ts`. `src/data/hero-slides.ts`, `collections.ts` and `reviews.ts`
+back the Hero, Curated Collections and Reviews sections respectively. Swap
+all of these for Supabase queries once the corresponding tables exist — the
+product/category shapes already match `src/lib/supabase/types.ts`.
 
-Product and category photography is **not** final — `public/images/` holds
-generated placeholder SVGs (soft brand-palette gradients with a minimal
-vessel motif) so the UI can be built and reviewed without external image
-hosting. Regenerate or extend them with:
+Product, category, hero and editorial imagery is **not** final —
+`public/images/` holds generated placeholder SVGs (soft brand-palette
+gradients with a minimal vessel motif, **no text baked into the image
+itself** — all copy is real HTML rendered by the page) so the UI can be
+built and reviewed without external image hosting. Regenerate or extend them
+with:
 
 ```bash
 npm run generate:placeholders
@@ -191,7 +281,7 @@ npm run generate:placeholders
 
 Before launch, replace these with real photography — most simply via
 Supabase Storage (uncomment the `remotePatterns` example in
-`next.config.ts` and update the `images` arrays in `src/data/`). See
+`next.config.ts` and update the `image`/`images` fields in `src/data/`). See
 **Placeholder assets still required** below for the full list.
 
 ---
@@ -209,16 +299,17 @@ cp .env.local.example .env.local
 | `NEXT_PUBLIC_SUPABASE_URL`            | Auth, database, storage                |
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY`       | Auth, database, storage                |
 | `SUPABASE_SERVICE_ROLE_KEY`           | Server-only admin operations           |
-| `NEXT_PUBLIC_SITE_URL`                | Metadata / OpenGraph canonical URLs    |
+| `NEXT_PUBLIC_SITE_URL`                | Metadata / OpenGraph canonical URLs / JSON-LD |
 | `STRIPE_SECRET_KEY`                   | Checkout (not yet implemented)         |
 | `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY`  | Checkout (not yet implemented)         |
 | `STRIPE_WEBHOOK_SECRET`               | Checkout (not yet implemented)         |
 | `RESEND_API_KEY`                      | Transactional email / newsletter       |
 
 The app runs without any of these set — Supabase calls are structured to no-op
-gracefully in `src/proxy.ts`, and the newsletter form currently logs to the
-console instead of calling Supabase (marked with a `TODO` in
-`NewsletterForm.tsx`).
+gracefully in `src/proxy.ts`, and both newsletter forms currently simulate
+their network call (marked with a `TODO` pointing at a `subscribers`
+table/edge function) so their success/error states are real without a
+backend wired up yet.
 
 ---
 
@@ -249,6 +340,26 @@ npm run generate:placeholders # regenerate placeholder SVG imagery
 
 ---
 
+## Performance, SEO & conversion notes
+
+- **Images** — every image goes through `next/image` with explicit `sizes`
+  for responsive srcsets; the Hero's first slide is `priority`-loaded, all
+  others lazy-load; placeholder SVGs are tiny (a gradient + one glyph) so
+  they cost almost nothing over the wire.
+- **Static generation** — the homepage has no per-request data dependency,
+  so it's fully static-prerendered (`next build` reports it as `○ Static`).
+- **SEO** — per-page `<title>`/`<meta description>`/OpenGraph tags live in
+  `layout.tsx`; the homepage additionally injects `Organization` JSON-LD
+  (name, social profiles, tagline) via a `<script type="application/ld+json">`
+  in `page.tsx`. Semantic landmarks (`<header>`, `<main>`, `<footer>`,
+  heading hierarchy starting at one `<h1>` in the Hero) are used throughout
+  rather than generic `<div>`s.
+- **Conversion affordances** — quick-add and wishlist directly from product
+  cards (no page navigation required), a persistent cart badge, sale/new/
+  out-of-stock/discount-percentage badges, star ratings and colour swatches
+  on the Bestsellers carousel, a free-delivery threshold surfaced in the
+  benefit strip, and a recently-viewed rail to reduce abandonment.
+
 ## Responsive behavior
 
 Verified at phone (390px), tablet (834px) and desktop (1440px) widths:
@@ -258,6 +369,12 @@ Verified at phone (390px), tablet (834px) and desktop (1440px) widths:
   phones **and** tablets — gets the compact bar (logo, search, bag, menu)
   and the slide-out `MobileDrawer`. This is a deliberate choice given the
   expanded nav requirements, not an oversight.
+- The category showcase is a single, non-scrolling row of all 6 cards at
+  `lg`+, a 3-column grid at `sm`–`lg`, and a swipeable scroll-snap row below
+  `sm` (6 cards don't fit one screen on a phone).
+- The Bestsellers carousel shows ~4 cards at `xl`, ~3 at `lg`, ~2 at `sm`,
+  and a swipeable single-card-plus-peek row on phones; its arrow controls
+  are `lg`+ only (mobile relies on touch swipe).
 - Footer link columns collapse from a 6-column grid to 2 columns at `sm`
   and stack fully below that.
 - The mega menus and search modal are full-width/full-screen affordances
@@ -271,11 +388,16 @@ Verified at phone (390px), tablet (834px) and desktop (1440px) widths:
 - The mega menu follows the WAI-ARIA disclosure pattern (`aria-haspopup`,
   `aria-expanded`, `ArrowDown` to enter, `Escape` to exit and return focus)
   rather than only working for mouse/hover users.
+- The `Carousel` primitive exposes `role="region" aria-roledescription="carousel"`,
+  labels each slide (`aria-hidden` on off-screen slides), and its dot
+  pagination uses `role="tablist"`/`role="tab"` with `aria-selected`.
 - `aria-current="page"` plus a persistent underline mark the active nav
   item; `aria-label`s on all icon-only buttons (cart, wishlist, search,
-  social links, close buttons).
-- The cookie preference `Switch` uses `role="switch"` / `aria-checked`;
-  each row's label and description are wired via `htmlFor` / `aria-describedby`.
+  social links, close buttons, carousel arrows).
+- Form controls: the newsletter section's checkbox/input wire `aria-invalid`
+  and `aria-describedby` to their error text; the cookie preference `Switch`
+  uses `role="switch"`/`aria-checked` with `htmlFor`/`aria-describedby` on
+  each row.
 - `prefers-reduced-motion` disables/shortens the site's custom transitions
   and scroll-behavior globally.
 - Palette contrast was chosen deliberately: `charcoal`-on-`porcelain` and
@@ -286,40 +408,30 @@ Verified at phone (390px), tablet (834px) and desktop (1440px) widths:
 - lucide-react no longer ships brand/social marks, so `SocialIcons.tsx` and
   `PaymentIcons.tsx` are hand-drawn, stroke-matched replacements — see
   below for swapping in official logos before launch.
+- **No text is baked into any image asset** — the Hero, editorial and
+  collection imagery are pure gradients with a decorative glyph; every
+  headline, price, badge and caption is real, accessible HTML.
 
 ---
 
-## Files created or changed in this pass
-
-**New:** `MegaMenu.tsx`, `MobileDrawer.tsx`, `nav-data.ts`, `CookieBanner.tsx`,
-`CookieSettingsLink.tsx`, `SearchModal.tsx`, `HeroWaypoint.tsx`, `Switch.tsx`,
-`PaymentIcons.tsx`, `wishlist-store.ts`, `consent-store.ts`, `ui-store.ts`.
-
-**Rewritten:** `globals.css` (full palette + fluid type scale), `Header.tsx`
-(fixed positioning, mega menus, transparent-over-hero, wishlist icon, active
-indicator), `Footer.tsx` (6-column layout, WhatsApp, payment icons, delivery
-info), `Logo.tsx` (`compact` variant), `layout.tsx` (skip link, header
-clearance, CookieBanner mount).
-
-**Updated (token migration + fixes):** every existing component's color
-classes (`ink`→`charcoal`, `ivory`→`warm-white`, `clay`→`stone`,
-`brass`→`champagne`), `Badge.tsx` variants, `ProductCard.tsx` (wishlist
-wiring + a `fill`-image positioning fix), `SocialIcons.tsx` (added TikTok,
-Pinterest, WhatsApp).
-
 ## Placeholder assets still required
 
-- **Product & category photography** — `public/images/**` are generated
-  gradient placeholders (`npm run generate:placeholders`), not real photos.
+- **Product, category, hero and editorial photography** —
+  `public/images/**` are generated gradient placeholders
+  (`npm run generate:placeholders`), not real photos.
 - **Official payment method logos**, if pixel-accurate brand marks are
   required — `PaymentIcons.tsx` currently ships simplified, non-trademarked
   monochrome badges (labelled Visa/Mastercard/Amex/PayPal/Apple Pay/Google
   Pay) rather than the official SVGs.
-- **Real social handles & WhatsApp number** — `nav-data.ts`'s `socialLinks`
-  point at the bare platform domains, and `contactInfo.whatsappHref` uses a
-  placeholder number; swap in the brand's actual accounts.
-- **Contact email domain** — `contactInfo.email` (`hello@clinkandco.com`) is
-  a placeholder pending the real domain.
+- **Real social handles & WhatsApp number** — `siteConfig.social` in
+  `src/config/site.ts` points at placeholder handles/numbers; swap in the
+  brand's actual accounts (this single file feeds the header, footer and
+  social gallery, so it only needs updating in one place).
+- **Contact email domain** — `siteConfig.contactEmail`
+  (`hello@clinkandco.com`) is a placeholder pending the real domain.
+- **Review authenticity** — `src/data/reviews.ts` is realistic sample copy,
+  not real customer reviews; replace before launch or wire up a reviews
+  table.
 
 ## Foundation checklist
 
@@ -328,12 +440,18 @@ Pinterest, WhatsApp).
 - [x] Floating header: mega menus, mobile drawer, full-screen search, transparent-over-hero
 - [x] Multi-column footer: policies, support, newsletter, socials, WhatsApp, payment icons
 - [x] Cookie consent banner + preferences modal, persisted
-- [x] Cart + wishlist state (Zustand, persisted), wired into Header and ProductCard
-- [x] Zod validation schemas for auth and newsletter forms
+- [x] Cart + wishlist + recently-viewed state (Zustand, persisted)
+- [x] Zod validation schemas for auth and newsletter forms (incl. consent checkbox)
 - [x] Supabase browser/server clients + session-refresh proxy (middleware)
 - [x] `.env.local.example` with every required variable documented
-- [x] Homepage assembling Hero, FeatureStrip, category grid, editorial splits, bestsellers and a closing CTA
-- [x] Production build, lint and typecheck all passing; keyboard/focus flows manually verified
+- [x] Full 12-section homepage: hero carousel, benefit strip, category
+      showcase, editorial feature, bestsellers carousel, new arrivals,
+      curated collections, brand story, reviews carousel, social gallery,
+      newsletter, recently viewed
+- [x] ZAR pricing site-wide via a single, hydration-safe `formatPrice()`
+- [x] Production build, lint and typecheck all passing; keyboard/focus
+      flows and the full form + carousel + recently-viewed flows manually
+      verified against both `next dev` and a production `next build`
 - [ ] Shop / category listing pages, filtering & sorting
 - [ ] Product detail page
 - [ ] Cart page / full checkout flow (Stripe)
