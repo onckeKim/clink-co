@@ -6,7 +6,7 @@ export interface RecentlyViewedItem {
   productId: string;
   slug: string;
   name: string;
-  tagline: string;
+  shortDescription: string;
   image: string;
   price: number;
   compareAtPrice?: number;
@@ -34,7 +34,7 @@ export const useRecentlyViewedStore = create<RecentlyViewedState>()(
           productId: product.id,
           slug: product.slug,
           name: product.name,
-          tagline: product.tagline,
+          shortDescription: product.shortDescription,
           image: product.images[0],
           price: product.price,
           compareAtPrice: product.compareAtPrice,

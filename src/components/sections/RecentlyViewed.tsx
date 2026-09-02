@@ -24,7 +24,7 @@ export function RecentlyViewed() {
       <div className="mt-10 grid grid-cols-2 gap-x-5 gap-y-10 sm:grid-cols-3 lg:grid-cols-4">
         {items.map((item, i) => (
           <Reveal key={item.productId} delay={i * 0.05}>
-            <Link href={`/product/${item.slug}`} className="focus-ring group flex flex-col">
+            <Link href={`/products/${item.slug}`} className="focus-ring group flex flex-col">
               <div className="relative aspect-[4/5] overflow-hidden rounded-2xl bg-sand/40">
                 <Image
                   src={item.image}
@@ -36,7 +36,7 @@ export function RecentlyViewed() {
               </div>
               <div className="mt-4 flex flex-col gap-1">
                 <h3 className="text-sm font-medium text-charcoal">{item.name}</h3>
-                <p className="text-xs text-stone">{item.tagline}</p>
+                <p className="text-xs text-stone">{item.shortDescription}</p>
                 <div className="flex items-baseline gap-1.5">
                   {item.compareAtPrice && (
                     <span className="text-xs text-stone line-through">

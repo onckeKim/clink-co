@@ -5,8 +5,9 @@ import Link from "next/link";
 import { AnimatePresence, motion } from "framer-motion";
 import { ChevronDown, Heart, Mail, User, X } from "lucide-react";
 import { Logo } from "./Logo";
-import { primaryNav, collections, accountLinks, helpLinks, socialLinks } from "./nav-data";
+import { primaryNav, accountLinks, helpLinks, socialLinks } from "./nav-data";
 import { categories } from "@/data/categories";
+import { curatedCollections } from "@/data/collections";
 import { InstagramIcon, FacebookIcon, TikTokIcon, PinterestIcon } from "@/components/icons/SocialIcons";
 import { useWishlistCount } from "@/store/wishlist-store";
 import { cn } from "@/lib/utils";
@@ -108,7 +109,7 @@ export function MobileDrawer({ open, onClose }: { open: boolean; onClose: () => 
                                 >
                                   {(link.label === "Shop"
                                     ? categories.map((c) => ({ label: c.name, href: `/shop/${c.slug}` }))
-                                    : collections.map((c) => ({ label: c.label, href: c.href }))
+                                    : curatedCollections.map((c) => ({ label: c.name, href: c.href }))
                                   ).map((item) => (
                                     <li key={item.href}>
                                       <Link

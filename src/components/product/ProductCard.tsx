@@ -2,13 +2,14 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { Heart, ShoppingBag } from "lucide-react";
+import { Eye, Heart, ShoppingBag } from "lucide-react";
 import type { Product } from "@/types/product";
 import { Badge } from "@/components/ui/Badge";
 import { Rating } from "@/components/ui/Rating";
 import { useCartStore } from "@/store/cart-store";
 import { useWishlistStore } from "@/store/wishlist-store";
 import { useRecentlyViewedStore } from "@/store/recently-viewed-store";
+import { getCategoryBySlug } from "@/data/categories";
 import { cn, formatPrice } from "@/lib/utils";
 
 export function ProductCard({
@@ -16,18 +17,22 @@ export function ProductCard({
   className,
   inverse = false,
   detailed = false,
+  onQuickView,
 }: {
   product: Product;
   className?: string;
   inverse?: boolean;
   /** Adds rating, colour/style swatches and a discount badge — used in the Bestsellers carousel. */
   detailed?: boolean;
+  /** Renders a quick-view icon button that calls back with this product — used in the shop grid. */
+  onQuickView?: (product: Product) => void;
 }) {
   const addItem = useCartStore((state) => state.addItem);
   const wishlisted = useWishlistStore((state) => state.has(product.id));
   const toggleWishlist = useWishlistStore((state) => state.toggle);
   const recordView = useRecentlyViewedStore((state) => state.add);
   const secondImage = product.images[1] ?? product.images[0];
+  const categoryName = getCategoryBySlug(product.categorySlug)?.name;
   const discountPercent = product.compareAtPrice
     ? Math.round((1 - product.price / product.compareAtPrice) * 100)
     : null;
@@ -36,7 +41,7 @@ export function ProductCard({
     <div className={cn("group flex flex-col", className)}>
       <div className="relative aspect-[4/5] overflow-hidden rounded-2xl bg-sand/40">
         <Link
-          href={`/product/${product.slug}`}
+          href={`/products/${product.slug}`}
           onClick={() => recordView(product)}
           className="focus-ring relative block h-full w-full"
         >
@@ -67,15 +72,27 @@ export function ProductCard({
           ))}
         </div>
 
-        <button
-          type="button"
-          onClick={() => toggleWishlist(product)}
-          aria-label={wishlisted ? "Remove from wishlist" : "Add to wishlist"}
-          aria-pressed={wishlisted}
-          className="focus-ring absolute right-3 top-3 flex h-9 w-9 items-center justify-center rounded-full bg-warm-white/90 text-charcoal opacity-0 backdrop-blur transition-all duration-300 group-hover:opacity-100 sm:opacity-100"
-        >
-          <Heart className={cn("h-4 w-4", wishlisted && "fill-charcoal")} />
-        </button>
+        <div className="absolute right-3 top-3 flex flex-col gap-2">
+          <button
+            type="button"
+            onClick={() => toggleWishlist(product)}
+            aria-label={wishlisted ? "Remove from wishlist" : "Add to wishlist"}
+            aria-pressed={wishlisted}
+            className="focus-ring flex h-9 w-9 items-center justify-center rounded-full bg-warm-white/90 text-charcoal opacity-0 backdrop-blur transition-all duration-300 group-hover:opacity-100 sm:opacity-100"
+          >
+            <Heart className={cn("h-4 w-4", wishlisted && "fill-charcoal")} />
+          </button>
+          {onQuickView && (
+            <button
+              type="button"
+              onClick={() => onQuickView(product)}
+              aria-label={`Quick view ${product.name}`}
+              className="focus-ring flex h-9 w-9 items-center justify-center rounded-full bg-warm-white/90 text-charcoal opacity-0 backdrop-blur transition-all duration-300 group-hover:opacity-100"
+            >
+              <Eye className="h-4 w-4" />
+            </button>
+          )}
+        </div>
 
         <button
           type="button"
@@ -92,10 +109,20 @@ export function ProductCard({
       </div>
 
       <Link
-        href={`/product/${product.slug}`}
+        href={`/products/${product.slug}`}
         onClick={() => recordView(product)}
         className="focus-ring mt-4 flex flex-col gap-1"
       >
+        {categoryName && (
+          <span
+            className={cn(
+              "text-[11px] font-semibold uppercase tracking-[0.14em]",
+              inverse ? "text-warm-white/45" : "text-stone",
+            )}
+          >
+            {categoryName}
+          </span>
+        )}
         <div className="flex items-start justify-between gap-2">
           <h3 className={cn("text-sm font-medium", inverse ? "text-warm-white" : "text-charcoal")}>
             {product.name}
@@ -111,7 +138,7 @@ export function ProductCard({
             </span>
           </div>
         </div>
-        <p className={cn("text-xs", inverse ? "text-warm-white/50" : "text-stone")}>{product.tagline}</p>
+        <p className={cn("text-xs", inverse ? "text-warm-white/50" : "text-stone")}>{product.shortDescription}</p>
 
         {detailed && product.rating !== undefined && (
           <Rating value={product.rating} count={product.reviewCount} size="xs" inverse={inverse} className="mt-1" />

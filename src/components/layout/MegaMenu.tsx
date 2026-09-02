@@ -6,7 +6,7 @@ import Link from "next/link";
 import { AnimatePresence, motion } from "framer-motion";
 import { ArrowUpRight } from "lucide-react";
 import { categories } from "@/data/categories";
-import { collections } from "./nav-data";
+import { curatedCollections } from "@/data/collections";
 
 export type MegaMenuKey = "shop" | "collections";
 
@@ -135,7 +135,7 @@ function CollectionsMenu({ onNavigate }: { onNavigate: () => void }) {
         Curated collections
       </p>
       <ul className="grid grid-cols-2 gap-x-10 gap-y-5">
-        {collections.map((collection) => (
+        {curatedCollections.map((collection) => (
           <li key={collection.href}>
             <Link
               href={collection.href}
@@ -143,7 +143,7 @@ function CollectionsMenu({ onNavigate }: { onNavigate: () => void }) {
               className="focus-ring group block rounded-lg px-2 py-1"
             >
               <span className="flex items-center gap-1.5 text-sm font-medium text-charcoal">
-                {collection.label}
+                {collection.name}
                 <ArrowUpRight className="h-3.5 w-3.5 opacity-0 transition-opacity group-hover:opacity-100" />
               </span>
               <span className="mt-1 block text-xs leading-relaxed text-stone">

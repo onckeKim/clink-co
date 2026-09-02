@@ -26,7 +26,7 @@ export function ReviewsCarousel() {
           </div>
           <p className="text-xs text-stone">{review.location}</p>
           <Link
-            href={`/product/${review.productSlug}`}
+            href={`/products/${review.productSlug}`}
             className="link-underline mt-1 text-xs font-medium text-stone hover:text-charcoal"
           >
             Purchased: {review.productPurchased}

@@ -8,45 +8,10 @@ export const primaryNav: NavLink[] = [
   { label: "Home", href: "/" },
   { label: "Shop", href: "/shop" },
   { label: "Collections", href: "/collections" },
-  { label: "New Arrivals", href: "/new-arrivals" },
+  { label: "New Arrivals", href: "/shop?new=1" },
   { label: "Gifts", href: "/gifts" },
   { label: "About", href: "/about" },
   { label: "Journal", href: "/journal" },
-];
-
-export interface Collection {
-  label: string;
-  href: string;
-  description: string;
-}
-
-/** Curated editorial collections shown in the "Collections" mega menu. */
-export const collections: Collection[] = [
-  {
-    label: "The Autumn Edit",
-    href: "/collections/autumn-edit",
-    description: "Seasonal glassware and warm-toned tableware for the months ahead.",
-  },
-  {
-    label: "Wedding Registry",
-    href: "/collections/wedding-registry",
-    description: "Build a registry made of pieces guests actually reach for.",
-  },
-  {
-    label: "Housewarming",
-    href: "/collections/housewarming",
-    description: "Considered first pieces for a table just getting started.",
-  },
-  {
-    label: "Corporate Gifting",
-    href: "/collections/corporate-gifting",
-    description: "Branded, boxed and shipped at scale — talk to our trade team.",
-  },
-  {
-    label: "Best Sellers",
-    href: "/shop?filter=bestseller",
-    description: "The pieces our community reaches for again and again.",
-  },
 ];
 
 export const accountLinks: NavLink[] = [

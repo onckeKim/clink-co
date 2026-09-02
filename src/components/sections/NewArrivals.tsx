@@ -16,7 +16,7 @@ export function NewArrivals() {
             eyebrow="Just landed"
             title="New Arrivals"
             description="Fresh off the workbench — the newest additions to the Clink & Co edit."
-            cta={{ label: "Shop New Arrivals", href: "/new-arrivals" }}
+            cta={{ label: "Shop New Arrivals", href: "/shop?new=1" }}
           />
         </Reveal>
 

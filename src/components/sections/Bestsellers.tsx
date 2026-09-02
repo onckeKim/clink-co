@@ -23,7 +23,7 @@ export function Bestsellers() {
             eyebrow="Customer favourites"
             title="The Bestsellers"
             description="Experience the pieces our community reaches for again and again."
-            cta={{ label: "View All", href: "/shop?filter=bestseller" }}
+            cta={{ label: "View All", href: "/shop?sort=best-selling" }}
             inverse
           />
         </Reveal>

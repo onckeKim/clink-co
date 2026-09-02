@@ -8,8 +8,27 @@ import { AnimatePresence, motion } from "framer-motion";
 import { Clock, Search, TrendingUp, X } from "lucide-react";
 import { products } from "@/data/products";
 import { categories } from "@/data/categories";
+import { highlightMatch, searchProducts } from "@/lib/catalogue";
 import { formatPrice, cn } from "@/lib/utils";
 import { useMounted } from "@/lib/hooks/use-mounted";
+
+/** Renders `text` with the portion matching `query` wrapped for emphasis. */
+function Highlighted({ text, query }: { text: string; query: string }) {
+  const segments = highlightMatch(text, query);
+  return (
+    <>
+      {segments.map((segment, i) =>
+        segment.match ? (
+          <mark key={i} className="rounded-sm bg-champagne/50 text-charcoal">
+            {segment.text}
+          </mark>
+        ) : (
+          <React.Fragment key={i}>{segment.text}</React.Fragment>
+        ),
+      )}
+    </>
+  );
+}
 
 const RECENT_KEY = "clink-co-recent-searches";
 const MAX_RECENT = 5;
@@ -64,17 +83,10 @@ export function SearchModal({ open, onClose }: { open: boolean; onClose: () => v
     };
   }, [open]);
 
-  const q = query.trim().toLowerCase();
+  const q = query.trim();
   const results = React.useMemo(() => {
     if (!q) return [];
-    return products
-      .filter(
-        (p) =>
-          p.name.toLowerCase().includes(q) ||
-          p.tagline.toLowerCase().includes(q) ||
-          p.categorySlug.toLowerCase().includes(q),
-      )
-      .slice(0, 6);
+    return searchProducts(products, q).slice(0, 6);
   }, [q]);
 
   const commitSearch = React.useCallback(
@@ -104,7 +116,7 @@ export function SearchModal({ open, onClose }: { open: boolean; onClose: () => v
         setRecent(next);
         writeRecent(next);
       }
-      router.push(`/product/${slug}`);
+      router.push(`/products/${slug}`);
       onClose();
     },
     [recent, router, onClose],
@@ -217,9 +229,16 @@ export function SearchModal({ open, onClose }: { open: boolean; onClose: () => v
                           </div>
                           <div className="min-w-0 flex-1">
                             <p className="truncate text-sm font-medium text-charcoal">
-                              {product.name}
+                              <Highlighted text={product.name} query={query} />
                             </p>
-                            <p className="truncate text-xs text-stone">{product.tagline}</p>
+                            <p className="truncate text-xs text-stone">
+                              <Highlighted text={product.shortDescription} query={query} />
+                            </p>
+                            {product.sku.toLowerCase().includes(query.trim().toLowerCase()) && (
+                              <p className="mt-0.5 truncate text-[11px] text-stone/70">
+                                SKU: <Highlighted text={product.sku} query={query} />
+                              </p>
+                            )}
                           </div>
                           <span className="shrink-0 text-sm font-medium text-charcoal">
                             {formatPrice(product.price)}
@@ -234,8 +253,8 @@ export function SearchModal({ open, onClose }: { open: boolean; onClose: () => v
                       No results for &ldquo;{query}&rdquo;
                     </p>
                     <p className="max-w-xs text-sm text-stone">
-                      Try a category name like &ldquo;glassware&rdquo; or &ldquo;barware&rdquo;, or
-                      browse popular categories below.
+                      Try a product name, SKU, category or collection — or browse popular categories
+                      below.
                     </p>
                     <PopularCategories onNavigate={onClose} />
                   </div>

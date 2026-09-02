@@ -12,9 +12,14 @@ bestsellers carousel, new arrivals, curated collections, brand story,
 customer reviews, a social gallery, a newsletter section and a
 recently-viewed rail — all backed by the shared design system, layout
 (header/mega menus/mobile drawer/search/footer/cookie consent) and cart/
-wishlist state built in earlier passes. Catalog listing, product detail,
-cart and checkout *pages* are the next phase; the data layer, types and
-client state here are already shaped to support them.
+wishlist state built in earlier passes.
+
+The shop and product catalogue are also a complete build: `/shop`,
+category and collection listing pages, and product detail pages, all with
+real filtering, sorting, search and pagination — see
+**"Shop & product catalogue"** below. Cart page / full checkout flow and
+account pages are the next phase; the data layer, types and client state
+here are already shaped to support them.
 
 ---
 
@@ -62,6 +67,114 @@ colour/style swatches and a discount badge — used by Bestsellers).
 
 ---
 
+## Shop & product catalogue
+
+### Routes
+
+| Route | Page | Notes |
+| --- | --- | --- |
+| `/shop` | `src/app/shop/page.tsx` | Full catalogue, all 22 products |
+| `/shop/[category]` | `src/app/shop/[category]/page.tsx` | One of the 6 categories, e.g. `/shop/glassware`; `notFound()` on an invalid slug; statically generated for all 6 |
+| `/collections` | `src/app/collections/page.tsx` | Index of the 4 curated collections |
+| `/collections/[collection]` | `src/app/collections/[collection]/page.tsx` | One curated collection, e.g. `/collections/home-bar-edit`; `notFound()` on an invalid slug; statically generated for all 4 |
+| `/products/[slug]` | `src/app/products/[slug]/page.tsx` | Product detail page, e.g. `/products/ribbed-champagne-coupe-set` → `/products/solstice-coupe-glasses` in the seed data; `notFound()` on an invalid slug; statically generated for all 22 products |
+
+`/shop/[category]` and `/collections/[collection]` both render the same
+`ShopExperience` client component (`src/components/catalogue/ShopExperience.tsx`)
+as `/shop`, passed a pre-scoped product list and a "locked" facet
+(`lockedCategory` / `lockedCollection`) that hides the now-redundant filter
+section (you can't un-filter "Glassware" from within `/shop/glassware`) —
+one implementation, three entry points, so filtering/sorting/search/pagination
+behave identically everywhere. All five routes are prerendered at build time
+via `generateStaticParams`; `ShopExperience` itself is a Client Component
+(it reads/writes `useSearchParams()`), so each route wraps it in
+`<Suspense fallback={<ShopSkeleton />}>` — that Suspense boundary **is** the
+page's loading state, not a simulated one.
+
+### Filtering
+
+Facets, all reflected in the URL as query parameters so any combination is
+a shareable link:
+
+| Facet | Query param | Example |
+| --- | --- | --- |
+| Category | `category` (CSV of slugs) | `?category=glassware,barware` |
+| Product type | `type` (CSV) | `?type=Wine%20Glasses` |
+| Collection | `collection` (CSV of collection ids) | `?collection=home-bar-edit` |
+| Colour | `color` (CSV) | `?color=Ivory,Sage` |
+| Material | `material` (CSV) | `?material=Solid%20oak` |
+| Capacity | `capacity` (CSV) | `?capacity=300%20ml` |
+| Set size | `set` (CSV) | `?set=Set%20of%204` |
+| Price range | `price` (`min-max`) | `?price=500-2000` |
+| Rating | `rating` (minimum, 3 or 4) | `?rating=4` |
+| Availability | `availability=in-stock` | in-stock only |
+| New arrivals | `new=1` | badge-driven |
+| Sale products | `sale=1` | has a `compareAtPrice` |
+| Search | `q` | also matches SKU/tags/collection — see below |
+| Sort | `sort` | see table below |
+| Load-more depth | `page` | how many pages of results have been loaded |
+
+Desktop gets an always-visible sidebar (`FilterSidebar.tsx`) of expandable
+`Disclosure` sections that apply each change immediately. Mobile gets a
+slide-up sheet (`FilterDrawer.tsx`) with its own draft state — nothing
+filters until **Apply filters (N)** is tapped, with a separate **Clear
+all**. Both render the exact same `FilterPanel.tsx` content so they can
+never drift apart. Active filters also surface as removable chips
+(`ActiveFilterChips.tsx`) above the grid.
+
+### Sorting
+
+`Featured` (default) · `Newest` · `Best Selling` · `Price: Low to High` ·
+`Price: High to Low` · `Highest Rated` · `Biggest Discount` — see
+`SORT_OPTIONS` in `src/lib/catalogue.ts`.
+
+### Product card & quick view
+
+`ProductCard.tsx` shows: primary image, a secondary image swapped in on
+hover, category label, name, collection/short description, price with a
+struck-through original price and a `-N%` badge when on sale, `New` /
+`Bestseller` / `Limited` / `Gift Edit` badges, an out-of-stock state
+(dims the quick-add button, swaps its label to "Notify me"), star rating +
+review count (in `detailed` mode), a wishlist heart button, a quick-view
+eye button (only rendered where a handler is passed, e.g. the shop grid),
+and colour/variant swatch dots. Quick view (`QuickView.tsx`) opens a modal
+with the same core information plus a variant picker and "View full
+details" link to the full PDP, without leaving the grid.
+
+### Search
+
+`src/lib/catalogue.ts`'s `searchProducts()` matches name, SKU, short/full
+description, category name, product type, collection names and tags —
+every whitespace-separated token in the query must match somewhere, via an
+exact substring check first and a Levenshtein-distance-1 fallback per word
+for basic typo tolerance (so "decantr" still finds "Decanter"). The same
+function powers both `SearchModal.tsx` (the header's full-screen search,
+which also keeps recent searches in `localStorage` and suggests popular
+categories on no results) and the `q` filter on the shop pages, so a
+search's "View all results" link and the shop's own search box behave
+identically. `highlightMatch()` wraps the matched substring in `<mark>` for
+visual emphasis in the search results list.
+
+### Empty / loading / error states
+
+`EmptyState.tsx` (with a query-aware headline and a "Clear all filters"
+action when applicable), `ProductGridSkeleton.tsx` (the route-level
+Suspense fallback, and reused while "Load more" is in flight), and
+`ErrorState.tsx` (a defensive boundary around the filter/sort/search
+pipeline — genuinely reachable once catalogue reads become real, possibly
+failing network calls against Supabase).
+
+### Pagination
+
+Grid results load 12 at a time (`PRODUCTS_PER_PAGE` in `src/lib/catalogue.ts`)
+via a "Load more" button (`LoadMoreButton.tsx`) with a short simulated
+delay standing in for what will be a real async fetch once Supabase is
+wired up; how many pages have been loaded is itself reflected in the URL's
+`page` param, so a reloaded or shared URL restores exactly what was on
+screen.
+
+---
+
 ## Folder structure
 
 ```
@@ -74,19 +187,31 @@ clink-co/
 │  ├─ app/
 │  │  ├─ layout.tsx                Root layout: fonts, metadata, Header/Footer/CookieBanner
 │  │  ├─ page.tsx                  Homepage (assembles all 12 sections + JSON-LD)
-│  │  └─ globals.css               Design tokens (@theme) + base styles
+│  │  ├─ globals.css               Design tokens (@theme) + base styles
+│  │  ├─ shop/
+│  │  │  ├─ page.tsx                /shop — full catalogue
+│  │  │  └─ [category]/page.tsx     /shop/[category] — locked-category catalogue
+│  │  ├─ collections/
+│  │  │  ├─ page.tsx                /collections — index of curated collections
+│  │  │  └─ [collection]/page.tsx   /collections/[collection] — locked-collection catalogue
+│  │  └─ products/
+│  │     └─ [slug]/page.tsx         /products/[slug] — product detail page
 │  ├─ components/
 │  │  ├─ ui/                       Button, Badge, Card, Input, Textarea, Label, Modal, Switch,
-│  │  │                            Checkbox, Carousel, Rating
+│  │  │                            Checkbox, Carousel, Rating, Disclosure (accordion section)
 │  │  ├─ layout/                   Header, MegaMenu, MobileDrawer, Footer, Logo, NewsletterForm,
 │  │  │                            CookieBanner, CookieSettingsLink, nav-data.ts (shared nav/footer data)
 │  │  ├─ search/                   SearchModal (full-screen search overlay)
-│  │  ├─ product/                  ProductCard, CategoryCard
+│  │  ├─ catalogue/                ShopExperience, FilterSidebar/FilterDrawer/FilterPanel,
+│  │  │                            ActiveFilterChips, SortSelect, Breadcrumbs, ProductGrid,
+│  │  │                            ProductGridSkeleton, ShopSkeleton, EmptyState, ErrorState,
+│  │  │                            LoadMoreButton — see "Shop & product catalogue" above
+│  │  ├─ product/                  ProductCard, CategoryCard, QuickView, ProductDetailView
 │  │  ├─ sections/                 All 12 homepage sections — see table above
 │  │  ├─ cart/                     CartDrawer
 │  │  ├─ motion/                   Reveal (scroll-triggered fade-up)
 │  │  └─ icons/                    SocialIcons, PaymentIcons — lucide-react dropped brand/payment marks
-│  ├─ data/                        Seed data: products.ts, categories.ts, hero-slides.ts,
+│  ├─ data/                        Seed data: products.ts (22 products), categories.ts, hero-slides.ts,
 │  │                                collections.ts, reviews.ts
 │  ├─ types/                       Product, Category domain types
 │  ├─ config/
@@ -95,6 +220,7 @@ clink-co/
 │  │  ├─ supabase/                 client.ts (browser), server.ts (RSC/actions), types.ts (DB schema)
 │  │  ├─ validations/              Zod schemas: auth.ts, newsletter.ts (+ newsletterSectionSchema)
 │  │  ├─ hooks/                    use-mounted.ts, use-horizontal-scroll.ts
+│  │  ├─ catalogue.ts              Filter/sort/search + URL (de)serialization — see above
 │  │  └─ utils.ts                  cn(), formatPrice(), slugify()
 │  ├─ store/
 │  │  ├─ cart-store.ts             Zustand cart (add/remove/update, persisted)
@@ -228,9 +354,14 @@ safe default (solid) from the start.
   accordion for Shop/Collections, account/wishlist links, help links and
   social icons.
 - **`SearchModal`** — full-screen overlay with live product suggestions
-  (filtered client-side against seed data), recent searches
-  (`localStorage`), popular categories, and full keyboard navigation
-  (`↑`/`↓`/`Enter`/`Escape`).
+  matched via `src/lib/catalogue.ts`'s `searchProducts()` (name, SKU,
+  description, category, product type, collection and tags, with basic
+  typo tolerance — see "Shop & product catalogue" above), result-text
+  highlighting, recent searches (`localStorage`), popular-category
+  suggestions on no results, and full keyboard navigation
+  (`↑`/`↓`/`Enter`/`Escape`). Pressing Enter with no result selected routes
+  to `/shop?q=<query>`, so a search and the shop's own filtering share one
+  matching implementation.
 - **`nav-data.ts`** centralizes nav links, collections, footer link groups,
   social links and contact info so Header/MegaMenu/MobileDrawer/Footer never
   drift out of sync.
@@ -259,14 +390,73 @@ per-category `Switch` toggles). The decision persists to `localStorage`;
 
 ## Seed data & placeholder imagery
 
-`src/data/products.ts` (18 products across 6 categories, priced in ZAR,
-several with colour/style `variants`) and `src/data/categories.ts`
-(Glassware, Barware, Tableware, Serveware, Gift Sets, Accessories) contain
+### How catalogue data is currently stored
+
+`src/data/products.ts` is a plain, in-memory TypeScript array of 22
+`Product` objects (`src/types/product.ts`) — no database, no fetch, no
+loading state at the data layer. Each product carries `sku`, short/full
+`description`, `price`/`compareAtPrice` (ZAR), `images`, `categorySlug`
+(one of 6 top-level categories), `productType` (a finer facet, e.g. "Wine
+Glasses"), `collectionSlugs` (0+ curated collections), `material`,
+`colors`/`variants` (swatches with optional per-option pricing),
+`capacity`, `setSize`, `stockQuantity`/`inStock`, `featured`, `badges`,
+`rating`/`reviewCount`, `tags`, `careInstructions`, `dimensions` and
+`weightGrams`. Helper functions in the same file (`getProductBySlug`,
+`getProductsByCategory`, `getBestsellers`, `getRelatedProducts`, etc.) are
+the only way the rest of the app reads product data — components never
+`.filter()`/`.find()` the array directly. `src/data/categories.ts` and
+`collections.ts` follow the same pattern, and deliberately derive their
+`itemCount` / product counts from the live `products` array (`products
+.filter(...).length`) at module load rather than hardcoding a number that
+could drift out of sync as products are added. All of this — plus
+`src/data/hero-slides.ts` and `reviews.ts` for the Hero and Reviews
+sections — is synchronous, so every page in this build (including
+`/shop`, `/products/[slug]`, etc.) can be statically generated at build
+time with `generateStaticParams`.
+
+### How catalogue data will connect to Supabase
+
+`src/lib/supabase/types.ts` already defines the target database schema —
+the `Product`/`Category` shapes in `src/types/` were designed to match it
+field-for-field, so the migration is a data-source swap, not a rewrite:
+
+1. **Schema** — create `products`, `categories` and `collections` tables
+   (plus a `product_collections` join table for the many-to-many
+   relationship `collectionSlugs` represents) in Supabase using
+   `src/lib/supabase/types.ts` as the DDL reference.
+2. **Reads** — replace the `src/data/*.ts` arrays with query functions of
+   the same name and signature (`getProductBySlug(slug)`,
+   `getProductsByCategory(slug)`, etc.), backed by
+   `src/lib/supabase/server.ts`'s server client, so every call site
+   (`page.tsx` files, `ShopExperience`, `SearchModal`) keeps working
+   unchanged — only the implementation behind each helper changes from an
+   `Array.prototype` call to a `supabase.from("products").select(...)`
+   call.
+3. **Async boundary** — those helpers become `async`, which the route
+   `page.tsx` files already anticipate (they're Server Components awaiting
+   `params`/`generateMetadata`), so the change is additive there; the
+   client-side pieces (`ShopExperience`, `SearchModal`) receive their
+   product list as a prop from the server rather than importing the array
+   directly, so their filter/sort/search logic in `src/lib/catalogue.ts` —
+   which is already pure and framework-agnostic — needs no change at all.
+4. **Filtering & search at scale** — `src/lib/catalogue.ts`'s
+   `filterProducts`/`sortProducts`/`searchProducts` currently run in
+   memory over the full catalogue; once product count outgrows what's
+   reasonable to ship to the client, the same filter/sort inputs
+   (`CatalogueFilters`, `SortKey`) translate directly into Supabase
+   `.eq()`/`.in()`/`.gte()`/`.lte()`/`.order()` calls (and
+   `.textSearch()` or `pg_trgm` for fuzzy search) run server-side, with
+   `ErrorState`/`ProductGridSkeleton` becoming genuinely reachable states
+   instead of the defensive/simulated ones they are today.
+5. **Images** — swap the local placeholder SVG paths in `images: []` for
+   Supabase Storage URLs (the `remotePatterns` example is already
+   commented into `next.config.ts`) once real photography exists.
+
+`src/data/categories.ts` (Glassware, Barware, Tableware, Serveware, Gift
+Sets, Accessories) and `collections.ts` (4 curated collections) contain
 realistic, Clink & Co–specific copy typed against `src/types/product.ts` /
-`category.ts`. `src/data/hero-slides.ts`, `collections.ts` and `reviews.ts`
-back the Hero, Curated Collections and Reviews sections respectively. Swap
-all of these for Supabase queries once the corresponding tables exist — the
-product/category shapes already match `src/lib/supabase/types.ts`.
+`category.ts`. `src/data/hero-slides.ts` and `reviews.ts` back the Hero
+and Reviews sections respectively.
 
 Product, category, hero and editorial imagery is **not** final —
 `public/images/` holds generated placeholder SVGs (soft brand-palette
@@ -452,8 +642,23 @@ Verified at phone (390px), tablet (834px) and desktop (1440px) widths:
 - [x] Production build, lint and typecheck all passing; keyboard/focus
       flows and the full form + carousel + recently-viewed flows manually
       verified against both `next dev` and a production `next build`
-- [ ] Shop / category listing pages, filtering & sorting
-- [ ] Product detail page
+- [x] Shop, category and collection listing pages (`/shop`,
+      `/shop/[category]`, `/collections`, `/collections/[collection]`)
+      with full filtering, sorting, search and load-more pagination, all
+      reflected in shareable URL query parameters
+- [x] Product detail page (`/products/[slug]`) with variant selection,
+      spec sheet, care instructions, dimensions and related products
+- [x] Quick-view modal from the shop grid; enhanced global search (SKU/
+      tags/collection matching, result highlighting, typo tolerance,
+      recent searches, no-result suggestions)
+- [x] 22-product seed catalogue with the full commerce schema (SKU,
+      pricing, variants, stock, badges, ratings, tags, care, dimensions)
+- [x] Production build, lint and typecheck all passing for the shop/
+      catalogue build; filter/sort/search flows, mobile filter drawer,
+      quick view and PDP manually verified in a real browser against both
+      `next dev` and a production `next build`
 - [ ] Cart page / full checkout flow (Stripe)
 - [ ] Account pages (Supabase Auth: sign in, sign up, order history)
 - [ ] Real product photography and the placeholder assets listed above
+- [ ] Wire `src/data/*.ts` up to Supabase (schema + query functions — see
+      "How catalogue data will connect to Supabase" above)

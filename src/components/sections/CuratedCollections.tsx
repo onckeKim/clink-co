@@ -17,7 +17,7 @@ export function CuratedCollections() {
       </Reveal>
 
       <div className="mt-10 grid gap-5 sm:grid-cols-3">
-        {curatedCollections.map((collection, i) => (
+        {curatedCollections.slice(0, 3).map((collection, i) => (
           <Reveal key={collection.id} delay={i * 0.08}>
             <Link
               href={collection.href}
