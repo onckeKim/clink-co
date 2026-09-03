@@ -14,7 +14,7 @@ export async function POST(request: Request, { params }: RouteContext<"/api/admi
   }
 
   const { orderNumber } = await params;
-  const before = getOrderByNumber(orderNumber);
+  const before = await getOrderByNumber(orderNumber);
   if (!before) return NextResponse.json({ error: "Order not found." }, { status: 404 });
 
   const body = await request.json().catch(() => ({}));
@@ -23,7 +23,7 @@ export async function POST(request: Request, { params }: RouteContext<"/api/admi
     return NextResponse.json({ error: parsed.error.issues[0]?.message ?? "Invalid request." }, { status: 400 });
   }
 
-  const order = cancelOrder(orderNumber, parsed.data.reason);
+  const order = await cancelOrder(orderNumber, parsed.data.reason);
   if (!order) return NextResponse.json({ error: "Order not found." }, { status: 404 });
 
   recordAuditLog({

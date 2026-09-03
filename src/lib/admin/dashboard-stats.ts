@@ -54,7 +54,7 @@ function daysAgo(days: number, from: Date): Date {
 }
 
 export async function getDashboardStats(now: Date = new Date()): Promise<DashboardStats> {
-  const orders = getAllOrders();
+  const orders = await getAllOrders();
   const paidOrders = orders.filter((o) => PAID_STATUSES.has(o.status));
 
   const totalSales = paidOrders.reduce((sum, o) => sum + o.total, 0);

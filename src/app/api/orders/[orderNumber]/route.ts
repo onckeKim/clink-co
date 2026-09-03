@@ -11,7 +11,7 @@ import { getOrderByNumber } from "@/lib/orders/store";
  */
 export async function GET(_request: Request, { params }: RouteContext<"/api/orders/[orderNumber]">) {
   const { orderNumber } = await params;
-  const order = getOrderByNumber(orderNumber);
+  const order = await getOrderByNumber(orderNumber);
   if (!order) {
     return NextResponse.json({ error: "Order not found." }, { status: 404 });
   }

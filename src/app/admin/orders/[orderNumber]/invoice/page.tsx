@@ -11,7 +11,7 @@ export default async function AdminOrderInvoicePage({ params }: PageProps<"/admi
   await requirePermission("orders:view");
   const { orderNumber } = await params;
 
-  const order = getOrderByNumber(orderNumber);
+  const order = await getOrderByNumber(orderNumber);
   if (!order) notFound();
 
   const settings = await getStoreSettings();

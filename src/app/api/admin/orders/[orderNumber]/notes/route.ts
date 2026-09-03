@@ -24,7 +24,7 @@ export async function POST(request: Request, { params }: RouteContext<"/api/admi
   }
 
   const { orderNumber } = await params;
-  const order = getOrderByNumber(orderNumber);
+  const order = await getOrderByNumber(orderNumber);
   if (!order) return NextResponse.json({ error: "Order not found." }, { status: 404 });
 
   const body = await request.json().catch(() => null);

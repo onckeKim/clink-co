@@ -16,8 +16,9 @@ export type DeleteProductResult = { ok: true } | { ok: false; reason: string };
  * importing it there would pull a server-only chain into the client
  * bundle. This file is only ever imported from the admin DELETE route.
  */
-export function deleteProduct(id: string): DeleteProductResult {
-  const referenced = getAllOrders().some((order) => order.lines.some((line) => line.productId === id));
+export async function deleteProduct(id: string): Promise<DeleteProductResult> {
+  const orders = await getAllOrders();
+  const referenced = orders.some((order) => order.lines.some((line) => line.productId === id));
   if (referenced) {
     return { ok: false, reason: "This product appears in past orders and can't be deleted — archive it instead." };
   }

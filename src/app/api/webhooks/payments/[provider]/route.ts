@@ -1,15 +1,23 @@
 import { NextResponse } from "next/server";
 import { getPaymentProvider, paymentProviders } from "@/lib/payments";
-import {
-  getOrderByNumber,
-  getOrderByPaymentReference,
-  hasProcessedWebhookEvent,
-  markWebhookEventProcessed,
-  setOrderStatus,
-} from "@/lib/orders/store";
+import { getOrderByNumber, getOrderByPaymentReference, claimWebhookEvent, setOrderStatus } from "@/lib/orders/store";
 import { sendPaymentReceivedEmail, sendPaymentFailedEmail, sendPaymentFailureAdminNotification } from "@/lib/email";
 import type { NormalizedPaymentStatus } from "@/lib/payments/types";
 import type { OrderStatus, PaymentMethodId } from "@/lib/orders/types";
+import type { Database } from "@/lib/supabase/types";
+
+/** Not "cancelled" — payment_status has no such value; a cancelled attempt is recorded as a failed one in the payments ledger (the order's own status is the source of truth for "cancelled"). */
+function mapPaymentLedgerStatus(status: NormalizedPaymentStatus): Database["public"]["Enums"]["payment_status"] {
+  switch (status) {
+    case "paid":
+      return "succeeded";
+    case "failed":
+    case "cancelled":
+      return "failed";
+    default:
+      return "pending";
+  }
+}
 
 function headersToRecord(headers: Headers): Record<string, string> {
   const record: Record<string, string> = {};
@@ -55,24 +63,32 @@ export async function POST(request: Request, { params }: RouteContext<"/api/webh
     return NextResponse.json({ error: "Invalid or unverifiable webhook payload." }, { status: 400 });
   }
 
-  const eventKey = `${provider.id}:${event.eventId}`;
-  if (hasProcessedWebhookEvent(eventKey)) {
-    return NextResponse.json({ ok: true, alreadyProcessed: true });
-  }
-
   const order = event.orderNumber
-    ? getOrderByNumber(event.orderNumber)
-    : getOrderByPaymentReference(event.providerReference);
+    ? await getOrderByNumber(event.orderNumber)
+    : await getOrderByPaymentReference(event.providerReference);
 
   if (!order) {
     return NextResponse.json({ error: "No matching order for this payment reference." }, { status: 404 });
+  }
+
+  const eventKey = `${provider.id}:${event.eventId}`;
+  const claimed = await claimWebhookEvent({
+    orderId: order.id,
+    provider: provider.id,
+    eventKey,
+    amount: order.total,
+    status: mapPaymentLedgerStatus(event.status),
+    providerReference: event.providerReference,
+  });
+  if (!claimed) {
+    return NextResponse.json({ ok: true, alreadyProcessed: true });
   }
 
   const nextStatus = mapStatus(event.status);
   if (nextStatus) {
     const wasAlreadyPaid = order.status === "paid";
     const wasAlreadyFailed = order.status === "payment_failed";
-    setOrderStatus(order.orderNumber, nextStatus);
+    await setOrderStatus(order.orderNumber, nextStatus);
     if (nextStatus === "paid" && !wasAlreadyPaid) {
       void sendPaymentReceivedEmail(order);
     }
@@ -82,6 +98,5 @@ export async function POST(request: Request, { params }: RouteContext<"/api/webh
     }
   }
 
-  markWebhookEventProcessed(eventKey);
   return NextResponse.json({ ok: true });
 }

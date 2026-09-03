@@ -14,7 +14,7 @@ export async function POST(request: Request, { params }: RouteContext<"/api/admi
   }
 
   const { orderNumber } = await params;
-  const before = getOrderByNumber(orderNumber);
+  const before = await getOrderByNumber(orderNumber);
   if (!before) return NextResponse.json({ error: "Order not found." }, { status: 404 });
 
   const body = await request.json().catch(() => null);
@@ -26,7 +26,7 @@ export async function POST(request: Request, { params }: RouteContext<"/api/admi
     return NextResponse.json({ error: "Refund amount can't exceed the order total." }, { status: 400 });
   }
 
-  const order = recordOrderRefund(orderNumber, parsed.data);
+  const order = await recordOrderRefund(orderNumber, parsed.data);
   if (!order) return NextResponse.json({ error: "Order not found." }, { status: 404 });
 
   recordAuditLog({

@@ -20,7 +20,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Missing orderNumber, reference or status." }, { status: 400 });
   }
 
-  const order = getOrderByNumber(body.orderNumber);
+  const order = await getOrderByNumber(body.orderNumber);
   if (!order || order.paymentReference !== body.reference) {
     return NextResponse.json({ error: "Order or payment reference doesn't match." }, { status: 404 });
   }

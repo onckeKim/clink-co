@@ -36,7 +36,7 @@ export async function GET(request: NextRequest) {
     firstName: meta.first_name ?? fallbackFirst,
     lastName: meta.last_name ?? fallbackRest.join(" "),
   });
-  if (user.email) linkGuestOrdersToUser(user.email, user.id);
+  if (user.email) await linkGuestOrdersToUser(user.email, user.id);
 
   return NextResponse.redirect(`${origin}/account`);
 }

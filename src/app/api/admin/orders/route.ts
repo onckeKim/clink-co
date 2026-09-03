@@ -18,5 +18,5 @@ export async function GET(request: Request) {
     paymentMethod: (url.searchParams.get("paymentMethod") as PaymentMethodId) ?? undefined,
   };
 
-  return NextResponse.json({ orders: listAdminOrders(filters) });
+  return NextResponse.json({ orders: await listAdminOrders(filters) });
 }

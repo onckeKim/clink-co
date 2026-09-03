@@ -17,7 +17,7 @@ export async function GET(_request: Request, { params }: RouteContext<"/api/acco
   if (!user) return NextResponse.json({ error: "Not signed in." }, { status: 401 });
 
   const { orderNumber } = await params;
-  const order = getOrderByNumber(orderNumber);
+  const order = await getOrderByNumber(orderNumber);
   if (!order || order.userId !== user.id) {
     // Same 404 whether the order doesn't exist or belongs to someone else
     // — confirming "that order exists but isn't yours" is its own leak.

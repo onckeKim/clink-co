@@ -78,7 +78,7 @@ export async function DELETE(_request: Request, { params }: RouteContext<"/api/a
   const before = getAdminProductById(id);
   if (!before) return NextResponse.json({ error: "Product not found." }, { status: 404 });
 
-  const result = deleteProduct(id);
+  const result = await deleteProduct(id);
   if (!result.ok) return NextResponse.json({ error: result.reason }, { status: 409 });
 
   recordAuditLog({

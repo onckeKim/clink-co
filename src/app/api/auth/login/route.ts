@@ -56,6 +56,6 @@ export async function POST(request: Request) {
     );
   }
 
-  const linkedOrders = linkGuestOrdersToUser(email, data.user.id);
+  const linkedOrders = await linkGuestOrdersToUser(email, data.user.id);
   return NextResponse.json({ ok: true, linkedOrders });
 }

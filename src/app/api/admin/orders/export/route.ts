@@ -19,7 +19,7 @@ export async function GET(request: Request) {
     status: (url.searchParams.get("status") as OrderStatus) ?? undefined,
     paymentMethod: (url.searchParams.get("paymentMethod") as PaymentMethodId) ?? undefined,
   };
-  const orders = listAdminOrders(filters);
+  const orders = await listAdminOrders(filters);
 
   recordAuditLog({
     userId: ctx.user.id,

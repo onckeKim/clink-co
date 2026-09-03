@@ -53,7 +53,7 @@ export async function POST(request: Request) {
   }
 
   await ensureProfile({ id: user.id, email: user.email, firstName, lastName, marketingConsent });
-  const linkedOrders = linkGuestOrdersToUser(email, user.id);
+  const linkedOrders = await linkGuestOrdersToUser(email, user.id);
 
   // A session is only present here if the project has email confirmation
   // turned off; otherwise the account exists but is unconfirmed until the

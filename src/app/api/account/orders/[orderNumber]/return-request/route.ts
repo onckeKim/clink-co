@@ -13,7 +13,7 @@ export async function POST(
   if (!user) return NextResponse.json({ error: "Not signed in." }, { status: 401 });
 
   const { orderNumber } = await params;
-  const order = getOrderByNumber(orderNumber);
+  const order = await getOrderByNumber(orderNumber);
   if (!order || order.userId !== user.id) {
     return NextResponse.json({ error: "Order not found." }, { status: 404 });
   }

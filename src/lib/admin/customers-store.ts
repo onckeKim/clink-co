@@ -17,8 +17,8 @@ export interface AdminCustomerSummary extends Profile {
 /** Orders that count toward a customer's spend — a pending/failed/cancelled order was never actually paid. */
 const PAID_STATUSES = new Set(["paid", "fulfilled"]);
 
-function toSummary(profile: Profile): AdminCustomerSummary {
-  const orders = getOrdersByUserId(profile.id);
+async function toSummary(profile: Profile): Promise<AdminCustomerSummary> {
+  const orders = await getOrdersByUserId(profile.id);
   const totalSpend = orders
     .filter((order) => PAID_STATUSES.has(order.status))
     .reduce((sum, order) => sum + order.total, 0);
@@ -48,7 +48,7 @@ export async function listAdminCustomers(filters?: AdminCustomerFilters): Promis
     );
   }
 
-  return profiles.map(toSummary);
+  return Promise.all(profiles.map(toSummary));
 }
 
 export async function getAdminCustomerById(id: string): Promise<AdminCustomerSummary | undefined> {

@@ -39,7 +39,7 @@ export async function POST(request: Request) {
   // unlike a guest order (see linkGuestOrdersToUser in src/lib/orders/store.ts).
   const user = await getUser();
 
-  const existingOrder = findOrderByIdempotencyKey(data.idempotencyKey);
+  const existingOrder = await findOrderByIdempotencyKey(data.idempotencyKey);
   if (existingOrder) {
     return NextResponse.json({
       orderNumber: existingOrder.orderNumber,
@@ -161,7 +161,7 @@ export async function POST(request: Request) {
       notifyUrl: `${origin}/api/webhooks/payments/${provider.id}`,
     });
 
-    updateOrder(order.orderNumber, {
+    await updateOrder(order.orderNumber, {
       paymentReference: payment.providerReference,
       paymentRedirectUrl: payment.redirectUrl,
     });
@@ -178,7 +178,7 @@ export async function POST(request: Request) {
 
     return NextResponse.json({ orderNumber: order.orderNumber, redirectUrl: payment.redirectUrl });
   } catch (error) {
-    updateOrder(order.orderNumber, { status: "payment_failed" });
+    await updateOrder(order.orderNumber, { status: "payment_failed" });
     return NextResponse.json(
       { error: error instanceof Error ? error.message : "Payment could not be started." },
       { status: 502 },

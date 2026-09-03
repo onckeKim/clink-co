@@ -14,6 +14,6 @@ export async function POST() {
   if (!user) return NextResponse.json({ error: "Not signed in." }, { status: 401 });
   if (!user.email) return NextResponse.json({ linkedOrders: 0 });
 
-  const linkedOrders = linkGuestOrdersToUser(user.email, user.id);
+  const linkedOrders = await linkGuestOrdersToUser(user.email, user.id);
   return NextResponse.json({ linkedOrders });
 }

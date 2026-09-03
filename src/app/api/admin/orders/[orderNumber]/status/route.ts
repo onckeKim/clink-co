@@ -14,7 +14,7 @@ export async function PATCH(request: Request, { params }: RouteContext<"/api/adm
   }
 
   const { orderNumber } = await params;
-  const before = getOrderByNumber(orderNumber);
+  const before = await getOrderByNumber(orderNumber);
   if (!before) return NextResponse.json({ error: "Order not found." }, { status: 404 });
 
   const body = await request.json().catch(() => null);
@@ -23,7 +23,7 @@ export async function PATCH(request: Request, { params }: RouteContext<"/api/adm
     return NextResponse.json({ error: parsed.error.issues[0]?.message ?? "Invalid status." }, { status: 400 });
   }
 
-  const order = setOrderStatus(orderNumber, parsed.data.status);
+  const order = await setOrderStatus(orderNumber, parsed.data.status);
   if (!order) return NextResponse.json({ error: "Order not found." }, { status: 404 });
 
   recordAuditLog({

@@ -2,12 +2,59 @@ import { describe, it, expect, vi } from "vitest";
 import { createOrder, findOrderByIdempotencyKey, getOrderByNumber } from "@/lib/orders/store";
 import type { Order } from "@/lib/orders/types";
 
+// The "server-only" package works by resolving to a no-op under the
+// "react-server" export condition (which only Next.js's own build applies)
+// and to a module that unconditionally throws everywhere else — including
+// under Vite/Vitest, which doesn't apply that condition. Every module in
+// this file's import chain (orders/store.ts, and db/settings.ts/settings-store.ts
+// via the mocked settings store below) carries that import for real
+// production safety, so it's mocked out here rather than removed there.
+vi.mock("server-only", () => ({}));
+
 // orders/store.ts reads the order-number prefix from the DB-backed (server-only)
-// settings store — mocked here so this unit test can run in the test environment
-// without a real Supabase connection.
+// settings store, and every order read/write from the DB-backed (server-only)
+// orders DAL — both mocked here so this unit test can run without a real
+// Supabase connection. The orders mock is a small in-memory fake that
+// mirrors the real table's two guarantees this test suite actually cares
+// about: a unique idempotency_key returns the same row instead of creating
+// a second one, and order_number round-trips through a lookup.
 vi.mock("@/lib/admin/settings-store", () => ({
   getStoreSettings: vi.fn().mockResolvedValue({ orderNumberPrefix: "CC" }),
 }));
+
+vi.mock("@/lib/db/orders", () => {
+  const ordersByNumber = new Map<string, Record<string, unknown>>();
+  const ordersByIdempotencyKey = new Map<string, Record<string, unknown>>();
+
+  function withItems(row: Record<string, unknown>) {
+    return { ...row, items: [] };
+  }
+
+  return {
+    createOrderServerSide: vi.fn(async (order: Record<string, unknown>) => {
+      const existing = ordersByIdempotencyKey.get(order.idempotency_key as string);
+      if (existing) return withItems(existing);
+
+      const row: Record<string, unknown> = {
+        id: crypto.randomUUID(),
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+        ...order,
+      };
+      ordersByNumber.set(row.order_number as string, row);
+      ordersByIdempotencyKey.set(row.idempotency_key as string, row);
+      return withItems(row);
+    }),
+    getOrderByNumber: vi.fn(async (orderNumber: string) => {
+      const row = ordersByNumber.get(orderNumber);
+      return row ? withItems(row) : null;
+    }),
+    getOrderByIdempotencyKey: vi.fn(async (key: string) => {
+      const row = ordersByIdempotencyKey.get(key);
+      return row ? withItems(row) : null;
+    }),
+  };
+});
 
 const testAddress = {
   fullName: "Ada Lovelace",
@@ -71,7 +118,7 @@ describe("order number generation", () => {
 
   it("produces a unique, retrievable order number every time", async () => {
     const order = await createOrder(baseOrderInput());
-    expect(getOrderByNumber(order.orderNumber)?.id).toBe(order.id);
+    expect((await getOrderByNumber(order.orderNumber))?.id).toBe(order.id);
   });
 
   it("resets the daily counter when the date changes", async () => {
@@ -109,10 +156,10 @@ describe("createOrder idempotency", () => {
   it("looks up an order by its idempotency key", async () => {
     const key = crypto.randomUUID();
     const order = await createOrder(baseOrderInput({ idempotencyKey: key }));
-    expect(findOrderByIdempotencyKey(key)?.id).toBe(order.id);
+    expect((await findOrderByIdempotencyKey(key))?.id).toBe(order.id);
   });
 
-  it("returns undefined for an unknown idempotency key", () => {
-    expect(findOrderByIdempotencyKey("never-used-key")).toBeUndefined();
+  it("returns undefined for an unknown idempotency key", async () => {
+    expect(await findOrderByIdempotencyKey("never-used-key")).toBeUndefined();
   });
 });
