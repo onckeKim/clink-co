@@ -661,6 +661,19 @@ request is a database read, still with no redeploy in between.
 
 ---
 
+## Database (Supabase)
+
+The complete target database — 35 tables, full Row Level Security, storage
+buckets, seed data, generated TypeScript types, and a typed data-access
+layer (`src/lib/db/**`) — lives under `supabase/` and is ready to run
+against a real Supabase project today; it's what the "swapped for real
+Supabase tables" line above is describing. See **[supabase/README.md](supabase/README.md)**
+for the full schema (table relationships, every RLS policy, the role
+permission matrix), how to run the migrations, how to seed it, the storage
+bucket setup, and the security decisions behind it.
+
+---
+
 ## Folder structure
 
 ```
@@ -1024,7 +1037,7 @@ cp .env.local.example .env.local
 | ------------------------------------- | -------------------------------------- |
 | `NEXT_PUBLIC_SUPABASE_URL`            | Auth, database, storage                |
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY`       | Auth, database, storage — this alone is enough for full sign-up/login/logout/reset |
-| `SUPABASE_SERVICE_ROLE_KEY`           | Server-only admin operations (not currently used by anything in this build) |
+| `SUPABASE_SERVICE_ROLE_KEY`           | The Supabase data-access layer's server-only writes (order/payment creation, discount redemption, audit log) — see `src/lib/supabase/service.ts` and [supabase/README.md](supabase/README.md). Not used by the in-memory stores the app runs on today. |
 | `NEXT_PUBLIC_SITE_URL`                | Metadata / OpenGraph canonical URLs / JSON-LD / auth email redirect links |
 | `NEXT_PUBLIC_ENABLE_SOCIAL_LOGIN`     | Shows the "Continue with Google" button (also requires enabling Google in the Supabase dashboard) |
 | `ADMIN_BOOTSTRAP_EMAILS`              | Auto-grants Super Administrator to these emails on first sign-up/login — the only way to create your first admin. See [Admin dashboard](#admin-dashboard) below. |
