@@ -67,8 +67,15 @@ export interface Order {
   paymentReference?: string;
   paymentRedirectUrl?: string;
 
-  /** Populated once a courier handoff exists — no fulfilment/admin workflow sets these yet, so they stay undefined for every order today. See the account order-detail view for the honest empty state this produces. */
+  /** Set from /admin/orders once a courier handoff exists — undefined until the admin adds tracking. See the account order-detail view for the honest empty state this produces until then. */
   trackingCarrier?: string;
   trackingNumber?: string;
   trackingUrl?: string;
+
+  /** Set by an admin cancelling the order from /admin/orders — distinct from a payment-provider-initiated `payment_failed`. */
+  cancelledReason?: string;
+  /** Set by an admin recording a refund from /admin/orders. A refund doesn't itself change `status` — the admin still decides separately whether the order should also move to `cancelled`. */
+  refundAmount?: number;
+  refundReason?: string;
+  refundedAt?: string;
 }

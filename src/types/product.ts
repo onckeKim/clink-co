@@ -88,4 +88,25 @@ export interface Product {
   pairsWithSlugs?: string[];
   /** Packaging/gifting copy for the PDP's "Packaging information" accordion — falls back to generic copy when absent. */
   packagingInfo?: string;
+
+  // --- Admin-managed fields (src/lib/admin/products-store.ts) ---
+  /** Undefined is treated as "published" (every pre-admin seed product) — only admin-created drafts are explicitly "draft". Draft products are excluded from shop/collection/search listings but their PDP stays reachable (same precedent as `discontinued`), showing a draft notice — this is the "preview before publishing" mechanism. */
+  publishStatus?: "draft" | "published";
+  /** Below this stock quantity, the product is flagged "low stock" on the admin dashboard/product list. Falls back to the site-wide default (see src/components/product/StockStatus.tsx's LOW_STOCK_THRESHOLD) when unset. */
+  lowStockThreshold?: number;
+  /**
+   * Scheduled-sale fields. When `saleStartsAt`/`saleEndsAt` are set, the
+   * products store computes `price`/`compareAtPrice` from these on every
+   * read (see `applyScheduledPricing` in products-store.ts) rather than
+   * from the authored values directly — outside the window, `price` reverts
+   * to `regularPrice` and `compareAtPrice` is cleared. A product that isn't
+   * using scheduling just authors `price`/`compareAtPrice` directly, as
+   * before, and leaves these four fields unset.
+   */
+  regularPrice?: number;
+  salePrice?: number;
+  saleStartsAt?: string;
+  saleEndsAt?: string;
+  seoTitle?: string;
+  seoDescription?: string;
 }

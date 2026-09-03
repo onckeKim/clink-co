@@ -5,9 +5,9 @@ import Link from "next/link";
 import { AnimatePresence, motion } from "framer-motion";
 import { ChevronDown, Heart, Mail, User, X } from "lucide-react";
 import { Logo } from "./Logo";
-import { primaryNav, accountLinks, helpLinks, socialLinks } from "./nav-data";
-import { categories } from "@/data/categories";
-import { curatedCollections } from "@/data/collections";
+import { primaryNav, accountLinks, helpLinks, getSocialLinks } from "./nav-data";
+import { getCategories } from "@/data/categories";
+import { getCuratedCollections } from "@/data/collections";
 import { InstagramIcon, FacebookIcon, TikTokIcon, PinterestIcon } from "@/components/icons/SocialIcons";
 import { useWishlistCount } from "@/store/wishlist-store";
 import { cn } from "@/lib/utils";
@@ -22,6 +22,7 @@ const socialIconMap = {
 export function MobileDrawer({ open, onClose }: { open: boolean; onClose: () => void }) {
   const [expanded, setExpanded] = React.useState<string | null>(null);
   const wishlistCount = useWishlistCount();
+  const socialLinks = getSocialLinks();
 
   React.useEffect(() => {
     if (!open) return;
@@ -108,8 +109,8 @@ export function MobileDrawer({ open, onClose }: { open: boolean; onClose: () => 
                                   className="overflow-hidden"
                                 >
                                   {(link.label === "Shop"
-                                    ? categories.map((c) => ({ label: c.name, href: `/shop/${c.slug}` }))
-                                    : curatedCollections.map((c) => ({ label: c.name, href: c.href }))
+                                    ? getCategories().map((c) => ({ label: c.name, href: `/shop/${c.slug}` }))
+                                    : getCuratedCollections().map((c) => ({ label: c.name, href: c.href }))
                                   ).map((item) => (
                                     <li key={item.href}>
                                       <Link

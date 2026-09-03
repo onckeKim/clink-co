@@ -32,6 +32,7 @@ export async function GET(request: NextRequest) {
   const [fallbackFirst, ...fallbackRest] = (meta.full_name ?? meta.name ?? "").split(" ");
   ensureProfile({
     id: user.id,
+    email: user.email,
     firstName: meta.first_name ?? fallbackFirst,
     lastName: meta.last_name ?? fallbackRest.join(" "),
   });

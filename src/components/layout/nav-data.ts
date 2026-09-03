@@ -41,22 +41,28 @@ export const policyLinks: NavLink[] = [
   { label: "Accessibility", href: "/accessibility" },
 ];
 
-import { siteConfig } from "@/config/site";
+import { getStoreSettings } from "@/lib/admin/settings-store";
 
 export interface SocialLink {
   label: string;
   href: string;
 }
 
-/** Derived from siteConfig so there's one place to update social handles. */
-export const socialLinks: SocialLink[] = [
-  { label: "Instagram", href: siteConfig.social.instagram },
-  { label: "Facebook", href: siteConfig.social.facebook },
-  { label: "TikTok", href: siteConfig.social.tiktok },
-  { label: "Pinterest", href: siteConfig.social.pinterest },
-];
+/** Reads live from the store settings (Store Settings → Social media profiles) so an admin edit shows up without a redeploy. */
+export function getSocialLinks(): SocialLink[] {
+  const { social } = getStoreSettings();
+  return [
+    { label: "Instagram", href: social.instagram },
+    { label: "Facebook", href: social.facebook },
+    { label: "TikTok", href: social.tiktok },
+    { label: "Pinterest", href: social.pinterest },
+  ];
+}
 
-export const contactInfo = {
-  email: siteConfig.contactEmail,
-  whatsappHref: siteConfig.social.whatsapp,
-};
+export function getContactInfo() {
+  const settings = getStoreSettings();
+  return {
+    email: settings.contactEmail,
+    whatsappHref: settings.social.whatsapp,
+  };
+}

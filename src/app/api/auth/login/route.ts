@@ -3,6 +3,7 @@ import { createClientOrNull, AUTH_UNAVAILABLE_MESSAGE } from "@/lib/supabase/saf
 import { loginSchema } from "@/lib/validations/auth";
 import { checkRateLimit, getClientIp } from "@/lib/rate-limit";
 import { linkGuestOrdersToUser } from "@/lib/orders/store";
+import { getProfile } from "@/lib/account/profiles-store";
 
 const GENERIC_ERROR = "Invalid email or password.";
 
@@ -41,6 +42,18 @@ export async function POST(request: Request) {
   // information an attacker could use to enumerate accounts.
   if (error || !data.user) {
     return NextResponse.json({ error: GENERIC_ERROR }, { status: 401 });
+  }
+
+  // A disabled account (see /admin/customers) still has valid credentials —
+  // signInWithPassword above already succeeded and set a session cookie —
+  // so it must be explicitly signed back out here rather than just refused.
+  const profile = getProfile(data.user.id);
+  if (profile?.isDisabled) {
+    await supabase.auth.signOut();
+    return NextResponse.json(
+      { error: "This account has been disabled. Please contact support." },
+      { status: 403 },
+    );
   }
 
   const linkedOrders = linkGuestOrdersToUser(email, data.user.id);

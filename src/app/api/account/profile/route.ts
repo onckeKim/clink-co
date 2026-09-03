@@ -8,7 +8,7 @@ export async function GET() {
   const user = await getUser();
   if (!user) return NextResponse.json({ error: "Not signed in." }, { status: 401 });
 
-  const profile = ensureProfile({ id: user.id });
+  const profile = ensureProfile({ id: user.id, email: user.email });
   return NextResponse.json({
     profile: {
       firstName: profile.firstName,

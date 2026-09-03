@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import { Hero } from "@/components/sections/Hero";
 import { FeatureStrip } from "@/components/sections/FeatureStrip";
 import { CategoryShowcase } from "@/components/sections/CategoryShowcase";
@@ -11,23 +12,58 @@ import { SocialGallery } from "@/components/sections/SocialGallery";
 import { NewsletterSection } from "@/components/sections/NewsletterSection";
 import { RecentlyViewed } from "@/components/sections/RecentlyViewed";
 import { siteConfig } from "@/config/site";
-
-const jsonLd = {
-  "@context": "https://schema.org",
-  "@type": "Organization",
-  name: siteConfig.fullName,
-  alternateName: siteConfig.name,
-  url: siteConfig.url,
-  sameAs: [
-    siteConfig.social.instagram,
-    siteConfig.social.facebook,
-    siteConfig.social.tiktok,
-    siteConfig.social.pinterest,
-  ],
-  slogan: siteConfig.tagline,
-};
+import { getEditorialSection, getHomepageSectionsConfig } from "@/lib/admin/content-store";
+import { getStoreSettings } from "@/lib/admin/settings-store";
 
 export default function Home() {
+  const editorial = getEditorialSection();
+  const { order, hidden } = getHomepageSectionsConfig();
+  const settings = getStoreSettings();
+
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "Organization",
+    name: settings.businessName,
+    alternateName: siteConfig.name,
+    url: siteConfig.url,
+    sameAs: [
+      settings.social.instagram,
+      settings.social.facebook,
+      settings.social.tiktok,
+      settings.social.pinterest,
+    ],
+    slogan: siteConfig.tagline,
+  };
+
+  const sections: Record<string, ReactNode> = {
+    hero: <Hero key="hero" />,
+    "feature-strip": (
+      <div key="feature-strip" className="mt-3 sm:mt-5">
+        <FeatureStrip />
+      </div>
+    ),
+    "category-showcase": <CategoryShowcase key="category-showcase" />,
+    editorial: (
+      <LifestyleSplit
+        key="editorial"
+        eyebrow={editorial.eyebrow}
+        title={editorial.title}
+        description={editorial.description}
+        cta={{ label: editorial.ctaLabel, href: editorial.ctaHref }}
+        image={editorial.image}
+        imageAlt={editorial.imageAlt}
+      />
+    ),
+    bestsellers: <Bestsellers key="bestsellers" />,
+    "new-arrivals": <NewArrivals key="new-arrivals" />,
+    "curated-collections": <CuratedCollections key="curated-collections" />,
+    "brand-story": <BrandStory key="brand-story" />,
+    reviews: <ReviewsCarousel key="reviews" />,
+    "social-gallery": <SocialGallery key="social-gallery" />,
+    newsletter: <NewsletterSection key="newsletter" />,
+    "recently-viewed": <RecentlyViewed key="recently-viewed" />,
+  };
+
   return (
     <>
       {/* Structured data for SEO — helps search engines surface the brand + social profiles. */}
@@ -36,38 +72,7 @@ export default function Home() {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
 
-      <Hero />
-
-      <div className="mt-3 sm:mt-5">
-        <FeatureStrip />
-      </div>
-
-      <CategoryShowcase />
-
-      <LifestyleSplit
-        eyebrow="Editorial"
-        title="The Art of Hosting Well"
-        description="Hosting well isn't about grand gestures — it's the right glass in hand, a table that feels considered without feeling fussy, and pieces sturdy enough to survive the actual evening. We design for that: the quiet, repeatable moments of entertaining, not just the highlight reel."
-        cta={{ label: "Shop Entertaining", href: "/shop" }}
-        image="/images/editorial-hosting.svg"
-        imageAlt="A table set for entertaining with Clink & Co glassware and tableware"
-      />
-
-      <Bestsellers />
-
-      <NewArrivals />
-
-      <CuratedCollections />
-
-      <BrandStory />
-
-      <ReviewsCarousel />
-
-      <SocialGallery />
-
-      <NewsletterSection />
-
-      <RecentlyViewed />
+      {order.filter((key) => !hidden.includes(key) && sections[key]).map((key) => sections[key])}
     </>
   );
 }

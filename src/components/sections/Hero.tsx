@@ -6,7 +6,7 @@ import { motion } from "framer-motion";
 import { Carousel } from "@/components/ui/Carousel";
 import { buttonVariants } from "@/components/ui/Button";
 import { HeroWaypoint } from "@/components/sections/HeroWaypoint";
-import { heroSlides, type HeroSlide } from "@/data/hero-slides";
+import { getHeroSlides, type HeroSlide } from "@/data/hero-slides";
 import { cn } from "@/lib/utils";
 
 const EASE = [0.16, 1, 0.3, 1] as const;
@@ -77,7 +77,7 @@ function HeroSlideContent({ slide, animate }: { slide: HeroSlide; animate: boole
 }
 
 export function Hero() {
-  const slides = heroSlides.map((slide, i) => (
+  const slides = getHeroSlides().map((slide, i) => (
     <HeroSlideContent key={slide.id} slide={slide} animate={i === 0} />
   ));
 

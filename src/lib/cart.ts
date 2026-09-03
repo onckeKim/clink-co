@@ -1,4 +1,4 @@
-import { siteConfig } from "@/config/site";
+import { getStoreSettings } from "@/lib/admin/settings-store";
 
 export interface CartTotals {
   subtotal: number;
@@ -27,7 +27,8 @@ export function computeCartTotals({
 }): CartTotals {
   const discountedSubtotal = Math.max(0, subtotal - discountAmount);
   const total = discountedSubtotal + deliveryFee;
-  const taxAmount = Math.round((total * siteConfig.taxRatePercent) / (100 + siteConfig.taxRatePercent));
+  const taxRatePercent = getStoreSettings().taxRatePercent;
+  const taxAmount = Math.round((total * taxRatePercent) / (100 + taxRatePercent));
 
   return { subtotal, discountAmount, deliveryFee, taxAmount, total };
 }

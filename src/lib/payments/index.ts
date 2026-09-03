@@ -1,4 +1,5 @@
 import type { PaymentMethodId } from "@/lib/orders/types";
+import { getStoreSettings } from "@/lib/admin/settings-store";
 import type { PaymentProvider } from "./types";
 import { testProvider } from "./providers/test";
 import { eftProvider, eftBankDetails } from "./providers/eft";
@@ -20,9 +21,12 @@ export function getPaymentProvider(id: PaymentMethodId): PaymentProvider {
   return paymentProviders[id];
 }
 
-/** Every method whose credentials (or, for EFT/test, admin toggle) are currently present — what the checkout UI should actually offer. */
+/** Every method whose credentials are currently present AND that the admin has enabled in store settings (Store Settings → Payment methods) — what the checkout UI should actually offer. */
 export function getAvailablePaymentMethods(): PaymentProvider[] {
-  return Object.values(paymentProviders).filter((provider) => provider.isConfigured());
+  const enabledIds = getStoreSettings().enabledPaymentMethodIds;
+  return Object.values(paymentProviders).filter(
+    (provider) => provider.isConfigured() && enabledIds.includes(provider.id),
+  );
 }
 
 export { eftBankDetails };

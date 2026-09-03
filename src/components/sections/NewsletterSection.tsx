@@ -6,6 +6,7 @@ import { Controller, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { AlertCircle, CheckCircle2, Mail } from "lucide-react";
 import { newsletterSectionSchema, type NewsletterSectionInput } from "@/lib/validations/newsletter";
+import { getNewsletterContent } from "@/lib/admin/content-store";
 import { Input } from "@/components/ui/Input";
 import { Checkbox } from "@/components/ui/Checkbox";
 import { Button } from "@/components/ui/Button";
@@ -15,6 +16,7 @@ import { cn } from "@/lib/utils";
 type Status = "idle" | "success" | "error";
 
 export function NewsletterSection() {
+  const content = getNewsletterContent();
   const [status, setStatus] = React.useState<Status>("idle");
   const {
     register,
@@ -49,11 +51,10 @@ export function NewsletterSection() {
         <div className="overflow-hidden rounded-3xl bg-charcoal px-6 py-16 text-center sm:px-12 sm:py-20">
           <Mail className="mx-auto h-8 w-8 text-champagne" strokeWidth={1.5} />
           <h2 className="font-display mx-auto mt-5 max-w-lg text-display-lg text-warm-white">
-            Join the list
+            {content.heading}
           </h2>
           <p className="mx-auto mt-4 max-w-md text-sm leading-relaxed text-warm-white/60">
-            New arrivals, restocks and the occasional invitation to something worth dressing up
-            for — no more than twice a month, and never anything else.
+            {content.description}
           </p>
 
           {status === "success" ? (

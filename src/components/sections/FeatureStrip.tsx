@@ -1,18 +1,19 @@
 import { Truck, Lock, Gem, RotateCcw } from "lucide-react";
-import { siteConfig } from "@/config/site";
+import { getStoreSettings } from "@/lib/admin/settings-store";
 import { formatPrice } from "@/lib/utils";
 
-const features = [
-  {
-    icon: Truck,
-    label: `Free delivery over ${formatPrice(siteConfig.freeDeliveryThreshold)}`,
-  },
-  { icon: Lock, label: "Secure online payment" },
-  { icon: Gem, label: "Quality, carefully selected" },
-  { icon: RotateCcw, label: `Easy returns within ${siteConfig.returnWindowDays} days` },
-];
-
 export function FeatureStrip() {
+  const settings = getStoreSettings();
+  const features = [
+    {
+      icon: Truck,
+      label: `Free delivery over ${formatPrice(settings.freeDeliveryThreshold)}`,
+    },
+    { icon: Lock, label: "Secure online payment" },
+    { icon: Gem, label: "Quality, carefully selected" },
+    { icon: RotateCcw, label: `Easy returns within ${settings.returnWindowDays} days` },
+  ];
+
   return (
     <div className="bg-charcoal text-warm-white">
       <div className="mx-auto grid max-w-7xl grid-cols-2 gap-6 px-6 py-6 sm:px-8 lg:grid-cols-4">

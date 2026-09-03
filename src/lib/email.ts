@@ -1,5 +1,6 @@
 import type { Order } from "@/lib/orders/types";
 import { siteConfig } from "@/config/site";
+import { getStoreSettings } from "@/lib/admin/settings-store";
 import { formatPrice } from "@/lib/utils";
 
 const RESEND_API_URL = "https://api.resend.com/emails";
@@ -34,12 +35,13 @@ async function sendEmail({ to, subject, html }: SendEmailInput): Promise<{ sent:
         return "clinkandco.com";
       }
     })();
+    const settings = getStoreSettings();
 
     const response = await fetch(RESEND_API_URL, {
       method: "POST",
       headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
       body: JSON.stringify({
-        from: `${siteConfig.name} <orders@${fromHost}>`,
+        from: `${settings.emailSenderName} <${settings.emailSenderLocalPart}@${fromHost}>`,
         to,
         subject,
         html,
@@ -118,5 +120,5 @@ export async function sendAdminOrderNotification(order: Order) {
       ${order.shippingNotes ? `<p>Shipping notes: ${order.shippingNotes}</p>` : ""}
     </div>`;
 
-  return sendEmail({ to: siteConfig.orderNotificationEmail, subject: `New order: ${order.orderNumber}`, html });
+  return sendEmail({ to: getStoreSettings().orderNotificationEmail, subject: `New order: ${order.orderNumber}`, html });
 }

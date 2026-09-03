@@ -34,7 +34,7 @@ export async function GET(request: NextRequest) {
 
   const user = data.user;
   const meta = user.user_metadata as { first_name?: string; last_name?: string };
-  ensureProfile({ id: user.id, firstName: meta.first_name, lastName: meta.last_name });
+  ensureProfile({ id: user.id, email: user.email, firstName: meta.first_name, lastName: meta.last_name });
   if (user.email) linkGuestOrdersToUser(user.email, user.id);
 
   if (type === "recovery") {

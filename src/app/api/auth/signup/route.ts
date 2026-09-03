@@ -52,7 +52,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "We couldn't create your account. Please try again." }, { status: 500 });
   }
 
-  ensureProfile({ id: user.id, firstName, lastName, marketingConsent });
+  ensureProfile({ id: user.id, email: user.email, firstName, lastName, marketingConsent });
   const linkedOrders = linkGuestOrdersToUser(email, user.id);
 
   // A session is only present here if the project has email confirmation

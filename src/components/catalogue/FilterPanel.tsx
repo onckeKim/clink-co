@@ -2,8 +2,8 @@
 
 import { Star } from "lucide-react";
 import type { CatalogueFacets, CatalogueFilters } from "@/lib/catalogue";
-import { categories } from "@/data/categories";
-import { curatedCollections } from "@/data/collections";
+import { getCategories } from "@/data/categories";
+import { getCuratedCollections } from "@/data/collections";
 import { Checkbox } from "@/components/ui/Checkbox";
 import { Disclosure } from "@/components/ui/Disclosure";
 import { Input } from "@/components/ui/Input";
@@ -70,6 +70,8 @@ export function FilterPanel({
   const toggle = (key: MultiSelectKey, value: string) => {
     onChange((prev) => ({ ...prev, [key]: toggleValue(prev[key], value) }));
   };
+  const categories = getCategories();
+  const curatedCollections = getCuratedCollections();
 
   return (
     <div className="flex flex-col">

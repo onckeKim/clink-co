@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
 import { ArrowUpRight } from "lucide-react";
-import { curatedCollections, getCollectionProductCount } from "@/data/collections";
+import { getCuratedCollections, getCollectionProductCount } from "@/data/collections";
 import { Breadcrumbs } from "@/components/catalogue/Breadcrumbs";
 
 export const metadata: Metadata = {
@@ -11,6 +11,7 @@ export const metadata: Metadata = {
 };
 
 export default function CollectionsIndexPage() {
+  const curatedCollections = getCuratedCollections();
   return (
     <div className="mx-auto max-w-7xl px-6 py-10 sm:px-8">
       <Breadcrumbs items={[{ label: "Home", href: "/" }, { label: "Collections" }]} className="mb-6" />

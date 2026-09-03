@@ -1,4 +1,5 @@
-import type { Order, OrderStatus } from "./types";
+import type { Order, OrderStatus, PaymentMethodId } from "./types";
+import { getStoreSettings } from "@/lib/admin/settings-store";
 
 /**
  * In-memory orders store — a development/demo substitute for a real
@@ -31,7 +32,8 @@ function nextOrderNumber(): string {
     dailyCounter = 0;
   }
   dailyCounter += 1;
-  return `CC-${datePart}-${String(dailyCounter).padStart(4, "0")}`;
+  const prefix = getStoreSettings().orderNumberPrefix;
+  return `${prefix}-${datePart}-${String(dailyCounter).padStart(4, "0")}`;
 }
 
 export function findOrderByIdempotencyKey(key: string): Order | undefined {
@@ -85,6 +87,11 @@ export function getOrdersByUserId(userId: string): Order[] {
     .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
 }
 
+/** Every order, most recent first — the admin order list (/admin/orders) and cross-store safety checks (e.g. refusing to delete a product that appears in past orders) read from this. */
+export function getAllOrders(): Order[] {
+  return [...ordersById.values()].sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+}
+
 /**
  * Links every unclaimed guest order matching `email` to `userId` — called
  * after login/sign-up so a customer's past guest checkouts show up in
@@ -110,7 +117,21 @@ export function linkGuestOrdersToUser(email: string, userId: string): number {
 
 export function updateOrder(
   orderNumber: string,
-  patch: Partial<Pick<Order, "status" | "paymentReference" | "paymentRedirectUrl">>,
+  patch: Partial<
+    Pick<
+      Order,
+      | "status"
+      | "paymentReference"
+      | "paymentRedirectUrl"
+      | "trackingCarrier"
+      | "trackingNumber"
+      | "trackingUrl"
+      | "cancelledReason"
+      | "refundAmount"
+      | "refundReason"
+      | "refundedAt"
+    >
+  >,
 ): Order | undefined {
   const order = getOrderByNumber(orderNumber);
   if (!order) return undefined;
@@ -120,6 +141,58 @@ export function updateOrder(
 
 export function setOrderStatus(orderNumber: string, status: OrderStatus): Order | undefined {
   return updateOrder(orderNumber, { status });
+}
+
+export function setOrderTracking(
+  orderNumber: string,
+  tracking: { trackingCarrier: string; trackingNumber: string; trackingUrl?: string },
+): Order | undefined {
+  return updateOrder(orderNumber, tracking);
+}
+
+export function cancelOrder(orderNumber: string, reason?: string): Order | undefined {
+  return updateOrder(orderNumber, { status: "cancelled", cancelledReason: reason });
+}
+
+export function recordOrderRefund(
+  orderNumber: string,
+  refund: { amount: number; reason?: string },
+): Order | undefined {
+  return updateOrder(orderNumber, {
+    refundAmount: refund.amount,
+    refundReason: refund.reason,
+    refundedAt: new Date().toISOString(),
+  });
+}
+
+// ---------------------------------------------------------------------------
+// Admin-facing reads — /admin/orders and /api/admin/orders/**.
+// ---------------------------------------------------------------------------
+
+export interface AdminOrderFilters {
+  /** Matches order number, customer name or email (case-insensitive substring). */
+  search?: string;
+  status?: OrderStatus;
+  paymentMethod?: PaymentMethodId;
+}
+
+/** Every order matching the given filters, most recent first — the admin order list's search/filter backing. */
+export function listAdminOrders(filters?: AdminOrderFilters): Order[] {
+  let orders = getAllOrders();
+
+  if (filters?.search) {
+    const q = filters.search.trim().toLowerCase();
+    orders = orders.filter(
+      (o) =>
+        o.orderNumber.toLowerCase().includes(q) ||
+        o.customerName.toLowerCase().includes(q) ||
+        o.customerEmail.toLowerCase().includes(q),
+    );
+  }
+  if (filters?.status) orders = orders.filter((o) => o.status === filters.status);
+  if (filters?.paymentMethod) orders = orders.filter((o) => o.paymentMethod === filters.paymentMethod);
+
+  return orders;
 }
 
 /** `eventKey` should be unique per provider event, e.g. `${provider}:${providerEventId}`. */

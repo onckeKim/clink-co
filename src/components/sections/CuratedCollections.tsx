@@ -3,9 +3,10 @@ import Link from "next/link";
 import { ArrowUpRight } from "lucide-react";
 import { SectionHeading } from "@/components/sections/SectionHeading";
 import { Reveal } from "@/components/motion/Reveal";
-import { curatedCollections } from "@/data/collections";
+import { getCuratedCollections } from "@/data/collections";
 
 export function CuratedCollections() {
+  const curatedCollections = getCuratedCollections();
   return (
     <section className="mx-auto max-w-7xl px-6 py-20 sm:px-8">
       <Reveal>

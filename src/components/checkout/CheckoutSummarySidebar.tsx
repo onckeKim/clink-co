@@ -1,7 +1,7 @@
 import Image from "next/image";
 import { ShieldCheck } from "lucide-react";
 import type { CartLine } from "@/store/cart-store";
-import { siteConfig } from "@/config/site";
+import { getStoreSettings } from "@/lib/admin/settings-store";
 import { formatPrice } from "@/lib/utils";
 
 export function CheckoutSummarySidebar({
@@ -23,6 +23,7 @@ export function CheckoutSummarySidebar({
   taxAmount: number;
   total: number;
 }) {
+  const taxRatePercent = getStoreSettings().taxRatePercent;
   return (
     <div className="flex h-fit flex-col gap-5 rounded-3xl border border-sand p-6 lg:sticky lg:top-28">
       <ul className="flex flex-col gap-3">
@@ -58,7 +59,7 @@ export function CheckoutSummarySidebar({
           </span>
         </div>
         <div className="flex items-center justify-between text-xs text-stone">
-          <span>Includes VAT ({siteConfig.taxRatePercent}%)</span>
+          <span>Includes VAT ({taxRatePercent}%)</span>
           <span>{formatPrice(taxAmount)}</span>
         </div>
         <div className="flex items-center justify-between border-t border-sand pt-2 text-base font-medium">

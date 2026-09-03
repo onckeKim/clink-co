@@ -554,6 +554,113 @@ design.
 
 ---
 
+## Admin dashboard
+
+`/admin/**` is a secure internal tool the business uses to run the storefront
+day-to-day — products, orders, customers, promotions, content, media, store
+settings and team access — without touching code or redeploying. It has its
+own full-page shell (sidebar nav + topbar, `AdminShell.tsx`) instead of the
+storefront's Header/Footer (`SiteChrome.tsx` skips storefront chrome for any
+`/admin` path).
+
+### Architecture
+
+- **Authorization is checked twice, independently**: `src/proxy.ts` gates
+  `/admin/**` and `/api/admin/**` on having *any* signed-in session (same
+  mechanism as `/account`), and `requireAdmin()` in `src/app/admin/layout.tsx`
+  additionally requires the session's profile to hold one of the six admin
+  roles below — a customer account is redirected away even though it's
+  signed in. Every `/api/admin/**` route handler repeats the role/permission
+  check server-side via `getAdminContext()` + `hasPermission()`, so the UI
+  gating is a convenience, not the enforcement boundary.
+- **Data lives in mutable in-memory stores** (`src/lib/admin/*-store.ts`,
+  `src/lib/orders/store.ts`, `src/lib/account/profiles-store.ts`), the same
+  development/demo substitute for Postgres used elsewhere in this build (see
+  [Seed data & placeholder imagery](#seed-data--placeholder-imagery)) — every
+  store function is written so swapping its body for a real Supabase query
+  later doesn't change any call site. This is what makes admin edits appear
+  live: reads and writes share the same in-process module state, so there's
+  no build step, cache, or redeploy between an admin saving a change and the
+  storefront rendering it.
+- **Every mutating admin action is audit-logged** (`recordAuditLog()`) with
+  the acting user, the action, the record affected, and before/after values
+  — reviewable at `/admin/audit-log`.
+- **Image uploads** go through `POST /api/admin/media` as base64 data URIs
+  (capped at 2MB) rather than a cloud storage bucket, since this environment
+  has no storage credentials configured — see
+  [Environment variables](#environment-variables).
+
+### Admin routes
+
+| Route | Purpose |
+| --- | --- |
+| `/admin` | Dashboard — sales/orders/AOV, low & out-of-stock, recent orders, bestsellers, sales trend, order-status distribution |
+| `/admin/products`, `/admin/products/new`, `/admin/products/[id]` | Product list, create, edit — images, variants, pricing/scheduling, stock, SEO, publish status |
+| `/admin/categories` | Category CRUD, images, slugs, SEO, reorder |
+| `/admin/collections` | Collection CRUD, product assignment |
+| `/admin/orders`, `/admin/orders/[orderNumber]` | Order list/search/filter, detail, status/tracking, refund, cancel, notes, CSV export |
+| `/admin/orders/[orderNumber]/invoice`, `/admin/orders/[orderNumber]/packing-slip` | Printable invoice and packing slip |
+| `/admin/customers`, `/admin/customers/[id]` | Customer search, profile, order history, spend, notes, marketing consent, disable account |
+| `/admin/promotions` | Discount codes, automatic discounts, free-delivery rules, restrictions, usage limits |
+| `/admin/content` | Hero slides, banners, editorial section, about page, FAQs, journal, policy pages, newsletter copy, homepage section order |
+| `/admin/media` | Media library — upload, search, folders/labels, alt text, replace, delete |
+| `/admin/settings` | Business details, currency/tax, delivery/payment methods, email sender, order number format, return window, maintenance mode |
+| `/admin/team` | Grant/change admin roles (view: all admins; edit: `team:write` only, i.e. `super_admin`/`store_admin`) |
+| `/admin/audit-log` | Full history of admin actions — who, what, when, before/after |
+
+Every page above has a matching `/api/admin/**` route family the UI calls
+(e.g. `/admin/products` is backed by `GET/POST /api/admin/products` and
+`GET/PATCH/DELETE /api/admin/products/[id]`, plus `/archive`, `/restore`,
+`/duplicate`); they enforce the same permissions server-side and aren't
+meant to be called directly.
+
+### Roles & permissions
+
+Every account is a `customer` by default; the six roles below are additive —
+granting one turns on `/admin` access scoped to that role's permissions only,
+without changing the account's ability to shop as a customer too. Roles are
+granted at `/admin/team` (never through an env var, except for bootstrapping
+the very first admin — see [Environment variables](#environment-variables)).
+
+| Role | Can access |
+| --- | --- |
+| **Super Administrator** | Everything, including changing anyone's role |
+| **Store Administrator** | Everything except granting/revoking admin roles |
+| **Product Manager** | Dashboard, products, categories, collections, media |
+| **Order Fulfilment** | Dashboard, orders (view/fulfil/export), customers (view), products (view) |
+| **Content Editor** | Dashboard, content, media, categories (view) |
+| **Customer Support** | Dashboard, customers (view/edit), orders (view) |
+
+The full matrix (one row per resource × view/write) lives in
+`src/lib/admin/roles.ts` (`ROLE_PERMISSIONS`) — the source of truth both the
+UI and every API route check against.
+
+### How content changes reach the storefront — and why no redeploy is needed
+
+An admin edit (say, publishing a product, changing a hero slide, or turning
+on maintenance mode) writes directly into the same in-memory store the
+storefront reads from on every request — there's no separate "draft" copy
+that needs publishing, no cache to invalidate, and no static site to
+rebuild. The very next request to any storefront page — the homepage, a
+product page, the footer newsletter copy — calls the same store function
+and gets the change immediately. This is verified end-to-end for
+promotional banners: `/admin/content` → Banners writes to
+`content-store.ts`, and `PromoBannerBar.tsx` (rendered on every non-admin
+page via `SiteChrome.tsx`) reads `getActiveBanners()` from that same store
+on every render.
+
+The one exception is **draft products and draft journal articles**: a draft
+resolves directly at its real URL (so an admin can preview it) but is
+excluded from listings/search/sitemaps until its publish status changes —
+by design, not because anything needs redeploying.
+
+In production, this same architecture holds once the in-memory stores are
+swapped for real Supabase tables (each store function's body changes, no
+call site does) — an admin save is a database write, and the next page
+request is a database read, still with no redeploy in between.
+
+---
+
 ## Folder structure
 
 ```
@@ -920,6 +1027,7 @@ cp .env.local.example .env.local
 | `SUPABASE_SERVICE_ROLE_KEY`           | Server-only admin operations (not currently used by anything in this build) |
 | `NEXT_PUBLIC_SITE_URL`                | Metadata / OpenGraph canonical URLs / JSON-LD / auth email redirect links |
 | `NEXT_PUBLIC_ENABLE_SOCIAL_LOGIN`     | Shows the "Continue with Google" button (also requires enabling Google in the Supabase dashboard) |
+| `ADMIN_BOOTSTRAP_EMAILS`              | Auto-grants Super Administrator to these emails on first sign-up/login — the only way to create your first admin. See [Admin dashboard](#admin-dashboard) below. |
 | `ENABLE_TEST_PAYMENTS`                | Test payment provider in production (always on outside production) |
 | `TEST_PAYMENT_WEBHOOK_SECRET`         | Test payment provider webhook signing  |
 | `EFT_ENABLED`                         | EFT / bank transfer payment method (defaults on) |

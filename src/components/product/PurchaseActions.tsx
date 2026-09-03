@@ -30,7 +30,8 @@ export function PurchaseActions({
   const toggleWishlist = useWishlistStore((state) => state.toggle);
   const [justShared, setJustShared] = React.useState(false);
 
-  const disabled = !product.inStock || Boolean(product.discontinued);
+  const isDraft = product.publishStatus === "draft";
+  const disabled = !product.inStock || Boolean(product.discontinued) || isDraft;
 
   const handleAddToCart = () => addItem(product, { variant, quantity });
 
@@ -61,7 +62,7 @@ export function PurchaseActions({
       <div className="flex items-center gap-3">
         <Button type="button" size="lg" disabled={disabled} onClick={handleAddToCart} className="flex-1">
           <ShoppingBag className="h-4 w-4" />
-          {product.discontinued ? "Discontinued" : product.inStock ? "Add to cart" : "Notify me"}
+          {isDraft ? "Not yet published" : product.discontinued ? "Discontinued" : product.inStock ? "Add to cart" : "Notify me"}
         </Button>
         <Button
           type="button"

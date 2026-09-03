@@ -1,13 +1,13 @@
 import { Suspense } from "react";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { categories, getCategoryBySlug } from "@/data/categories";
+import { getCategories, getCategoryBySlug } from "@/data/categories";
 import { getProductsByCategory } from "@/data/products";
 import { ShopExperience } from "@/components/catalogue/ShopExperience";
 import { ShopSkeleton } from "@/components/catalogue/ShopSkeleton";
 
 export function generateStaticParams() {
-  return categories.map((category) => ({ category: category.slug }));
+  return getCategories().map((category) => ({ category: category.slug }));
 }
 
 export async function generateMetadata({

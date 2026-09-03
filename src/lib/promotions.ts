@@ -1,4 +1,4 @@
-import { coupons, getCouponByCode, type Coupon } from "@/data/coupons";
+import { getCouponByCode, getAutomaticCoupons, recordCouponUsage, type Coupon } from "@/data/coupons";
 import { formatPrice } from "@/lib/utils";
 
 /** The minimal shape the promotions engine needs from a cart line — decoupled from the cart store so this stays a pure, independently testable module. */
@@ -40,17 +40,26 @@ function matchesScope(line: PromotableLine, coupon: Coupon): boolean {
  * Validates a coupon code against the current cart and, if valid, computes
  * the discount it grants. Product-/collection-specific coupons only
  * discount the matching line items' share of the subtotal — not the whole
- * cart — mirroring how a real promotions engine scopes discounts.
+ * cart — mirroring how a real promotions engine scopes discounts. Works
+ * identically for a manually-entered code and for the code of an
+ * automatic discount (see `getBestAutomaticDiscount`) — both are `Coupon`
+ * records, just gated by `requiresCode` on the storefront.
  */
 export function validateCoupon(
   code: string,
   lines: PromotableLine[],
   subtotal: number,
   now: Date = new Date(),
+  /** The customer's email, when known — only passed at checkout (see /api/checkout), so a `customerEmails`-restricted coupon isn't rejected merely for being applied to an anonymous cart. */
+  customerEmail?: string,
 ): CouponValidationResult {
   const coupon = getCouponByCode(code);
   if (!coupon) return { valid: false, error: "That coupon code isn't valid." };
   if (!coupon.active) return { valid: false, error: "That coupon is no longer active." };
+  if (coupon.customerEmails?.length && customerEmail) {
+    const allowed = coupon.customerEmails.some((email) => email.toLowerCase() === customerEmail.trim().toLowerCase());
+    if (!allowed) return { valid: false, error: "That coupon isn't valid for this account." };
+  }
 
   if (coupon.startsAt && now < new Date(`${coupon.startsAt}T00:00:00`)) {
     return { valid: false, error: "That coupon isn't active yet." };
@@ -81,16 +90,31 @@ export function validateCoupon(
 }
 
 /**
- * Increments the seed coupon's usage counter — a stand-in for a real
- * transactional `UPDATE coupons SET times_used = times_used + 1 WHERE ...`
- * run inside the order-creation transaction. Mutating this in-memory array
- * is a development substitute only: it resets on server restart and isn't
- * safe across multiple server instances — see the orders store for the
- * same caveat applied to orders themselves.
+ * Finds the best-value automatic discount (a `requiresCode: false` coupon)
+ * eligible for the current cart, if any — the storefront auto-apply
+ * mechanism the cart store calls whenever no manual code is applied.
+ * "Best" is the largest Rand discount, with free delivery breaking a tie in
+ * its favour; only one automatic discount is ever applied at a time (no
+ * stacking), matching how the manual-coupon flow already works.
  */
-export function recordCouponUsage(code: string): void {
-  const coupon = getCouponByCode(code);
-  if (coupon) coupon.timesUsed += 1;
+export function getBestAutomaticDiscount(
+  lines: PromotableLine[],
+  subtotal: number,
+  now: Date = new Date(),
+): CouponValidationSuccess | null {
+  let best: CouponValidationSuccess | null = null;
+  for (const coupon of getAutomaticCoupons()) {
+    const result = validateCoupon(coupon.code, lines, subtotal, now);
+    if (!result.valid) continue;
+    if (
+      !best ||
+      result.discountAmount > best.discountAmount ||
+      (result.discountAmount === best.discountAmount && result.freeDelivery && !best.freeDelivery)
+    ) {
+      best = result;
+    }
+  }
+  return best;
 }
 
-export { coupons };
+export { recordCouponUsage };

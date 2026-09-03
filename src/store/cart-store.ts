@@ -1,7 +1,7 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import type { Product, ProductVariant } from "@/types/product";
-import { validateCoupon, type PromotableLine } from "@/lib/promotions";
+import { validateCoupon, getBestAutomaticDiscount, type PromotableLine } from "@/lib/promotions";
 
 export interface CartLine {
   lineId: string;
@@ -22,12 +22,16 @@ interface AppliedCoupon {
   code: string;
   discountAmount: number;
   freeDelivery: boolean;
+  /** "manual": the customer entered this code. "automatic": no code was entered — the promotions engine picked the best eligible automatic discount (Coupon.requiresCode === false) for the current cart. */
+  source: "manual" | "automatic";
 }
 
 interface CartState {
   lines: CartLine[];
   isOpen: boolean;
   coupon: AppliedCoupon | null;
+  /** The code the customer explicitly entered via applyCoupon(), independent of whatever's currently applied — kept so an automatic discount picked up after removeCoupon() never gets mistaken for a manual choice, and so a cart-content change can re-validate the customer's actual intent rather than whatever happened to be applied last. */
+  manualCouponCode: string | null;
   couponError: string | null;
   addItem: (product: Product, options?: { variant?: ProductVariant; quantity?: number }) => void;
   removeLine: (lineId: string) => void;
@@ -56,17 +60,56 @@ function subtotalOf(lines: CartLine[]): number {
   return lines.reduce((sum, line) => sum + line.price * line.quantity, 0);
 }
 
-/** Re-runs the currently applied coupon against the latest cart contents — called after any line change so a coupon that's no longer eligible (e.g. its only matching item was removed) is dropped rather than silently kept. */
-function revalidateCoupon(lines: CartLine[], coupon: AppliedCoupon | null): { coupon: AppliedCoupon | null; couponError: string | null } {
-  if (!coupon) return { coupon: null, couponError: null };
-  const result = validateCoupon(coupon.code, toPromotableLines(lines), subtotalOf(lines));
-  if (!result.valid) {
-    return { coupon: null, couponError: `"${coupon.code}" no longer applies: ${result.error}` };
+/**
+ * Resolves what coupon/discount should be applied to the given cart
+ * contents — called after every line change and after applyCoupon()/
+ * removeCoupon(), so the cart never shows a discount that's no longer
+ * eligible (e.g. its only matching item was removed), and always picks up
+ * a newly-eligible automatic discount (e.g. the cart just crossed a
+ * `minSpend` threshold). A manually-entered code, while still valid, always
+ * wins over an automatic discount — the customer typed it on purpose. If it
+ * stops applying, its error is still surfaced, but the best automatic
+ * discount (if any) takes over underneath it rather than leaving the cart
+ * with nothing.
+ */
+function resolveCoupon(
+  lines: CartLine[],
+  manualCouponCode: string | null,
+): { coupon: AppliedCoupon | null; couponError: string | null } {
+  const promotableLines = toPromotableLines(lines);
+  const subtotal = subtotalOf(lines);
+
+  let couponError: string | null = null;
+  if (manualCouponCode) {
+    const result = validateCoupon(manualCouponCode, promotableLines, subtotal);
+    if (result.valid) {
+      return {
+        coupon: {
+          code: result.coupon.code,
+          discountAmount: result.discountAmount,
+          freeDelivery: result.freeDelivery,
+          source: "manual",
+        },
+        couponError: null,
+      };
+    }
+    couponError = `"${manualCouponCode}" no longer applies: ${result.error}`;
   }
-  return {
-    coupon: { code: coupon.code, discountAmount: result.discountAmount, freeDelivery: result.freeDelivery },
-    couponError: null,
-  };
+
+  const automatic = getBestAutomaticDiscount(promotableLines, subtotal);
+  if (automatic) {
+    return {
+      coupon: {
+        code: automatic.coupon.code,
+        discountAmount: automatic.discountAmount,
+        freeDelivery: automatic.freeDelivery,
+        source: "automatic",
+      },
+      couponError,
+    };
+  }
+
+  return { coupon: null, couponError };
 }
 
 export const useCartStore = create<CartState>()(
@@ -75,6 +118,7 @@ export const useCartStore = create<CartState>()(
       lines: [],
       isOpen: false,
       coupon: null,
+      manualCouponCode: null,
       couponError: null,
 
       addItem: (product, options) => {
@@ -106,12 +150,12 @@ export const useCartStore = create<CartState>()(
             },
           ];
         }
-        set({ lines: nextLines, isOpen: true, ...revalidateCoupon(nextLines, get().coupon) });
+        set({ lines: nextLines, isOpen: true, ...resolveCoupon(nextLines, get().manualCouponCode) });
       },
 
       removeLine: (lineId) => {
         const nextLines = get().lines.filter((line) => line.lineId !== lineId);
-        set({ lines: nextLines, ...revalidateCoupon(nextLines, get().coupon) });
+        set({ lines: nextLines, ...resolveCoupon(nextLines, get().manualCouponCode) });
       },
 
       updateQuantity: (lineId, quantity, stockQuantity) => {
@@ -123,10 +167,10 @@ export const useCartStore = create<CartState>()(
         const nextLines = get().lines.map((line) =>
           line.lineId === lineId ? { ...line, quantity: capped } : line,
         );
-        set({ lines: nextLines, ...revalidateCoupon(nextLines, get().coupon) });
+        set({ lines: nextLines, ...resolveCoupon(nextLines, get().manualCouponCode) });
       },
 
-      clear: () => set({ lines: [], coupon: null, couponError: null }),
+      clear: () => set({ lines: [], coupon: null, manualCouponCode: null, couponError: null }),
       open: () => set({ isOpen: true }),
       close: () => set({ isOpen: false }),
       toggle: () => set({ isOpen: !get().isOpen }),
@@ -138,16 +182,33 @@ export const useCartStore = create<CartState>()(
           return;
         }
         set({
-          coupon: { code: result.coupon.code, discountAmount: result.discountAmount, freeDelivery: result.freeDelivery },
+          coupon: {
+            code: result.coupon.code,
+            discountAmount: result.discountAmount,
+            freeDelivery: result.freeDelivery,
+            source: "manual",
+          },
+          manualCouponCode: code,
           couponError: null,
         });
       },
 
-      removeCoupon: () => set({ coupon: null, couponError: null }),
+      removeCoupon: () => {
+        const nextLines = get().lines;
+        set({ manualCouponCode: null, ...resolveCoupon(nextLines, null) });
+      },
     }),
     {
       name: "clink-co-cart",
-      partialize: (state) => ({ lines: state.lines, coupon: state.coupon }),
+      partialize: (state) => ({ lines: state.lines, coupon: state.coupon, manualCouponCode: state.manualCouponCode }),
+      // A persisted cart may have been saved before today's automatic
+      // discounts existed (or before a since-changed minSpend/date window),
+      // so re-resolve once the persisted lines/manualCouponCode are back —
+      // same reasoning as revalidating after any other cart mutation.
+      onRehydrateStorage: () => (state) => {
+        if (!state) return;
+        Object.assign(state, resolveCoupon(state.lines, state.manualCouponCode));
+      },
     },
   ),
 );

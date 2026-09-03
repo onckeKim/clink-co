@@ -1,12 +1,13 @@
 import type { Product } from "@/types/product";
 import { Disclosure } from "@/components/ui/Disclosure";
-import { siteConfig } from "@/config/site";
+import { getStoreSettings } from "@/lib/admin/settings-store";
 import { formatPrice } from "@/lib/utils";
 
 const DEFAULT_PACKAGING_INFO =
   "Arrives boxed with protective wrapping around each piece. Gift note and gift wrap options are available at checkout.";
 
 export function ProductAccordions({ product }: { product: Product }) {
+  const settings = getStoreSettings();
   return (
     <div className="flex flex-col">
       <Disclosure title="Description" defaultOpen>
@@ -80,10 +81,10 @@ export function ProductAccordions({ product }: { product: Product }) {
 
       <Disclosure title="Delivery & Returns">
         <ul className="flex flex-col gap-2 text-sm leading-relaxed text-stone">
-          <li>Free delivery on orders over {formatPrice(siteConfig.freeDeliveryThreshold)}.</li>
+          <li>Free delivery on orders over {formatPrice(settings.freeDeliveryThreshold)}.</li>
           <li>Use the delivery estimator above for a delivery window specific to your area.</li>
-          <li>{siteConfig.returnWindowDays}-day returns on unused items in original packaging.</li>
-          <li>Prices include {siteConfig.taxRatePercent}% VAT — no surprises at checkout.</li>
+          <li>{settings.returnWindowDays}-day returns on unused items in original packaging.</li>
+          <li>Prices include {settings.taxRatePercent}% VAT — no surprises at checkout.</li>
         </ul>
       </Disclosure>
 

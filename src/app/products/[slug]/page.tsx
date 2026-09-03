@@ -1,14 +1,14 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { getCategoryBySlug } from "@/data/categories";
-import { getPairedProducts, getProductBySlug, getRelatedProducts, products } from "@/data/products";
+import { getPairedProducts, getProductBySlug, getProducts, getRelatedProducts } from "@/data/products";
 import { getReviewsForProduct } from "@/data/reviews";
 import { getQAForProduct } from "@/data/qa";
 import { ProductDetailView } from "@/components/product/ProductDetailView";
 import { siteConfig } from "@/config/site";
 
 export function generateStaticParams() {
-  return products.map((product) => ({ slug: product.slug }));
+  return getProducts().map((product) => ({ slug: product.slug }));
 }
 
 export async function generateMetadata({
@@ -17,12 +17,14 @@ export async function generateMetadata({
   const { slug } = await params;
   const product = getProductBySlug(slug);
   if (!product) return {};
+  const title = product.seoTitle || (product.discontinued ? `${product.name} (Discontinued)` : product.name);
+  const description = product.seoDescription || product.shortDescription;
   return {
-    title: product.discontinued ? `${product.name} (Discontinued)` : product.name,
-    description: product.shortDescription,
+    title,
+    description,
     openGraph: {
-      title: product.name,
-      description: product.shortDescription,
+      title,
+      description,
       images: product.images[0] ? [{ url: product.images[0] }] : undefined,
     },
   };

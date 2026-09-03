@@ -36,3 +36,40 @@ export function getFulfilmentStatusLabel(status: OrderStatus): { label: string; 
       return { label: "Not yet fulfilled", tone: "neutral" };
   }
 }
+
+/**
+ * Fixed hex values for the admin dashboard's order-status distribution
+ * chart — status color is reserved/semantic (never a themed categorical
+ * hue), per the dataviz skill. "Paid" and "Fulfilled" both read as
+ * positive outcomes but get two distinguishable steps of green rather than
+ * one shared color, so a distribution chart can still tell them apart.
+ */
+export function getOrderStatusChartColor(status: OrderStatus): string {
+  switch (status) {
+    case "paid":
+      return "#0ca30c"; // good
+    case "fulfilled":
+      return "#287a4b"; // good, deeper step — this app's own --color-success
+    case "pending_payment":
+      return "#fab219"; // warning
+    case "payment_failed":
+      return "#d03b3b"; // critical
+    case "cancelled":
+      return "#746c62"; // neutral — this app's own --color-stone
+  }
+}
+
+export function getOrderStatusLabel(status: OrderStatus): string {
+  switch (status) {
+    case "paid":
+      return "Paid";
+    case "fulfilled":
+      return "Fulfilled";
+    case "pending_payment":
+      return "Pending payment";
+    case "payment_failed":
+      return "Payment failed";
+    case "cancelled":
+      return "Cancelled";
+  }
+}

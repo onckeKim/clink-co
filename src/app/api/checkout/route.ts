@@ -68,6 +68,8 @@ export async function POST(request: Request) {
         lineTotal: line.lineTotal,
       })),
       subtotal,
+      new Date(),
+      data.customer.email,
     );
     if (!couponResult.valid) {
       return NextResponse.json({ error: couponResult.error, field: "couponCode" }, { status: 409 });

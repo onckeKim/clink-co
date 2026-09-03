@@ -5,8 +5,9 @@ import { paymentIcons } from "@/components/icons/PaymentIcons";
 import { Logo } from "./Logo";
 import { NewsletterForm } from "./NewsletterForm";
 import { CookieSettingsLink } from "./CookieSettingsLink";
-import { helpLinks, aboutLinks, policyLinks, socialLinks, contactInfo, type NavLink } from "./nav-data";
-import { categories } from "@/data/categories";
+import { helpLinks, aboutLinks, policyLinks, getSocialLinks, getContactInfo, type NavLink } from "./nav-data";
+import { getCategories } from "@/data/categories";
+import { getNewsletterContent } from "@/lib/admin/content-store";
 
 const socialIconMap = {
   Instagram: InstagramIcon,
@@ -15,9 +16,11 @@ const socialIconMap = {
   Pinterest: PinterestIcon,
 } as const;
 
-const shopLinks: NavLink[] = categories.map((c) => ({ label: c.name, href: `/shop/${c.slug}` }));
-
 export function Footer() {
+  const shopLinks: NavLink[] = getCategories().map((c) => ({ label: c.name, href: `/shop/${c.slug}` }));
+  const socialLinks = getSocialLinks();
+  const newsletter = getNewsletterContent();
+  const contactInfo = getContactInfo();
   return (
     <footer className="mt-24 bg-charcoal text-warm-white print:hidden">
       <div className="mx-auto max-w-7xl px-6 py-16 sm:px-8 lg:py-20">
@@ -78,11 +81,9 @@ export function Footer() {
 
           <div>
             <h3 className="text-xs font-medium uppercase tracking-[0.2em] text-warm-white/50">
-              Join the list
+              {newsletter.heading}
             </h3>
-            <p className="mt-4 text-sm text-warm-white/60">
-              New arrivals, restocks and the occasional invitation — no more than twice a month.
-            </p>
+            <p className="mt-4 text-sm text-warm-white/60">{newsletter.description}</p>
             <NewsletterForm className="mt-5" />
           </div>
         </div>

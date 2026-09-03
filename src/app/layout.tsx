@@ -5,6 +5,8 @@ import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { CookieBanner } from "@/components/layout/CookieBanner";
 import { AuthCartSync } from "@/components/layout/AuthCartSync";
+import { PromoBannerBar } from "@/components/layout/PromoBannerBar";
+import { SiteChrome } from "@/components/layout/SiteChrome";
 
 const inter = Inter({
   variable: "--font-inter",
@@ -55,25 +57,23 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       className={`${inter.variable} ${fraunces.variable} h-full antialiased`}
     >
       <body className="flex min-h-full flex-col bg-porcelain text-charcoal">
-        <a
-          href="#main-content"
-          className="focus-ring sr-only rounded-full bg-charcoal px-5 py-2.5 text-sm font-medium text-warm-white focus:not-sr-only focus:fixed focus:left-3 focus:top-3 focus:z-[100]"
+        <SiteChrome
+          skipLink={
+            <a
+              href="#main-content"
+              className="focus-ring sr-only rounded-full bg-charcoal px-5 py-2.5 text-sm font-medium text-warm-white focus:not-sr-only focus:fixed focus:left-3 focus:top-3 focus:z-[100]"
+            >
+              Skip to content
+            </a>
+          }
+          header={<Header />}
+          banners={<PromoBannerBar />}
+          footer={<Footer />}
+          cookieBanner={<CookieBanner />}
+          authCartSync={<AuthCartSync />}
         >
-          Skip to content
-        </a>
-        <Header />
-        {/*
-          pt-24 reserves space for the fixed Header so normal pages aren't
-          hidden beneath it. A page with a dark hero (see Hero.tsx +
-          HeroWaypoint) cancels this with a matching negative margin so the
-          hero renders full-bleed behind the transparent/tinted header.
-        */}
-        <main id="main-content" className="flex-1 pt-24 print:pt-0">
           {children}
-        </main>
-        <Footer />
-        <CookieBanner />
-        <AuthCartSync />
+        </SiteChrome>
       </body>
     </html>
   );

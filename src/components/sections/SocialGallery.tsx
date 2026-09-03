@@ -2,7 +2,7 @@ import Image from "next/image";
 import { InstagramIcon } from "@/components/icons/SocialIcons";
 import { SectionHeading } from "@/components/sections/SectionHeading";
 import { Reveal } from "@/components/motion/Reveal";
-import { siteConfig } from "@/config/site";
+import { getStoreSettings } from "@/lib/admin/settings-store";
 
 const galleryImages = [
   { id: "social-1", image: "/images/social-1.svg", alt: "A styled table with Clink & Co coupe glasses" },
@@ -14,6 +14,7 @@ const galleryImages = [
 ];
 
 export function SocialGallery() {
+  const instagramHref = getStoreSettings().social.instagram;
   return (
     <section className="mx-auto max-w-7xl px-6 py-20 sm:px-8">
       <Reveal>
@@ -21,7 +22,7 @@ export function SocialGallery() {
           eyebrow="Tag us"
           title="@clinkandco"
           description="Share the moments you raise a glass to — we feature our favourites."
-          cta={{ label: "Follow on Instagram", href: siteConfig.social.instagram }}
+          cta={{ label: "Follow on Instagram", href: instagramHref }}
         />
       </Reveal>
 
@@ -29,7 +30,7 @@ export function SocialGallery() {
         {galleryImages.map((item, i) => (
           <Reveal key={item.id} delay={i * 0.05}>
             <a
-              href={siteConfig.social.instagram}
+              href={instagramHref}
               target="_blank"
               rel="noreferrer"
               className="focus-ring group relative block aspect-square overflow-hidden rounded-2xl"

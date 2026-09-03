@@ -6,8 +6,8 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { AnimatePresence, motion } from "framer-motion";
 import { Clock, Search, TrendingUp, X } from "lucide-react";
-import { activeProducts } from "@/data/products";
-import { categories } from "@/data/categories";
+import { getActiveProducts } from "@/data/products";
+import { getCategories } from "@/data/categories";
 import { highlightMatch, searchProducts } from "@/lib/catalogue";
 import { formatPrice, cn } from "@/lib/utils";
 import { useMounted } from "@/lib/hooks/use-mounted";
@@ -86,7 +86,7 @@ export function SearchModal({ open, onClose }: { open: boolean; onClose: () => v
   const q = query.trim();
   const results = React.useMemo(() => {
     if (!q) return [];
-    return searchProducts(activeProducts, q).slice(0, 6);
+    return searchProducts(getActiveProducts(), q).slice(0, 6);
   }, [q]);
 
   const commitSearch = React.useCallback(
@@ -300,7 +300,7 @@ export function SearchModal({ open, onClose }: { open: boolean; onClose: () => v
 function PopularCategories({ onNavigate }: { onNavigate: () => void }) {
   return (
     <div className="flex flex-wrap justify-center gap-2 sm:justify-start">
-      {categories.slice(0, 5).map((category) => (
+      {getCategories().slice(0, 5).map((category) => (
         <Link
           key={category.id}
           href={`/shop/${category.slug}`}

@@ -25,7 +25,7 @@ import { Button, buttonVariants } from "@/components/ui/Button";
 import { Modal } from "@/components/ui/Modal";
 import { Label } from "@/components/ui/Label";
 import { Textarea } from "@/components/ui/Textarea";
-import { siteConfig } from "@/config/site";
+import { getStoreSettings } from "@/lib/admin/settings-store";
 import { cn, formatPrice } from "@/lib/utils";
 
 const RETURN_REASONS: { value: ReturnReason; label: string }[] = [
@@ -111,7 +111,7 @@ export function OrderDetailView({ orderNumber }: { orderNumber: string }) {
   const payment = getPaymentStatusLabel(order.status);
   const fulfilment = getFulfilmentStatusLabel(order.status);
   const canReturn = (order.status === "paid" || order.status === "fulfilled") && !returnRequest;
-  const supportMailto = `mailto:${siteConfig.contactEmail}?subject=${encodeURIComponent(`Order ${order.orderNumber}`)}`;
+  const supportMailto = `mailto:${getStoreSettings().contactEmail}?subject=${encodeURIComponent(`Order ${order.orderNumber}`)}`;
 
   return (
     <div className="flex flex-col gap-6">

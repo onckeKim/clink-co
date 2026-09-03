@@ -1,4 +1,4 @@
-import { siteConfig } from "@/config/site";
+import { getStoreSettings } from "@/lib/admin/settings-store";
 import {
   deliveryMethods,
   PICKUP_POSTAL_PREFIXES,
@@ -88,7 +88,8 @@ export function estimateDelivery(postalCode: string, orderValue: number): Delive
 
   const code = Number(trimmed);
   const zone = resolveZone(code);
-  const freeDeliveryEligible = orderValue >= siteConfig.freeDeliveryThreshold;
+  const freeDeliveryThreshold = getStoreSettings().freeDeliveryThreshold;
+  const freeDeliveryEligible = orderValue >= freeDeliveryThreshold;
 
   return {
     ok: true,
@@ -99,7 +100,7 @@ export function estimateDelivery(postalCode: string, orderValue: number): Delive
       maxDays: zone.maxDays,
       fee: freeDeliveryEligible ? 0 : zone.fee,
       freeDeliveryEligible,
-      freeDeliveryThreshold: siteConfig.freeDeliveryThreshold,
+      freeDeliveryThreshold,
     },
   };
 }
@@ -115,13 +116,15 @@ export function isPickupPostalCode(postalCode: string): boolean {
   return PICKUP_POSTAL_PREFIXES.some((prefix) => postalCode.startsWith(prefix));
 }
 
-/** Which of the configured delivery methods can actually be offered for this address. */
+/** Which of the configured delivery methods can actually be offered for this address — also excludes any method the admin has switched off in store settings. */
 export function getAvailableDeliveryMethods(
   province: SouthAfricanProvince,
   postalCode: string,
 ): DeliveryMethodConfig[] {
   const zone = PROVINCE_ZONE[province];
+  const enabledIds = getStoreSettings().enabledDeliveryMethodIds;
   return deliveryMethods.filter((method) => {
+    if (!enabledIds.includes(method.id)) return false;
     if (method.id === "express") return zone === "metro";
     if (method.id === "pickup") return isPickupPostalCode(postalCode);
     return true;
@@ -183,7 +186,7 @@ export function quoteDelivery({
   const zone = PROVINCE_ZONE[province];
   const adjustment = ZONE_ADJUSTMENT[zone];
   const freeDeliveryApplied =
-    method.id === "pickup" || freeDeliveryOverride || orderValue >= siteConfig.freeDeliveryThreshold;
+    method.id === "pickup" || freeDeliveryOverride || orderValue >= getStoreSettings().freeDeliveryThreshold;
 
   const fee = freeDeliveryApplied ? 0 : Math.round(method.baseFee * adjustment.feeMultiplier);
   const minDays = method.minDays + adjustment.extraDays;

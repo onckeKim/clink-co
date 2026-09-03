@@ -1,13 +1,13 @@
 import { Suspense } from "react";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { curatedCollections, getCollectionBySlug } from "@/data/collections";
+import { getCuratedCollections, getCollectionBySlug } from "@/data/collections";
 import { getProductsByCollection } from "@/data/products";
 import { ShopExperience } from "@/components/catalogue/ShopExperience";
 import { ShopSkeleton } from "@/components/catalogue/ShopSkeleton";
 
 export function generateStaticParams() {
-  return curatedCollections.map((collection) => ({ collection: collection.id }));
+  return getCuratedCollections().map((collection) => ({ collection: collection.id }));
 }
 
 export async function generateMetadata({

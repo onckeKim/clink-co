@@ -16,6 +16,7 @@ import { QuantitySelector } from "@/components/product/QuantitySelector";
 import { PurchaseActions } from "@/components/product/PurchaseActions";
 import { NotifyWhenAvailable } from "@/components/product/NotifyWhenAvailable";
 import { DiscontinuedNotice } from "@/components/product/DiscontinuedNotice";
+import { DraftNotice } from "@/components/product/DraftNotice";
 import { DeliveryEstimator } from "@/components/product/DeliveryEstimator";
 import { ProductAccordions } from "@/components/product/ProductAccordions";
 import { KeyBenefits } from "@/components/product/KeyBenefits";
@@ -31,7 +32,7 @@ import { useRecentlyViewedStore } from "@/store/recently-viewed-store";
 import { getCategoryBySlug } from "@/data/categories";
 import { getCollectionBySlug } from "@/data/collections";
 import { getDiscountPercent } from "@/lib/catalogue";
-import { siteConfig } from "@/config/site";
+import { getStoreSettings } from "@/lib/admin/settings-store";
 import { formatPrice } from "@/lib/utils";
 
 export function ProductDetailView({
@@ -88,11 +89,18 @@ export function ProductDetailView({
     .map((slug) => getCollectionBySlug(slug))
     .filter((c): c is NonNullable<typeof c> => Boolean(c));
 
-  const purchasable = product.inStock && !product.discontinued;
+  const isDraft = product.publishStatus === "draft";
+  const purchasable = product.inStock && !product.discontinued && !isDraft;
 
   return (
     <div className="mx-auto max-w-7xl px-6 py-10 pb-24 sm:px-8 sm:pb-10">
       <Breadcrumbs items={breadcrumbs} className="mb-6" />
+
+      {isDraft && (
+        <div className="mb-8">
+          <DraftNotice productName={product.name} />
+        </div>
+      )}
 
       {product.discontinued && (
         <div className="mb-8">
@@ -104,6 +112,7 @@ export function ProductDetailView({
         <div className="relative">
           <ProductGallery images={resolvedImages} videoUrl={product.videoUrl} productName={product.name} />
           <div className="pointer-events-none absolute left-4 top-4 z-10 flex flex-col gap-1.5">
+            {isDraft && <Badge variant="champagne">Draft</Badge>}
             {product.discontinued && <Badge variant="light">Discontinued</Badge>}
             {!product.discontinued && !product.inStock && <Badge variant="light">Out of stock</Badge>}
             {discountPercent !== null && discountPercent > 0 && <Badge variant="sale">-{discountPercent}%</Badge>}
@@ -147,7 +156,7 @@ export function ProductDetailView({
               <span className="text-2xl font-medium text-charcoal">{formatPrice(displayPrice)}</span>
             </div>
             <p className="mt-1 text-xs text-stone">
-              Inclusive of {siteConfig.taxRatePercent}% VAT. Delivery calculated below.
+              Inclusive of {getStoreSettings().taxRatePercent}% VAT. Delivery calculated below.
             </p>
           </div>
 

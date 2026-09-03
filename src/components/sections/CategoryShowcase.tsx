@@ -1,7 +1,7 @@
 import { SectionHeading } from "@/components/sections/SectionHeading";
 import { Reveal } from "@/components/motion/Reveal";
 import { CategoryCard } from "@/components/product/CategoryCard";
-import { categories } from "@/data/categories";
+import { getCategories } from "@/data/categories";
 
 /**
  * All 6 categories in one row on large screens (no scrolling needed); a
@@ -9,6 +9,7 @@ import { categories } from "@/data/categories";
  * grid at the tablet breakpoint in between.
  */
 export function CategoryShowcase() {
+  const categories = getCategories();
   return (
     <section className="mx-auto max-w-7xl px-6 py-20 sm:px-8" aria-labelledby="shop-by-category">
       <Reveal>

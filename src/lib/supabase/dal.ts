@@ -3,7 +3,8 @@ import { cache } from "react";
 import { redirect } from "next/navigation";
 import type { User } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/server";
-import { getProfile } from "@/lib/account/profiles-store";
+import { getProfile, type Profile } from "@/lib/account/profiles-store";
+import { isAdminRole, hasPermission, type Permission } from "@/lib/admin/roles";
 
 /**
  * Data Access Layer for auth — the single place server code asks "who is
@@ -21,6 +22,14 @@ export const getUser = cache(async (): Promise<User | null> => {
       error,
     } = await supabase.auth.getUser();
     if (error || !user) return null;
+
+    // A disabled account (see /admin/customers) is treated as signed out
+    // everywhere from this point on, even if it's mid-session — an admin
+    // disabling an account should cut off access immediately, not just
+    // block the next login attempt (see POST /api/auth/login).
+    const profile = getProfile(user.id);
+    if (profile?.isDisabled) return null;
+
     return user;
   } catch {
     // Supabase env vars aren't set in this environment — there's no way to
@@ -39,15 +48,39 @@ export async function requireUser(redirectTo = "/login"): Promise<User> {
 }
 
 /**
- * Role-based access — reserved for a future admin area (no admin UI exists
- * yet in this build). `profiles.role` defaults to "customer" for every
- * shopper; nothing sets "admin" today, so this always redirects until an
- * admin surface consumes it. Wired now so that surface doesn't need to
- * retrofit authorization later.
+ * Requires any admin role (the six roles in src/lib/admin/roles.ts) — the
+ * gate for /admin/layout.tsx. A signed-in customer with no admin role is
+ * redirected to /account, not /login (they're authenticated, just not
+ * authorized), matching how a "you don't have access" case should read
+ * differently from "please sign in".
  */
-export async function requireRole(role: "admin", redirectTo = "/account"): Promise<User> {
-  const user = await requireUser();
+export async function requireAdmin(redirectTo = "/account"): Promise<{ user: User; profile: Profile }> {
+  const user = await requireUser("/login?redirect=/admin");
   const profile = getProfile(user.id);
-  if (profile?.role !== role) redirect(redirectTo);
-  return user;
+  if (!profile || !isAdminRole(profile.role)) redirect(redirectTo);
+  return { user, profile };
+}
+
+/** Requires a specific permission (see src/lib/admin/roles.ts) — use in individual admin pages/route handlers on top of the broader requireAdmin() layout guard, so a role with partial access (e.g. content_editor) is redirected/rejected from sections its role doesn't cover. */
+export async function requirePermission(
+  permission: Permission,
+  redirectTo = "/admin",
+): Promise<{ user: User; profile: Profile }> {
+  const { user, profile } = await requireAdmin();
+  if (!hasPermission(profile.role, permission)) redirect(redirectTo);
+  return { user, profile };
+}
+
+/**
+ * The non-redirecting counterpart to requireAdmin/requirePermission, for
+ * /api/admin/** route handlers — a JSON API should return 401/403, not an
+ * HTTP redirect. Returns null if there's no session or the account has no
+ * admin role; the caller decides the status code (typically 401 vs 403).
+ */
+export async function getAdminContext(): Promise<{ user: User; profile: Profile } | null> {
+  const user = await getUser();
+  if (!user) return null;
+  const profile = getProfile(user.id);
+  if (!profile || !isAdminRole(profile.role)) return null;
+  return { user, profile };
 }

@@ -7,7 +7,14 @@
  *   npx supabase gen types typescript --project-id <project-id> > src/lib/supabase/types.ts
  *
  * The shape below mirrors the tables this app expects, so the rest of the
- * codebase can already import `Database` safely.
+ * codebase can already import `Database` safely. It's deliberately kept
+ * thin/representative rather than tracking every table 1:1 — the many
+ * admin-managed "tables" added for the admin dashboard (products,
+ * categories, collections, coupons, media, content blocks, store settings,
+ * audit log, order/customer notes, etc.) are each fully specified as an
+ * in-memory store under src/lib/admin/ and src/lib/orders/, with a doc
+ * comment on the store itself describing its target real-table shape —
+ * that's the source of truth for those, not this file.
  */
 export type Json =
   | string
@@ -28,8 +35,10 @@ export interface Database {
           phone: string | null;
           date_of_birth: string | null;
           marketing_consent: boolean;
-          /** "customer" for every shopper; "admin" is reserved for a future admin area — see src/lib/supabase/dal.ts. */
-          role: "customer" | "admin";
+          /** "customer" for every shopper; the six admin roles are defined in src/lib/admin/roles.ts (ADMIN_ROLES), not duplicated here. */
+          role: "customer" | "super_admin" | "store_admin" | "product_manager" | "order_fulfilment" | "content_editor" | "customer_support";
+          is_disabled: boolean;
+          disabled_reason: string | null;
           avatar_url: string | null;
           created_at: string;
           updated_at: string;
@@ -41,7 +50,9 @@ export interface Database {
           phone?: string | null;
           date_of_birth?: string | null;
           marketing_consent?: boolean;
-          role?: "customer" | "admin";
+          role?: "customer" | "super_admin" | "store_admin" | "product_manager" | "order_fulfilment" | "content_editor" | "customer_support";
+          is_disabled?: boolean;
+          disabled_reason?: string | null;
           avatar_url?: string | null;
           created_at?: string;
           updated_at?: string;

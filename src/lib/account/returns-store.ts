@@ -25,6 +25,11 @@ export function getReturnRequest(orderNumber: string): ReturnRequest | undefined
   return returnsByOrderNumber.get(orderNumber);
 }
 
+/** Every return request, most recent first — every entry is "pending" today since there's no approve/receive/refund lifecycle yet (see the module comment above). Used by the admin dashboard's "Pending returns" stat. */
+export function listReturnRequests(): ReturnRequest[] {
+  return [...returnsByOrderNumber.values()].sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+}
+
 export function createReturnRequest(input: {
   orderNumber: string;
   userId: string;
