@@ -9,6 +9,7 @@ import { cn } from "@/lib/utils";
 
 export function NewsletterForm({ className }: { className?: string }) {
   const [submitted, setSubmitted] = React.useState(false);
+  const [submitError, setSubmitError] = React.useState(false);
   const {
     register,
     handleSubmit,
@@ -17,12 +18,19 @@ export function NewsletterForm({ className }: { className?: string }) {
   } = useForm<NewsletterInput>({ resolver: zodResolver(newsletterSchema) });
 
   const onSubmit = async (data: NewsletterInput) => {
-    // TODO: wire up to Supabase (e.g. an `subscribers` table or edge function)
-    // once NEXT_PUBLIC_SUPABASE_URL / NEXT_PUBLIC_SUPABASE_ANON_KEY are set.
-    await new Promise((resolve) => setTimeout(resolve, 500));
-    console.log("Newsletter signup:", data.email);
-    setSubmitted(true);
-    reset();
+    setSubmitError(false);
+    try {
+      const res = await fetch("/api/newsletter", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: data.email }),
+      });
+      if (!res.ok) throw new Error("Newsletter signup failed");
+      setSubmitted(true);
+      reset();
+    } catch {
+      setSubmitError(true);
+    }
   };
 
   if (submitted) {
@@ -53,6 +61,11 @@ export function NewsletterForm({ className }: { className?: string }) {
         </button>
       </div>
       {errors.email && <p className="mt-2 text-xs text-champagne-ink">{errors.email.message}</p>}
+      {submitError && (
+        <p role="alert" className="mt-2 text-xs text-champagne-ink">
+          Something went wrong — please try again in a moment.
+        </p>
+      )}
     </form>
   );
 }

@@ -516,19 +516,19 @@ export const policiesSeed: Record<PolicyPageKey, PolicyPageContent> = {
     title: "Delivery Policy",
     updatedAt: genericUpdatedAt,
     intro:
-      "[Placeholder legal copy] This delivery policy outlines the areas we deliver to, expected timeframes and fees for orders placed with Clink & Co by HEIMSIGHT. It should be read alongside our Delivery Information page.",
+      "This delivery policy outlines the areas we deliver to, expected timeframes and fees for orders placed with Clink & Co by HEIMSIGHT. It should be read alongside our Delivery Information page.",
     sections: [
       {
         heading: "Delivery areas and timeframes",
-        body: "[Placeholder] We deliver to addresses across South Africa. Estimated delivery timeframes are provided at checkout and on our Delivery Information page and are indicative only, not guaranteed delivery dates.",
+        body: "We deliver to addresses across South Africa. Estimated delivery timeframes are provided at checkout and on our Delivery Information page and are indicative only, not guaranteed delivery dates.",
       },
       {
         heading: "Delivery fees",
-        body: "[Placeholder] Delivery fees are calculated at checkout based on delivery zone and chosen method, and orders over the advertised free-delivery threshold qualify for free standard delivery.",
+        body: "Delivery fees are calculated at checkout based on delivery zone and chosen method, and orders over the advertised free-delivery threshold qualify for free standard delivery.",
       },
       {
         heading: "Failed or delayed delivery",
-        body: "[Placeholder] Where a delivery is delayed, misdirected due to an incorrect address supplied at checkout, or cannot be completed after reasonable attempts, additional fees may apply for re-delivery. Contact our support team for assistance.",
+        body: "Where a delivery is delayed, misdirected due to an incorrect address supplied at checkout, or cannot be completed after reasonable attempts, additional fees may apply for re-delivery. Contact our support team for assistance.",
       },
     ],
   },
@@ -536,19 +536,19 @@ export const policiesSeed: Record<PolicyPageKey, PolicyPageContent> = {
     title: "Returns and Refund Policy",
     updatedAt: genericUpdatedAt,
     intro:
-      "[Placeholder legal copy] This policy sets out the terms on which Clink & Co by HEIMSIGHT accepts returns and processes refunds, in addition to any statutory rights you have under South African consumer protection law.",
+      "This policy sets out the terms on which Clink & Co by HEIMSIGHT accepts returns and processes refunds, in addition to any statutory rights you have under South African consumer protection law.",
     sections: [
       {
         heading: "Return eligibility",
-        body: "[Placeholder] Items may be returned within the return window stated on our Returns page, provided they are unused, in their original packaging, and accompanied by proof of purchase.",
+        body: "Items may be returned within the return window stated on our Returns page, provided they are unused, in their original packaging, and accompanied by proof of purchase.",
       },
       {
         heading: "Refunds",
-        body: "[Placeholder] Approved refunds are issued to the original payment method within the timeframe stated on our Returns page. Delivery fees are refunded only where the return is due to our error or a damaged or incorrect item.",
+        body: "Approved refunds are issued to the original payment method within the timeframe stated on our Returns page. Delivery fees are refunded only where the return is due to our error or a damaged or incorrect item.",
       },
       {
         heading: "Consumer Protection Act",
-        body: "[Placeholder] Nothing in this policy limits any right you may have under the Consumer Protection Act 68 of 2008 or other applicable South African legislation.",
+        body: "Nothing in this policy limits any right you may have under the Consumer Protection Act 68 of 2008 or other applicable South African legislation.",
       },
     ],
   },
@@ -556,19 +556,19 @@ export const policiesSeed: Record<PolicyPageKey, PolicyPageContent> = {
     title: "Payment Policy",
     updatedAt: genericUpdatedAt,
     intro:
-      "[Placeholder legal copy] This payment policy describes the payment methods we accept and how payment information is processed and secured when you shop with Clink & Co by HEIMSIGHT.",
+      "This payment policy describes the payment methods we accept and how payment information is processed and secured when you shop with Clink & Co by HEIMSIGHT.",
     sections: [
       {
         heading: "Accepted payment methods",
-        body: "[Placeholder] We accept major credit and debit cards and other payment methods shown at checkout, processed through PCI-DSS-compliant third-party payment gateways.",
+        body: "We accept major credit and debit cards and other payment methods shown at checkout, processed through PCI-DSS-compliant third-party payment gateways.",
       },
       {
         heading: "Security",
-        body: "[Placeholder] We do not store your full card details on our servers. All payment data is transmitted securely and handled in accordance with our payment providers' security standards.",
+        body: "We do not store your full card details on our servers. All payment data is transmitted securely and handled in accordance with our payment providers' security standards.",
       },
       {
         heading: "Currency and pricing",
-        body: "[Placeholder] All prices are displayed and charged in South African Rand (ZAR) and are inclusive of VAT at the applicable rate unless stated otherwise.",
+        body: "All prices are displayed and charged in South African Rand (ZAR) and are inclusive of VAT at the applicable rate unless stated otherwise.",
       },
     ],
   },
@@ -576,19 +576,19 @@ export const policiesSeed: Record<PolicyPageKey, PolicyPageContent> = {
     title: "Website Disclaimer",
     updatedAt: genericUpdatedAt,
     intro:
-      "[Placeholder legal copy] The following disclaimer applies to your use of the Clink & Co by HEIMSIGHT website. By using this site, you accept this disclaimer in full.",
+      "The following disclaimer applies to your use of the Clink & Co by HEIMSIGHT website. By using this site, you accept this disclaimer in full.",
     sections: [
       {
         heading: "No professional advice",
-        body: "[Placeholder] Content on this website, including our Journal, is provided for general informational purposes only and does not constitute professional advice of any kind.",
+        body: "Content on this website, including our Journal, is provided for general informational purposes only and does not constitute professional advice of any kind.",
       },
       {
         heading: "Accuracy of information",
-        body: "[Placeholder] While we try to keep product, pricing and availability information up to date, we make no warranties about the completeness or accuracy of the information on this site.",
+        body: "While we try to keep product, pricing and availability information up to date, we make no warranties about the completeness or accuracy of the information on this site.",
       },
       {
         heading: "Limitation of liability",
-        body: "[Placeholder] To the fullest extent permitted by law, Clink & Co by HEIMSIGHT will not be liable for any indirect or consequential loss arising from the use of this website.",
+        body: "To the fullest extent permitted by law, Clink & Co by HEIMSIGHT will not be liable for any indirect or consequential loss arising from the use of this website.",
       },
     ],
   },

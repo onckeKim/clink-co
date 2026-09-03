@@ -35,12 +35,12 @@ export function NewsletterSection() {
   const onSubmit = async (data: NewsletterSectionInput) => {
     setStatus("idle");
     try {
-      // TODO: wire up to Supabase (e.g. a `subscribers` table or edge
-      // function) once NEXT_PUBLIC_SUPABASE_URL / NEXT_PUBLIC_SUPABASE_ANON_KEY
-      // are set. Simulated here so the form's success/error states are real.
-      await new Promise<void>((resolve, reject) =>
-        setTimeout(() => (data.email.includes("@") ? resolve() : reject()), 600),
-      );
+      const res = await fetch("/api/newsletter", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: data.email }),
+      });
+      if (!res.ok) throw new Error("Newsletter signup failed");
       setStatus("success");
       track({ name: "newsletter_signup", location: pathname });
       reset();

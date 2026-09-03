@@ -28,7 +28,8 @@ export const siteConfig = {
     facebook: "https://facebook.com/clinkandco",
     tiktok: "https://tiktok.com/@clinkandco",
     pinterest: "https://pinterest.com/clinkandco",
-    whatsapp: "https://wa.me/15550102024",
+    // Placeholder South African number — replace with the real support line before go-live (overridable via Store Settings).
+    whatsapp: "https://wa.me/27210000000",
   },
 
   contactEmail: "hello@clinkandco.com",

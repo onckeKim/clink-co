@@ -64,11 +64,16 @@ test.describe("Filter and sort products", () => {
     const isMobileDrawer = await openFilters.isVisible().catch(() => false);
     if (isMobileDrawer) {
       await openFilters.click();
+      // Wait for the slide-up sheet's open animation to finish rather than
+      // racing it with an immediate isVisible() probe (flaky under load —
+      // the drawer element exists and reports "visible" the instant it
+      // mounts, even mid-transition, before its contents are interactable).
+      await expect(page.getByRole("dialog", { name: "Filters" })).toBeVisible();
     }
-    const availabilitySection = page.getByRole("button", { name: "Availability" });
-    if (await availabilitySection.isVisible().catch(() => false)) {
-      await availabilitySection.click();
-    }
+    // Availability starts collapsed on both the desktop sidebar and the
+    // mobile drawer (they share FilterPanel) — click() auto-waits for it
+    // rather than relying on a synchronous, non-waiting isVisible() check.
+    await page.getByRole("button", { name: "Availability" }).click();
     await page.getByText("In stock only").click();
     if (isMobileDrawer) {
       await page.getByRole("button", { name: /^apply filters/i }).click();
