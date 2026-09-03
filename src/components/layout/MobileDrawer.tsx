@@ -11,6 +11,7 @@ import { getCuratedCollections } from "@/data/collections";
 import { InstagramIcon, FacebookIcon, TikTokIcon, PinterestIcon } from "@/components/icons/SocialIcons";
 import { useWishlistCount } from "@/store/wishlist-store";
 import { cn } from "@/lib/utils";
+import { useFocusTrap } from "@/lib/hooks/use-focus-trap";
 
 const socialIconMap = {
   Instagram: InstagramIcon,
@@ -23,6 +24,9 @@ export function MobileDrawer({ open, onClose }: { open: boolean; onClose: () => 
   const [expanded, setExpanded] = React.useState<string | null>(null);
   const wishlistCount = useWishlistCount();
   const socialLinks = getSocialLinks();
+  const panelRef = React.useRef<HTMLDivElement>(null);
+
+  useFocusTrap(open, onClose, panelRef);
 
   React.useEffect(() => {
     if (!open) return;
@@ -55,11 +59,13 @@ export function MobileDrawer({ open, onClose }: { open: boolean; onClose: () => 
           />
 
           <motion.div
+            ref={panelRef}
+            tabIndex={-1}
             initial={{ x: "100%" }}
             animate={{ x: 0 }}
             exit={{ x: "100%" }}
             transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
-            className="relative flex h-full w-full max-w-sm flex-col bg-porcelain shadow-lifted"
+            className="focus-ring relative flex h-full w-full max-w-sm flex-col bg-porcelain shadow-lifted"
           >
             <div className="flex items-center justify-between border-b border-sand px-5 py-4">
               <Logo compact />

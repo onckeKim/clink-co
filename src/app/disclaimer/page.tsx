@@ -5,6 +5,7 @@ import { getPolicyPage } from "@/lib/admin/content-store";
 export const metadata: Metadata = {
   title: "Website Disclaimer",
   description: "The disclaimer that applies to your use of the Clink & Co by HEIMSIGHT website.",
+  alternates: { canonical: "/disclaimer" },
 };
 
 export default function DisclaimerPage() {

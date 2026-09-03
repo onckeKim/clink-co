@@ -25,7 +25,7 @@ export function StatCard({
         <p
           className={cn(
             "font-display mt-2 text-2xl text-charcoal",
-            tone === "warning" && "text-champagne",
+            tone === "warning" && "text-champagne-ink",
             tone === "error" && "text-error",
           )}
         >

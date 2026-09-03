@@ -8,7 +8,10 @@ export const metadata: Metadata = {
   title: "Shop All",
   description:
     "Browse the full Clink & Co range — glassware, barware, tableware, serveware, gift sets and accessories.",
+  alternates: { canonical: "/shop" },
 };
+
+export const revalidate = 3600;
 
 export default function ShopPage() {
   return (

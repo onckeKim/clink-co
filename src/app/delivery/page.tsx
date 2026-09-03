@@ -5,10 +5,12 @@ import { Breadcrumbs } from "@/components/catalogue/Breadcrumbs";
 import { deliveryMethods, PROVINCE_ZONE, ZONE_ADJUSTMENT } from "@/config/delivery";
 import { getStoreSettings } from "@/lib/admin/settings-store";
 import { formatPrice } from "@/lib/utils";
+import { breadcrumbJsonLd, JsonLd } from "@/lib/seo/json-ld";
 
 export const metadata: Metadata = {
   title: "Delivery Information",
   description: "Delivery areas, processing times, fees and tracking for Clink & Co by HEIMSIGHT orders.",
+  alternates: { canonical: "/delivery" },
 };
 
 const ZONE_LABELS: Record<keyof typeof ZONE_ADJUSTMENT, { label: string; provinces: string[] }> = {
@@ -27,6 +29,7 @@ export default function DeliveryPage() {
 
   return (
     <div className="mx-auto max-w-3xl px-6 py-10 sm:px-8">
+      <JsonLd data={breadcrumbJsonLd([{ label: "Home", href: "/" }, { label: "Delivery Information" }])} />
       <Breadcrumbs items={[{ label: "Home", href: "/" }, { label: "Delivery Information" }]} className="mb-6" />
 
       <h1 className="font-display text-display-2xl text-charcoal">Delivery Information</h1>

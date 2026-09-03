@@ -3,10 +3,11 @@ import { Inter, Fraunces } from "next/font/google";
 import "./globals.css";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
-import { CookieBanner } from "@/components/layout/CookieBanner";
+import { CookieBannerLoader } from "@/components/layout/CookieBannerLoader";
 import { AuthCartSync } from "@/components/layout/AuthCartSync";
 import { PromoBannerBar } from "@/components/layout/PromoBannerBar";
 import { SiteChrome } from "@/components/layout/SiteChrome";
+import { Analytics } from "@/components/analytics/Analytics";
 
 const inter = Inter({
   variable: "--font-inter",
@@ -41,12 +42,35 @@ export const metadata: Metadata = {
     "tableware",
     "gift sets",
   ],
+  alternates: {
+    canonical: "/",
+  },
   openGraph: {
     title: "Clink & Co by HEIMSIGHT",
     description:
       "Premium glassware, barware and tableware for entertaining, gifting and everyday living.",
     siteName: "Clink & Co",
     type: "website",
+    url: "/",
+    locale: "en_ZA",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Clink & Co by HEIMSIGHT",
+    description:
+      "Premium glassware, barware and tableware for entertaining, gifting and everyday living.",
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-image-preview": "large",
+    },
+  },
+  verification: {
+    google: process.env.NEXT_PUBLIC_GSC_VERIFICATION,
   },
 };
 
@@ -69,11 +93,12 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
           header={<Header />}
           banners={<PromoBannerBar />}
           footer={<Footer />}
-          cookieBanner={<CookieBanner />}
+          cookieBanner={<CookieBannerLoader />}
           authCartSync={<AuthCartSync />}
         >
           {children}
         </SiteChrome>
+        <Analytics />
       </body>
     </html>
   );

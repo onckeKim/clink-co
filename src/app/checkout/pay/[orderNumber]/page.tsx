@@ -4,6 +4,7 @@ import { PaymentSimulatorView } from "@/components/checkout/PaymentSimulatorView
 
 export const metadata: Metadata = {
   title: "Complete Payment",
+  robots: { index: false, follow: false },
 };
 
 export default async function PayPage({ params }: PageProps<"/checkout/pay/[orderNumber]">) {

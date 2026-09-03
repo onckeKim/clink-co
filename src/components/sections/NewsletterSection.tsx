@@ -2,6 +2,7 @@
 
 import * as React from "react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { Controller, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { AlertCircle, CheckCircle2, Mail } from "lucide-react";
@@ -12,11 +13,13 @@ import { Checkbox } from "@/components/ui/Checkbox";
 import { Button } from "@/components/ui/Button";
 import { Reveal } from "@/components/motion/Reveal";
 import { cn } from "@/lib/utils";
+import { track } from "@/lib/analytics/track";
 
 type Status = "idle" | "success" | "error";
 
 export function NewsletterSection() {
   const content = getNewsletterContent();
+  const pathname = usePathname();
   const [status, setStatus] = React.useState<Status>("idle");
   const {
     register,
@@ -39,6 +42,7 @@ export function NewsletterSection() {
         setTimeout(() => (data.email.includes("@") ? resolve() : reject()), 600),
       );
       setStatus("success");
+      track({ name: "newsletter_signup", location: pathname });
       reset();
     } catch {
       setStatus("error");

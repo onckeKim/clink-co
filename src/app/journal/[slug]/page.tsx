@@ -6,10 +6,13 @@ import { Share2, Send, MessageCircle, Mail } from "lucide-react";
 import { Breadcrumbs } from "@/components/catalogue/Breadcrumbs";
 import { getArticleBySlug, getPublishedArticles } from "@/lib/admin/content-store";
 import { siteConfig } from "@/config/site";
+import { breadcrumbJsonLd, JsonLd } from "@/lib/seo/json-ld";
 
 export function generateStaticParams() {
   return getPublishedArticles().map((article) => ({ slug: article.slug }));
 }
+
+export const revalidate = 3600;
 
 export async function generateMetadata({
   params,
@@ -17,10 +20,26 @@ export async function generateMetadata({
   const { slug } = await params;
   const article = getArticleBySlug(slug);
   if (!article) return {};
+  const title = article.seoTitle || article.title;
+  const description = article.seoDescription || article.excerpt;
+  const canonical = `/journal/${article.slug}`;
   return {
-    title: article.seoTitle || article.title,
-    description: article.seoDescription || article.excerpt,
-    openGraph: { images: [{ url: article.coverImage }] },
+    title,
+    description,
+    alternates: { canonical },
+    openGraph: {
+      title,
+      description,
+      url: canonical,
+      type: "article",
+      publishedTime: article.publishedAt,
+      authors: [article.author],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title,
+      description,
+    },
   };
 }
 
@@ -56,12 +75,28 @@ export default async function JournalArticlePage({ params }: PageProps<"/journal
     { label: "Share via email", icon: Mail, href: `mailto:?subject=${encodeURIComponent(article.title)}&body=${encodeURIComponent(articleUrl)}` },
   ];
 
+  const breadcrumbs = [{ label: "Home", href: "/" }, { label: "Journal", href: "/journal" }, { label: article.title }];
+
+  const articleJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "Article",
+    headline: article.title,
+    description: article.excerpt,
+    image: [`${siteConfig.url}${article.coverImage}`],
+    datePublished: article.publishedAt,
+    author: { "@type": "Organization", name: article.author },
+    publisher: {
+      "@type": "Organization",
+      name: siteConfig.name,
+      logo: { "@type": "ImageObject", url: `${siteConfig.url}/icon` },
+    },
+    mainEntityOfPage: { "@type": "WebPage", "@id": articleUrl },
+  };
+
   return (
     <div className="mx-auto max-w-3xl px-6 py-10 sm:px-8">
-      <Breadcrumbs
-        items={[{ label: "Home", href: "/" }, { label: "Journal", href: "/journal" }, { label: article.title }]}
-        className="mb-6"
-      />
+      <JsonLd data={[articleJsonLd, breadcrumbJsonLd(breadcrumbs)]} />
+      <Breadcrumbs items={breadcrumbs} className="mb-6" />
 
       {article.publishStatus === "draft" && (
         <div className="mb-6 rounded-xl border border-champagne bg-champagne/20 px-4 py-3 text-sm text-charcoal">

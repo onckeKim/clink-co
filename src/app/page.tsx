@@ -20,12 +20,13 @@ export default function Home() {
   const { order, hidden } = getHomepageSectionsConfig();
   const settings = getStoreSettings();
 
-  const jsonLd = {
+  const organizationJsonLd = {
     "@context": "https://schema.org",
     "@type": "Organization",
     name: settings.businessName,
     alternateName: siteConfig.name,
     url: siteConfig.url,
+    logo: `${siteConfig.url}/icon`,
     sameAs: [
       settings.social.instagram,
       settings.social.facebook,
@@ -33,6 +34,28 @@ export default function Home() {
       settings.social.pinterest,
     ],
     slogan: siteConfig.tagline,
+    contactPoint: {
+      "@type": "ContactPoint",
+      contactType: "customer service",
+      email: settings.contactEmail,
+      telephone: settings.contactPhone || undefined,
+      areaServed: "ZA",
+    },
+  };
+
+  const websiteJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "WebSite",
+    name: siteConfig.fullName,
+    url: siteConfig.url,
+    potentialAction: {
+      "@type": "SearchAction",
+      target: {
+        "@type": "EntryPoint",
+        urlTemplate: `${siteConfig.url}/shop?q={search_term_string}`,
+      },
+      "query-input": "required name=search_term_string",
+    },
   };
 
   const sections: Record<string, ReactNode> = {
@@ -66,10 +89,14 @@ export default function Home() {
 
   return (
     <>
-      {/* Structured data for SEO — helps search engines surface the brand + social profiles. */}
+      {/* Structured data for SEO — helps search engines surface the brand, social profiles and sitelinks search box. */}
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationJsonLd) }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteJsonLd) }}
       />
 
       {order.filter((key) => !hidden.includes(key) && sections[key]).map((key) => sections[key])}

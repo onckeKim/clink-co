@@ -11,6 +11,7 @@ import { Label } from "@/components/ui/Label";
 import { Select } from "@/components/ui/Select";
 import { Checkbox } from "@/components/ui/Checkbox";
 import { Button } from "@/components/ui/Button";
+import { track } from "@/lib/analytics/track";
 
 type Status = "idle" | "success" | "error";
 
@@ -53,6 +54,7 @@ export function ContactForm({ defaultCategory }: { defaultCategory?: (typeof ENQ
         return;
       }
       setStatus("success");
+      track({ name: "contact_form_submitted", category: data.category });
       reset({ ...data, name: "", email: "", phone: "", orderNumber: "", message: "", consent: false, company: "" });
     } catch {
       setErrorMessage("Something went wrong — please check your connection and try again.");
@@ -87,13 +89,11 @@ export function ContactForm({ defaultCategory }: { defaultCategory?: (typeof ENQ
       <div className="grid gap-5 sm:grid-cols-2">
         <div>
           <Label htmlFor="contact-name">Full name</Label>
-          <Input id="contact-name" autoComplete="name" aria-invalid={!!errors.name} {...register("name")} />
-          {errors.name && <p className="mt-1.5 text-xs text-error">{errors.name.message}</p>}
+          <Input id="contact-name" autoComplete="name" error={errors.name?.message} {...register("name")} />
         </div>
         <div>
           <Label htmlFor="contact-email">Email address</Label>
-          <Input id="contact-email" type="email" autoComplete="email" aria-invalid={!!errors.email} {...register("email")} />
-          {errors.email && <p className="mt-1.5 text-xs text-error">{errors.email.message}</p>}
+          <Input id="contact-email" type="email" autoComplete="email" error={errors.email?.message} {...register("email")} />
         </div>
       </div>
 
@@ -110,20 +110,18 @@ export function ContactForm({ defaultCategory }: { defaultCategory?: (typeof ENQ
 
       <div>
         <Label htmlFor="contact-category">Enquiry type</Label>
-        <Select id="contact-category" aria-invalid={!!errors.category} {...register("category")}>
+        <Select id="contact-category" error={errors.category?.message} {...register("category")}>
           {ENQUIRY_CATEGORIES.map((category) => (
             <option key={category} value={category}>
               {category}
             </option>
           ))}
         </Select>
-        {errors.category && <p className="mt-1.5 text-xs text-error">{errors.category.message}</p>}
       </div>
 
       <div>
         <Label htmlFor="contact-message">Message</Label>
-        <Textarea id="contact-message" rows={6} aria-invalid={!!errors.message} {...register("message")} />
-        {errors.message && <p className="mt-1.5 text-xs text-error">{errors.message.message}</p>}
+        <Textarea id="contact-message" rows={6} error={errors.message?.message} {...register("message")} />
       </div>
 
       {/* Honeypot — hidden from sighted and screen-reader users alike (aria-hidden + tabIndex -1 + off-screen), never legitimately filled in. See POST /api/contact. */}

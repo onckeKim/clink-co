@@ -36,7 +36,7 @@ function StarPicker({ value, onChange }: { value: number; onChange: (value: numb
           <Star
             className={cn(
               "h-6 w-6 transition-colors",
-              star <= display ? "fill-champagne text-champagne" : "fill-transparent text-sand",
+              star <= display ? "fill-champagne-ink text-champagne-ink" : "fill-transparent text-sand",
             )}
           />
         </button>
@@ -180,7 +180,7 @@ export function WriteReviewForm({
                 type="button"
                 onClick={() => removeImage(image.url)}
                 aria-label="Remove photo"
-                className="focus-ring absolute right-0.5 top-0.5 flex h-5 w-5 items-center justify-center rounded-full bg-charcoal/70 text-warm-white"
+                className="focus-ring absolute right-0 top-0 flex h-6 w-6 items-center justify-center rounded-full bg-charcoal/70 text-warm-white"
               >
                 <X className="h-3 w-3" />
               </button>

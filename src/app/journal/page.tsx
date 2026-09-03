@@ -3,11 +3,15 @@ import Image from "next/image";
 import Link from "next/link";
 import { Breadcrumbs } from "@/components/catalogue/Breadcrumbs";
 import { getPublishedArticles } from "@/lib/admin/content-store";
+import { breadcrumbJsonLd, JsonLd } from "@/lib/seo/json-ld";
 
 export const metadata: Metadata = {
   title: "Journal",
   description: "Notes on hosting, glassware care and gifting from the Clink & Co editorial team.",
+  alternates: { canonical: "/journal" },
 };
+
+export const revalidate = 3600;
 
 function formatDate(iso: string): string {
   return new Date(iso).toLocaleDateString("en-ZA", { day: "numeric", month: "long", year: "numeric" });
@@ -26,6 +30,7 @@ export default async function JournalIndexPage({ searchParams }: PageProps<"/jou
 
   return (
     <div className="mx-auto max-w-6xl px-6 py-10 sm:px-8">
+      <JsonLd data={breadcrumbJsonLd([{ label: "Home", href: "/" }, { label: "Journal" }])} />
       <Breadcrumbs items={[{ label: "Home", href: "/" }, { label: "Journal" }]} className="mb-6" />
 
       <div className="mb-10 max-w-2xl">

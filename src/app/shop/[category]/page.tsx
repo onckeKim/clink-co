@@ -5,10 +5,13 @@ import { getCategories, getCategoryBySlug } from "@/data/categories";
 import { getProductsByCategory } from "@/data/products";
 import { ShopExperience } from "@/components/catalogue/ShopExperience";
 import { ShopSkeleton } from "@/components/catalogue/ShopSkeleton";
+import { breadcrumbJsonLd, JsonLd } from "@/lib/seo/json-ld";
 
 export function generateStaticParams() {
   return getCategories().map((category) => ({ category: category.slug }));
 }
+
+export const revalidate = 3600;
 
 export async function generateMetadata({
   params,
@@ -16,9 +19,15 @@ export async function generateMetadata({
   const { category: slug } = await params;
   const category = getCategoryBySlug(slug);
   if (!category) return {};
+  const title = category.seoTitle || category.name;
+  const description = category.seoDescription || category.description;
+  const canonical = `/shop/${category.slug}`;
   return {
-    title: category.name,
-    description: category.description,
+    title,
+    description,
+    alternates: { canonical },
+    openGraph: { title, description, url: canonical, images: [{ url: category.image }] },
+    twitter: { card: "summary_large_image", title, description, images: [category.image] },
   };
 }
 
@@ -28,20 +37,24 @@ export default async function ShopCategoryPage({ params }: PageProps<"/shop/[cat
   if (!category) notFound();
 
   const scopedProducts = getProductsByCategory(category.slug);
+  const breadcrumbs = [
+    { label: "Home", href: "/" },
+    { label: "Shop", href: "/shop" },
+    { label: category.name },
+  ];
 
   return (
-    <Suspense fallback={<ShopSkeleton />}>
-      <ShopExperience
-        products={scopedProducts}
-        title={category.name}
-        description={category.description}
-        breadcrumbs={[
-          { label: "Home", href: "/" },
-          { label: "Shop", href: "/shop" },
-          { label: category.name },
-        ]}
-        lockedCategory={category.slug}
-      />
-    </Suspense>
+    <>
+      <JsonLd data={breadcrumbJsonLd(breadcrumbs)} />
+      <Suspense fallback={<ShopSkeleton />}>
+        <ShopExperience
+          products={scopedProducts}
+          title={category.name}
+          description={category.description}
+          breadcrumbs={breadcrumbs}
+          lockedCategory={category.slug}
+        />
+      </Suspense>
+    </>
   );
 }

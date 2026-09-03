@@ -10,7 +10,7 @@ export function ReviewsCarousel() {
   const slides = reviews.map((review) => (
     <div key={review.id} className="flex justify-center px-6 py-2 sm:px-8">
       <div className="w-full max-w-2xl rounded-3xl border border-sand/70 bg-warm-white p-8 text-center sm:p-12">
-        <Quote className="mx-auto h-8 w-8 text-champagne" strokeWidth={1.5} />
+        <Quote className="mx-auto h-8 w-8 text-champagne-ink" strokeWidth={1.5} />
         <Rating value={review.rating} size="md" className="mt-4 justify-center" />
         <p className="font-display mt-5 text-xl leading-snug text-charcoal sm:text-2xl">
           &ldquo;{review.review}&rdquo;

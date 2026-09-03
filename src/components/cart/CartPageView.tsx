@@ -2,19 +2,23 @@
 
 import * as React from "react";
 import Link from "next/link";
+import dynamic from "next/dynamic";
 import { ArrowLeft, ShoppingBag } from "lucide-react";
 import { useCartStore } from "@/store/cart-store";
 import { CartLineItem } from "@/components/cart/CartLineItem";
 import { CartSummary } from "@/components/cart/CartSummary";
 import { Breadcrumbs } from "@/components/catalogue/Breadcrumbs";
 import { ProductGrid } from "@/components/catalogue/ProductGrid";
-import { QuickView } from "@/components/product/QuickView";
 import { buttonVariants } from "@/components/ui/Button";
 import { getComplementaryProducts } from "@/data/products";
 import type { CartLineInput } from "@/lib/cart-validation";
 import { useMounted } from "@/lib/hooks/use-mounted";
 import { cn } from "@/lib/utils";
 import type { Product } from "@/types/product";
+
+// Only mounted once a shopper opens it — deferring keeps its JS out of the
+// cart page's initial bundle.
+const QuickView = dynamic(() => import("@/components/product/QuickView").then((m) => m.QuickView), { ssr: false });
 
 interface ValidationIssue {
   slug: string;

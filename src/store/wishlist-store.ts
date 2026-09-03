@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import type { Product } from "@/types/product";
+import { track } from "@/lib/analytics/track";
 
 export interface WishlistItem {
   productId: string;
@@ -41,6 +42,12 @@ export const useWishlistStore = create<WishlistState>()(
                 price: product.price,
               },
             ],
+          });
+          track({
+            name: "add_to_wishlist",
+            currency: product.currency,
+            value: product.price,
+            items: [{ item_id: product.id, item_name: product.name, price: product.price, item_category: product.categorySlug }],
           });
         }
       },

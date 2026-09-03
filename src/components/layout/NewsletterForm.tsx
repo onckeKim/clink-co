@@ -52,7 +52,7 @@ export function NewsletterForm({ className }: { className?: string }) {
           <ArrowRight className="h-4 w-4" />
         </button>
       </div>
-      {errors.email && <p className="mt-2 text-xs text-champagne">{errors.email.message}</p>}
+      {errors.email && <p className="mt-2 text-xs text-champagne-ink">{errors.email.message}</p>}
     </form>
   );
 }

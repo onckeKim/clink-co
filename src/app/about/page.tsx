@@ -6,10 +6,12 @@ import { NewsletterSection } from "@/components/sections/NewsletterSection";
 import { buttonVariants } from "@/components/ui/Button";
 import { getAboutPageContent } from "@/lib/admin/content-store";
 import { cn } from "@/lib/utils";
+import { breadcrumbJsonLd, JsonLd } from "@/lib/seo/json-ld";
 
 export const metadata: Metadata = {
   title: "Our Story",
   description: "The story behind Clink & Co by HEIMSIGHT — considered glassware, barware and tableware for the table.",
+  alternates: { canonical: "/about" },
 };
 
 export default function AboutPage() {
@@ -18,6 +20,7 @@ export default function AboutPage() {
   return (
     <>
       <div className="mx-auto max-w-5xl px-6 py-10 sm:px-8">
+        <JsonLd data={breadcrumbJsonLd([{ label: "Home", href: "/" }, { label: "About" }])} />
         <Breadcrumbs items={[{ label: "Home", href: "/" }, { label: "About" }]} className="mb-6" />
 
         <p className="text-xs font-semibold uppercase tracking-[0.2em] text-stone">{content.heroEyebrow}</p>

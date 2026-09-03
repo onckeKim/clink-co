@@ -958,6 +958,43 @@ non-essential / Manage preferences, the last opening a `Modal` with
 per-category `Switch` toggles). The decision persists to `localStorage`;
 `CookieSettingsLink` in the footer calls `reset()` to reopen the banner.
 
+### Analytics & tracked events
+
+`<Analytics />` (mounted once in `layout.tsx`) renders nothing until the
+visitor has made a cookie-consent decision, then conditionally injects each
+provider's script via `next/script`: GA4 and Microsoft Clarity require
+`analytics` consent, the Meta and TikTok pixels require `marketing`
+consent — independently of that, each provider also only renders if its
+env var is set (see [Environment variables](#environment-variables)), so a
+clone of this repo with no keys configured loads nothing at all. Withdrawing
+consent (via the "Manage preferences" modal) stops new events immediately;
+already-loaded scripts aren't force-unloaded mid-session, but
+`src/lib/analytics/track.ts`'s `track()` re-checks consent on every call and
+no-ops if it's been withdrawn.
+
+`track()` is a plain, framework-agnostic function (not a hook) so it can be
+called from Zustand store actions as well as components. It fans a single
+internal event shape out to each configured/consented provider, mapping to
+GA4's recommended event vocabulary, Meta's standard events, and TikTok's
+standard events where each has an equivalent (falling back to a custom
+event otherwise). The 13 events called for are wired at these call sites:
+
+| Event | Fired from |
+| --- | --- |
+| Product viewed | `ProductDetailView.tsx`, on mount |
+| Product searched | `SearchModal.tsx`, on committing a search |
+| Filter used | `ShopExperience.tsx`, one event per facet that actually changed |
+| Add to cart | `cart-store.ts`'s `addItem()` |
+| Remove from cart | `cart-store.ts`'s `removeLine()` |
+| Add to wishlist | `wishlist-store.ts`'s `toggle()`, add branch only |
+| Begin checkout | `CheckoutView.tsx`, once per checkout session |
+| Add delivery information | `CheckoutView.tsx`, on completing the delivery-method step |
+| Add payment information | `CheckoutView.tsx`, on completing the payment-method step |
+| Purchase completed | `ConfirmationView.tsx`, once payment has actually succeeded |
+| Coupon applied | `cart-store.ts`'s `applyCoupon()`, on success |
+| Newsletter signup | `NewsletterSection.tsx`, on successful subscribe |
+| Contact form submitted | `ContactForm.tsx`, on successful submit |
+
 ## Seed data & placeholder imagery
 
 ### How catalogue data is currently stored
@@ -1070,6 +1107,11 @@ cp .env.local.example .env.local
 | `YOCO_SECRET_KEY` / `YOCO_WEBHOOK_SECRET` | Yoco payment method                |
 | `OZOW_SITE_CODE` / `_PRIVATE_KEY` / `_SANDBOX` | Ozow payment method              |
 | `RESEND_API_KEY`                      | Transactional email / newsletter / order confirmations |
+| `NEXT_PUBLIC_GA_MEASUREMENT_ID`       | Google Analytics 4 — only loads once the visitor has given "analytics" cookie consent |
+| `NEXT_PUBLIC_GSC_VERIFICATION`        | Google Search Console ownership verification meta tag |
+| `NEXT_PUBLIC_FB_PIXEL_ID`             | Meta Pixel — only loads once the visitor has given "marketing" cookie consent |
+| `NEXT_PUBLIC_TIKTOK_PIXEL_ID`         | TikTok Pixel — only loads once the visitor has given "marketing" cookie consent |
+| `NEXT_PUBLIC_CLARITY_ID`              | Microsoft Clarity — only loads once the visitor has given "analytics" cookie consent |
 
 The app runs without any of these set — Supabase calls are structured to no-op
 gracefully in `src/proxy.ts`, both newsletter forms currently simulate their
@@ -1115,14 +1157,54 @@ npm run generate:placeholders # regenerate placeholder SVG imagery
   for responsive srcsets; the Hero's first slide is `priority`-loaded, all
   others lazy-load; placeholder SVGs are tiny (a gradient + one glyph) so
   they cost almost nothing over the wire.
-- **Static generation** — the homepage has no per-request data dependency,
-  so it's fully static-prerendered (`next build` reports it as `○ Static`).
-- **SEO** — per-page `<title>`/`<meta description>`/OpenGraph tags live in
-  `layout.tsx`; the homepage additionally injects `Organization` JSON-LD
-  (name, social profiles, tagline) via a `<script type="application/ld+json">`
-  in `page.tsx`. Semantic landmarks (`<header>`, `<main>`, `<footer>`,
-  heading hierarchy starting at one `<h1>` in the Hero) are used throughout
-  rather than generic `<div>`s.
+- **Static generation & ISR** — the homepage and every content-driven
+  listing/detail page (`/shop`, `/shop/[category]`, `/collections`,
+  `/collections/[collection]`, `/journal`, `/journal/[slug]`,
+  `/products/[slug]`) prerender at build time via `generateStaticParams`
+  and revalidate hourly (`export const revalidate = 3600`), so an admin
+  edit to the in-memory content stores shows up within the hour without a
+  redeploy.
+- **Code-splitting** — `SearchModal`, `QuickView` and `CookieBanner` are
+  loaded via `next/dynamic({ ssr: false })` so their (framer-motion-heavy)
+  bundles only download once a visitor actually opens them, not on every
+  page's first paint; `framer-motion` is also opted into
+  `experimental.optimizePackageImports` in `next.config.ts`.
+- **Skeleton loading** — route-level `loading.tsx` for `/account/**`,
+  `/admin/**` and `/checkout` mirror their resolved layout's shape (no
+  layout shift); `/shop`, `/shop/[category]` and `/collections/[collection]`
+  use an inline `<Suspense>` + `ShopSkeleton` for the same reason.
+- **SEO — metadata**: every page sets a unique `<title>`/`<meta description>`
+  and `alternates.canonical`; product, category, collection and journal
+  pages additionally set full OpenGraph/Twitter card metadata sourced from
+  their own SEO fields. `/cart`, `/checkout`, every `/account/**` and
+  `/admin/**` page carry `robots: { index: false, follow: false }`; a
+  dynamic `src/app/robots.ts` disallows those same sections plus `/api`,
+  `/auth` and `/dev`.
+- **SEO — sitemaps**: `src/app/sitemap.ts` covers every static page plus
+  category/collection index routes; `src/app/products/sitemap.ts` and
+  `src/app/journal/sitemap.ts` are separate, per the task, and all three
+  are listed in `robots.ts`.
+- **SEO — structured data**: `Organization` (with `logo`/`contactPoint`)
+  and `WebSite` (with a `SearchAction` pointing at `/shop?q=`) JSON-LD on
+  the homepage; `Product` JSON-LD (SKU, price, availability, brand, rating,
+  reviews) plus `BreadcrumbList` on every product page; `BreadcrumbList` on
+  every other page with a visible breadcrumb trail (via the shared
+  `breadcrumbJsonLd()`/`<JsonLd>` helpers in `src/lib/seo/json-ld.tsx`);
+  `Article` JSON-LD on journal posts; `FAQPage` JSON-LD on `/faq`.
+- **Social sharing images** — `opengraph-image.tsx`/`twitter-image.tsx`
+  routes (via `next/og`'s `ImageResponse`) generate a branded 1200×630 PNG
+  card for the homepage, every product, every collection and every journal
+  article — this project's seed imagery is local SVG, which most social
+  platforms won't render as a link preview at all, so these are real PNGs
+  rather than pointing at the SVG assets directly. Favicon/apple-touch-icon
+  and the two manifest icon sizes are generated the same way, from a shared
+  `BrandMark` component (`src/lib/og/`).
+- **Analytics** — `src/lib/analytics/` prepares GA4, Meta Pixel, TikTok
+  Pixel and Microsoft Clarity, each gated on both its env var being set
+  (see [Environment variables](#environment-variables)) and the matching
+  cookie-consent category; see
+  [Cart, wishlist, recently viewed & cookie consent](#cart-wishlist-recently-viewed--cookie-consent)
+  below for exactly how that gating works and the full list of tracked events.
 - **Conversion affordances** — quick-add and wishlist directly from product
   cards (no page navigation required), a persistent cart badge, sale/new/
   out-of-stock/discount-percentage badges, star ratings and colour swatches
@@ -1174,6 +1256,28 @@ Verified at phone (390px), tablet (834px) and desktop (1440px) widths:
   `champagne` (a light, warm accent) is used as text only on dark
   (`charcoal`) backgrounds or as a background chip under dark text — never
   as small text on a light surface, where its contrast would be too low.
+  A follow-up contrast audit (computed WCAG ratios, not eyeballed) found
+  `champagne` text/icons on light surfaces (rating stars, low-stock notices,
+  etc.) were in fact shipping at ~2.5:1, well under the 4.5:1 minimum for
+  text; `--color-champagne-ink` (`src/app/globals.css`) is a darkened
+  variant (~4.6–4.9:1 on `porcelain`/`warm-white`) now used everywhere
+  champagne renders as foreground content on a light background, leaving
+  the original `champagne` for backgrounds/borders and the dark-background
+  case, which already passed.
+- **Focus trapping** — `Modal` and `MobileDrawer` both use a shared
+  `useFocusTrap()` hook (`src/lib/hooks/use-focus-trap.ts`): opening either
+  moves focus into the panel, `Tab`/`Shift+Tab` cycle within it rather than
+  escaping to the page behind the overlay, `Escape` closes it, and closing
+  restores focus to whatever triggered it — the standard WAI-ARIA dialog
+  pattern.
+- **Touch targets** — icon-only buttons meet the WCAG 2.5.8 24×24px
+  minimum; a handful of undersized ones found during this pass (the toast
+  dismiss button, the cart's "remove coupon" button, and a couple of
+  photo-remove buttons on evidence/review upload) were bumped up to it.
+- Every form field now goes through the shared `Input`/`Select`/`Textarea`
+  primitives' built-in `error` prop, which auto-generates a matching
+  `aria-describedby`-linked error message rather than a same-looking but
+  visually-only paragraph next to the field.
 - lucide-react no longer ships brand/social marks, so `SocialIcons.tsx` and
   `PaymentIcons.tsx` are hand-drawn, stroke-matched replacements — see
   below for swapping in official logos before launch.

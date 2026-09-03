@@ -2,18 +2,31 @@ import type { Metadata } from "next";
 import { Breadcrumbs } from "@/components/catalogue/Breadcrumbs";
 import { Disclosure } from "@/components/ui/Disclosure";
 import { getFaqs } from "@/lib/admin/content-store";
+import { breadcrumbJsonLd, JsonLd } from "@/lib/seo/json-ld";
 
 export const metadata: Metadata = {
   title: "FAQ",
   description: "Answers to common questions about shipping, returns, product care and orders.",
+  alternates: { canonical: "/faq" },
 };
 
 export default function FaqPage() {
   const faqs = getFaqs();
   const categories = [...new Set(faqs.map((faq) => faq.category))];
 
+  const faqJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    mainEntity: faqs.map((faq) => ({
+      "@type": "Question",
+      name: faq.question,
+      acceptedAnswer: { "@type": "Answer", text: faq.answer },
+    })),
+  };
+
   return (
     <div className="mx-auto max-w-3xl px-6 py-10 sm:px-8">
+      <JsonLd data={[faqJsonLd, breadcrumbJsonLd([{ label: "Home", href: "/" }, { label: "FAQ" }])]} />
       <Breadcrumbs items={[{ label: "Home", href: "/" }, { label: "FAQ" }]} className="mb-6" />
 
       <div className="mb-10 max-w-2xl">

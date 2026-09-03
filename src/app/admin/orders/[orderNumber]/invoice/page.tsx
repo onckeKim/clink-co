@@ -5,7 +5,7 @@ import { getOrderByNumber } from "@/lib/orders/store";
 import { getStoreSettings } from "@/lib/admin/settings-store";
 import { AdminInvoiceView } from "@/components/admin/orders/AdminInvoiceView";
 
-export const metadata: Metadata = { title: "Invoice" };
+export const metadata: Metadata = { title: "Invoice", robots: { index: false, follow: false } };
 
 export default async function AdminOrderInvoicePage({ params }: PageProps<"/admin/orders/[orderNumber]/invoice">) {
   await requirePermission("orders:view");

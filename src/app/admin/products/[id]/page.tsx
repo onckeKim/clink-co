@@ -6,7 +6,7 @@ import { getCategories } from "@/data/categories";
 import { getCuratedCollections } from "@/data/collections";
 import { ProductForm } from "@/components/admin/products/ProductForm";
 
-export const metadata: Metadata = { title: "Edit Product" };
+export const metadata: Metadata = { title: "Edit Product", robots: { index: false, follow: false } };
 
 export default async function AdminEditProductPage({ params }: PageProps<"/admin/products/[id]">) {
   await requirePermission("products:write");

@@ -81,7 +81,7 @@ export function Toaster() {
                 type="button"
                 onClick={() => dismiss(t.id)}
                 aria-label="Dismiss"
-                className="focus-ring text-stone transition-colors hover:text-charcoal"
+                className="focus-ring -m-1.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-stone transition-colors hover:text-charcoal"
               >
                 <X className="h-3.5 w-3.5" />
               </button>

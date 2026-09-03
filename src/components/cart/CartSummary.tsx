@@ -61,7 +61,12 @@ export function CartSummary({ compact = false }: { compact?: boolean }) {
       {coupon && (
         <div className="flex items-center justify-between rounded-full bg-success/10 px-3 py-1.5 text-xs font-medium text-success">
           <span>&ldquo;{coupon.code}&rdquo; applied</span>
-          <button type="button" onClick={removeCoupon} aria-label="Remove coupon" className="focus-ring">
+          <button
+            type="button"
+            onClick={removeCoupon}
+            aria-label="Remove coupon"
+            className="focus-ring -m-1.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full"
+          >
             <X className="h-3.5 w-3.5" />
           </button>
         </div>

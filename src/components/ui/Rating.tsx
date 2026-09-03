@@ -30,7 +30,7 @@ export function Rating({
             key={i}
             className={cn(
               sizeClass,
-              i < filledStars ? "fill-champagne text-champagne" : "fill-transparent text-sand",
+              i < filledStars ? "fill-champagne-ink text-champagne-ink" : "fill-transparent text-sand",
             )}
             strokeWidth={1.5}
           />

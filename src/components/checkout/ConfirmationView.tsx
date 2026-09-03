@@ -9,6 +9,7 @@ import type { Order } from "@/lib/orders/types";
 import { buttonVariants } from "@/components/ui/Button";
 import { CreateAccountPrompt } from "@/components/checkout/CreateAccountPrompt";
 import { cn, formatPrice } from "@/lib/utils";
+import { track } from "@/lib/analytics/track";
 
 function formatDate(iso: string): string {
   return new Date(iso).toLocaleDateString("en-ZA", { day: "numeric", month: "short" });
@@ -42,6 +43,19 @@ export function ConfirmationView({ orderNumber }: { orderNumber: string }) {
     // /cart when the cart is empty — so the bag is left untouched until
     // there's a real order to show for it.
     if (!clearedRef.current && order && !paymentDidNotSucceed) {
+      track({
+        name: "purchase_completed",
+        transactionId: order.orderNumber,
+        currency: "ZAR",
+        value: order.total,
+        coupon: order.couponCode,
+        items: order.lines.map((line) => ({
+          item_id: line.productId,
+          item_name: line.name,
+          price: line.unitPrice,
+          quantity: line.quantity,
+        })),
+      });
       clearCart();
       clearedRef.current = true;
     }

@@ -2,6 +2,7 @@
 
 import * as React from "react";
 import Link from "next/link";
+import dynamic from "next/dynamic";
 import { usePathname } from "next/navigation";
 import { ChevronDown, Heart, Menu, Search as SearchIcon, ShoppingBag, User } from "lucide-react";
 import { Logo } from "./Logo";
@@ -9,12 +10,18 @@ import { MegaMenu, type MegaMenuKey } from "./MegaMenu";
 import { MobileDrawer } from "./MobileDrawer";
 import { primaryNav } from "./nav-data";
 import { CartDrawer } from "@/components/cart/CartDrawer";
-import { SearchModal } from "@/components/search/SearchModal";
 import { useCartCount, useCartStore } from "@/store/cart-store";
 import { useWishlistCount } from "@/store/wishlist-store";
 import { useUIStore } from "@/store/ui-store";
 import { useAuthUser } from "@/lib/hooks/use-auth-user";
 import { cn } from "@/lib/utils";
+
+// Code-split out of the header's initial bundle — the search overlay's JS
+// (and framer-motion usage) only needs to load once a visitor actually
+// opens search, not on every single page's first paint.
+const SearchModal = dynamic(() => import("@/components/search/SearchModal").then((m) => m.SearchModal), {
+  ssr: false,
+});
 
 const MENU_CLOSE_DELAY = 150;
 

@@ -6,10 +6,15 @@ import { getReviewsForProduct } from "@/data/reviews";
 import { getQAForProduct } from "@/data/qa";
 import { ProductDetailView } from "@/components/product/ProductDetailView";
 import { siteConfig } from "@/config/site";
+import { breadcrumbJsonLd, JsonLd } from "@/lib/seo/json-ld";
 
 export function generateStaticParams() {
   return getProducts().map((product) => ({ slug: product.slug }));
 }
+
+// Products are admin-editable via the in-memory store — a background
+// revalidation within this hour picks up edits without a redeploy.
+export const revalidate = 3600;
 
 export async function generateMetadata({
   params,
@@ -19,13 +24,21 @@ export async function generateMetadata({
   if (!product) return {};
   const title = product.seoTitle || (product.discontinued ? `${product.name} (Discontinued)` : product.name);
   const description = product.seoDescription || product.shortDescription;
+  const canonical = `/products/${product.slug}`;
   return {
     title,
     description,
+    alternates: { canonical },
     openGraph: {
       title,
       description,
-      images: product.images[0] ? [{ url: product.images[0] }] : undefined,
+      url: canonical,
+      type: "website",
+    },
+    twitter: {
+      card: "summary_large_image",
+      title,
+      description,
     },
   };
 }
@@ -86,21 +99,23 @@ export default async function ProductPage({ params }: PageProps<"/products/[slug
       : {}),
   };
 
+  const breadcrumbs = [
+    { label: "Home", href: "/" },
+    { label: "Shop", href: "/shop" },
+    ...(category ? [{ label: category.name, href: `/shop/${category.slug}` }] : []),
+    { label: product.name },
+  ];
+
   return (
     <>
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
+      <JsonLd data={[jsonLd, breadcrumbJsonLd(breadcrumbs)]} />
       <ProductDetailView
         product={product}
         relatedProducts={relatedProducts}
         pairedProducts={pairedProducts}
         seedReviews={seedReviews}
         qaEntries={qaEntries}
-        breadcrumbs={[
-          { label: "Home", href: "/" },
-          { label: "Shop", href: "/shop" },
-          ...(category ? [{ label: category.name, href: `/shop/${category.slug}` }] : []),
-          { label: product.name },
-        ]}
+        breadcrumbs={breadcrumbs}
       />
     </>
   );

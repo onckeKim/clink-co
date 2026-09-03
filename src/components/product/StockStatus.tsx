@@ -16,7 +16,7 @@ export function StockStatus({ stockQuantity, inStock }: { stockQuantity: number;
 
   if (stockQuantity <= LOW_STOCK_THRESHOLD) {
     return (
-      <span className={cn("flex items-center gap-1.5 text-sm font-medium text-champagne")}>
+      <span className={cn("flex items-center gap-1.5 text-sm font-medium text-champagne-ink")}>
         <AlertTriangle className="h-4 w-4" />
         Only {stockQuantity} left in stock — order soon
       </span>

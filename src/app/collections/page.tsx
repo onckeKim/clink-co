@@ -4,16 +4,21 @@ import Link from "next/link";
 import { ArrowUpRight } from "lucide-react";
 import { getCuratedCollections, getCollectionProductCount } from "@/data/collections";
 import { Breadcrumbs } from "@/components/catalogue/Breadcrumbs";
+import { breadcrumbJsonLd, JsonLd } from "@/lib/seo/json-ld";
 
 export const metadata: Metadata = {
   title: "Collections",
   description: "Curated edits of the Clink & Co range, grouped by how you actually shop.",
+  alternates: { canonical: "/collections" },
 };
+
+export const revalidate = 3600;
 
 export default function CollectionsIndexPage() {
   const curatedCollections = getCuratedCollections();
   return (
     <div className="mx-auto max-w-7xl px-6 py-10 sm:px-8">
+      <JsonLd data={breadcrumbJsonLd([{ label: "Home", href: "/" }, { label: "Collections" }])} />
       <Breadcrumbs items={[{ label: "Home", href: "/" }, { label: "Collections" }]} className="mb-6" />
 
       <div className="mb-10 max-w-2xl">

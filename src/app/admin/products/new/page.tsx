@@ -4,7 +4,7 @@ import { getCategories } from "@/data/categories";
 import { getCuratedCollections } from "@/data/collections";
 import { ProductForm } from "@/components/admin/products/ProductForm";
 
-export const metadata: Metadata = { title: "New Product" };
+export const metadata: Metadata = { title: "New Product", robots: { index: false, follow: false } };
 
 export default async function AdminNewProductPage() {
   await requirePermission("products:write");

@@ -2,6 +2,7 @@ import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import type { Product, ProductVariant } from "@/types/product";
 import { validateCoupon, getBestAutomaticDiscount, type PromotableLine } from "@/lib/promotions";
+import { track } from "@/lib/analytics/track";
 
 export interface CartLine {
   lineId: string;
@@ -151,11 +152,46 @@ export const useCartStore = create<CartState>()(
           ];
         }
         set({ lines: nextLines, isOpen: true, ...resolveCoupon(nextLines, get().manualCouponCode) });
+
+        const addedQuantity = Math.min(requestedQuantity, cap);
+        const unitPrice = product.price + (variant?.priceDelta ?? 0);
+        track({
+          name: "add_to_cart",
+          currency: product.currency,
+          value: unitPrice * addedQuantity,
+          items: [
+            {
+              item_id: product.id,
+              item_name: product.name,
+              price: unitPrice,
+              quantity: addedQuantity,
+              item_category: product.categorySlug,
+            },
+          ],
+        });
       },
 
       removeLine: (lineId) => {
+        const removed = get().lines.find((line) => line.lineId === lineId);
         const nextLines = get().lines.filter((line) => line.lineId !== lineId);
         set({ lines: nextLines, ...resolveCoupon(nextLines, get().manualCouponCode) });
+
+        if (removed) {
+          track({
+            name: "remove_from_cart",
+            currency: "ZAR",
+            value: removed.price * removed.quantity,
+            items: [
+              {
+                item_id: removed.productId,
+                item_name: removed.name,
+                price: removed.price,
+                quantity: removed.quantity,
+                item_category: removed.categorySlug,
+              },
+            ],
+          });
+        }
       },
 
       updateQuantity: (lineId, quantity, stockQuantity) => {
@@ -191,6 +227,7 @@ export const useCartStore = create<CartState>()(
           manualCouponCode: code,
           couponError: null,
         });
+        track({ name: "coupon_applied", couponCode: result.coupon.code, discountAmount: result.discountAmount });
       },
 
       removeCoupon: () => {

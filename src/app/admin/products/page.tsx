@@ -4,7 +4,7 @@ import { requirePermission } from "@/lib/supabase/dal";
 import { getCategories } from "@/data/categories";
 import { ProductsListView } from "@/components/admin/products/ProductsListView";
 
-export const metadata: Metadata = { title: "Products" };
+export const metadata: Metadata = { title: "Products", robots: { index: false, follow: false } };
 
 export default async function AdminProductsPage() {
   await requirePermission("products:view");

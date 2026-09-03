@@ -273,7 +273,7 @@ function NewReturnForm({ orders, onSubmitted }: { orders: Order[]; onSubmitted: 
                 <button
                   type="button"
                   onClick={() => setImages((prev) => prev.filter((_, idx) => idx !== i))}
-                  className="focus-ring absolute -right-1.5 -top-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-charcoal text-[10px] text-warm-white"
+                  className="focus-ring absolute -right-2 -top-2 flex h-6 w-6 items-center justify-center rounded-full bg-charcoal text-xs text-warm-white"
                   aria-label={`Remove photo ${i + 1}`}
                 >
                   ×

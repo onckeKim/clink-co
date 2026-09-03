@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import dynamic from "next/dynamic";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { SlidersHorizontal } from "lucide-react";
 import type { Product } from "@/types/product";
@@ -26,7 +27,24 @@ import { ProductGrid } from "@/components/catalogue/ProductGrid";
 import { EmptyState } from "@/components/catalogue/EmptyState";
 import { ErrorState } from "@/components/catalogue/ErrorState";
 import { LoadMoreButton } from "@/components/catalogue/LoadMoreButton";
-import { QuickView } from "@/components/product/QuickView";
+import { track } from "@/lib/analytics/track";
+
+// Only mounted once a shopper opens it — deferring keeps its JS out of the
+// shop grid's initial bundle.
+const QuickView = dynamic(() => import("@/components/product/QuickView").then((m) => m.QuickView), { ssr: false });
+
+/** Fires one `filter_used` event per facet that actually changed between two filter states. */
+function trackFilterChanges(prev: CatalogueFilters, next: CatalogueFilters) {
+  for (const key of Object.keys(next) as (keyof CatalogueFilters)[]) {
+    if (JSON.stringify(prev[key]) === JSON.stringify(next[key])) continue;
+    const value = next[key];
+    track({
+      name: "filter_used",
+      filterType: key,
+      filterValue: Array.isArray(value) ? value.join(",") : String(value ?? ""),
+    });
+  }
+}
 
 /**
  * The shared shop experience — reused, with a "locked" facet, across
@@ -94,7 +112,9 @@ export function ShopExperience({
 
   const applyFilters = React.useCallback(
     (updater: (prev: CatalogueFilters) => CatalogueFilters) => {
-      updateUrl(updater(filters), sort, 1);
+      const nextFilters = updater(filters);
+      trackFilterChanges(filters, nextFilters);
+      updateUrl(nextFilters, sort, 1);
     },
     [filters, sort, updateUrl],
   );

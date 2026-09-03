@@ -5,6 +5,7 @@ import { getPolicyPage } from "@/lib/admin/content-store";
 export const metadata: Metadata = {
   title: "Returns and Refund Policy",
   description: "Our returns and refund policy for Clink & Co by HEIMSIGHT orders.",
+  alternates: { canonical: "/returns-policy" },
 };
 
 export default function ReturnsPolicyPage() {

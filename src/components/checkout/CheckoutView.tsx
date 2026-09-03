@@ -9,6 +9,7 @@ import type { DeliveryMethodId } from "@/config/delivery";
 import type { PaymentMethodId } from "@/lib/orders/types";
 import type { AddressInput, CustomerDetailsInput } from "@/lib/validations/checkout";
 import { useMounted } from "@/lib/hooks/use-mounted";
+import { track } from "@/lib/analytics/track";
 
 import { CheckoutProgress } from "@/components/checkout/CheckoutProgress";
 import { CheckoutSummarySidebar } from "@/components/checkout/CheckoutSummarySidebar";
@@ -63,6 +64,29 @@ export function CheckoutView() {
     if (mounted && lines.length === 0) router.replace("/cart");
   }, [mounted, lines.length, router]);
 
+  const discountAmount = coupon?.discountAmount ?? 0;
+
+  // Fired once, the moment checkout actually has line items to check out —
+  // not on every re-render of this step-based component.
+  const beginCheckoutTracked = React.useRef(false);
+  React.useEffect(() => {
+    if (!mounted || lines.length === 0 || beginCheckoutTracked.current) return;
+    beginCheckoutTracked.current = true;
+    track({
+      name: "begin_checkout",
+      currency: "ZAR",
+      value: Math.max(0, subtotal - discountAmount),
+      items: lines.map((line) => ({
+        item_id: line.productId,
+        item_name: line.name,
+        price: line.price,
+        quantity: line.quantity,
+        item_category: line.categorySlug,
+      })),
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [mounted, lines.length]);
+
   React.useEffect(() => {
     fetch("/api/payments/methods")
       .then((res) => res.json())
@@ -70,8 +94,6 @@ export function CheckoutView() {
       .catch(() => setAvailablePaymentMethods([]))
       .finally(() => setLoadingPaymentMethods(false));
   }, []);
-
-  const discountAmount = coupon?.discountAmount ?? 0;
 
   const deliveryQuote = React.useMemo(() => {
     if (!deliveryAddress || !deliveryMethodId) return null;
@@ -180,7 +202,15 @@ export function CheckoutView() {
               selectedMethodId={deliveryMethodId}
               onSelect={setDeliveryMethodId}
               onBack={() => goTo(1)}
-              onNext={() => goTo(3)}
+              onNext={() => {
+                track({
+                  name: "add_delivery_information",
+                  currency: "ZAR",
+                  value: Math.max(0, subtotal - discountAmount) + deliveryFee,
+                  shippingTier: deliveryQuote?.label ?? deliveryMethodId,
+                });
+                goTo(3);
+              }}
             />
           )}
 
@@ -205,7 +235,15 @@ export function CheckoutView() {
               selectedMethod={paymentMethod}
               onSelect={setPaymentMethod}
               onBack={() => goTo(3)}
-              onNext={() => goTo(5)}
+              onNext={() => {
+                track({
+                  name: "add_payment_information",
+                  currency: "ZAR",
+                  value: totals.total,
+                  paymentType: paymentMethod,
+                });
+                goTo(5);
+              }}
             />
           )}
 

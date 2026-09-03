@@ -7,10 +7,12 @@ import { buttonVariants } from "@/components/ui/Button";
 import { getActiveProducts } from "@/data/products";
 import type { Product } from "@/types/product";
 import { cn, formatPrice } from "@/lib/utils";
+import { breadcrumbJsonLd, JsonLd } from "@/lib/seo/json-ld";
 
 export const metadata: Metadata = {
   title: "Gift Guide",
   description: "Find the right Clink & Co by HEIMSIGHT gift by occasion, budget or recipient — from wedding gifts to corporate gifting.",
+  alternates: { canonical: "/gifts" },
 };
 
 function hasAnyTag(product: Product, tags: string[]): boolean {
@@ -70,6 +72,7 @@ export default function GiftsPage() {
 
   return (
     <div className="mx-auto max-w-6xl px-6 py-10 sm:px-8">
+      <JsonLd data={breadcrumbJsonLd([{ label: "Home", href: "/" }, { label: "Gift Guide" }])} />
       <Breadcrumbs items={[{ label: "Home", href: "/" }, { label: "Gift Guide" }]} className="mb-6" />
 
       <div className="max-w-2xl">

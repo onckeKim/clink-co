@@ -6,6 +6,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useMounted } from "@/lib/hooks/use-mounted";
+import { useFocusTrap } from "@/lib/hooks/use-focus-trap";
 
 export interface ModalProps {
   open: boolean;
@@ -17,19 +18,17 @@ export interface ModalProps {
 
 export function Modal({ open, onClose, title, children, className }: ModalProps) {
   const mounted = useMounted();
+  const panelRef = React.useRef<HTMLDivElement>(null);
+
+  useFocusTrap(open, onClose, panelRef);
 
   React.useEffect(() => {
     if (!open) return;
-    const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") onClose();
-    };
-    document.addEventListener("keydown", onKeyDown);
     document.body.style.overflow = "hidden";
     return () => {
-      document.removeEventListener("keydown", onKeyDown);
       document.body.style.overflow = "";
     };
-  }, [open, onClose]);
+  }, [open]);
 
   if (!mounted) return null;
 
@@ -47,15 +46,17 @@ export function Modal({ open, onClose, title, children, className }: ModalProps)
             aria-hidden
           />
           <motion.div
+            ref={panelRef}
             role="dialog"
             aria-modal="true"
             aria-label={title}
+            tabIndex={-1}
             initial={{ opacity: 0, y: 24, scale: 0.98 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 12, scale: 0.98 }}
             transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
             className={cn(
-              "relative w-full max-w-lg rounded-3xl bg-warm-white p-8 shadow-lifted",
+              "focus-ring relative w-full max-w-lg rounded-3xl bg-warm-white p-8 shadow-lifted",
               className,
             )}
           >

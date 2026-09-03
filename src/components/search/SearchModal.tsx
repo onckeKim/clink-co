@@ -11,6 +11,7 @@ import { getCategories } from "@/data/categories";
 import { highlightMatch, searchProducts } from "@/lib/catalogue";
 import { formatPrice, cn } from "@/lib/utils";
 import { useMounted } from "@/lib/hooks/use-mounted";
+import { track } from "@/lib/analytics/track";
 
 /** Renders `text` with the portion matching `query` wrapped for emphasis. */
 function Highlighted({ text, query }: { text: string; query: string }) {
@@ -99,10 +100,11 @@ export function SearchModal({ open, onClose }: { open: boolean; onClose: () => v
       );
       setRecent(next);
       writeRecent(next);
+      track({ name: "product_searched", searchTerm: trimmed, resultCount: results.length });
       router.push(`/shop?q=${encodeURIComponent(trimmed)}`);
       onClose();
     },
-    [recent, router, onClose],
+    [recent, router, onClose, results.length],
   );
 
   const goToProduct = React.useCallback(

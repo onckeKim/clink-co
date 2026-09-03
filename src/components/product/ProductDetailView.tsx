@@ -2,6 +2,7 @@
 
 import * as React from "react";
 import Link from "next/link";
+import dynamic from "next/dynamic";
 import type { Product } from "@/types/product";
 import type { Review } from "@/data/reviews";
 import type { QAEntry } from "@/data/qa";
@@ -26,7 +27,6 @@ import { TrustBadges } from "@/components/product/TrustBadges";
 import { ReviewsSection } from "@/components/product/ReviewsSection";
 import { QandASection } from "@/components/product/QandASection";
 import { StickyAddToCart } from "@/components/product/StickyAddToCart";
-import { QuickView } from "@/components/product/QuickView";
 import { RecentlyViewed } from "@/components/sections/RecentlyViewed";
 import { useRecentlyViewedStore } from "@/store/recently-viewed-store";
 import { getCategoryBySlug } from "@/data/categories";
@@ -34,6 +34,11 @@ import { getCollectionBySlug } from "@/data/collections";
 import { getDiscountPercent } from "@/lib/catalogue";
 import { getStoreSettings } from "@/lib/admin/settings-store";
 import { formatPrice } from "@/lib/utils";
+import { track } from "@/lib/analytics/track";
+
+// Only mounted once a shopper opens it (from "You may also like"/"Pairs
+// well with") — deferring keeps its JS out of the PDP's initial bundle.
+const QuickView = dynamic(() => import("@/components/product/QuickView").then((m) => m.QuickView), { ssr: false });
 
 export function ProductDetailView({
   product,
@@ -75,6 +80,11 @@ export function ProductDetailView({
 
   React.useEffect(() => {
     recordView(product);
+    track({
+      name: "product_viewed",
+      currency: product.currency,
+      items: [{ item_id: product.id, item_name: product.name, price: product.price, item_category: product.categorySlug }],
+    });
   }, [product, recordView]);
 
   const activeVariant = product.variants?.find((v) => v.id === activeVariantId);

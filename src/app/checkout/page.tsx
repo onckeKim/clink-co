@@ -4,6 +4,7 @@ import { CheckoutView } from "@/components/checkout/CheckoutView";
 export const metadata: Metadata = {
   title: "Checkout",
   description: "Complete your order.",
+  robots: { index: false, follow: false },
 };
 
 export default function CheckoutPage() {

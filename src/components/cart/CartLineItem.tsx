@@ -78,7 +78,7 @@ export function CartLineItem({ line, compact = false }: { line: CartLine; compac
           </p>
         )}
         {!exceedsStock && lowStock && (
-          <p className="text-xs font-medium text-champagne">Only {stockQuantity} left in stock</p>
+          <p className="text-xs font-medium text-champagne-ink">Only {stockQuantity} left in stock</p>
         )}
 
         <div className="flex items-center justify-between">

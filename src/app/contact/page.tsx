@@ -6,10 +6,12 @@ import { ContactForm } from "@/components/contact/ContactForm";
 import { getContactInfo } from "@/components/layout/nav-data";
 import { getStoreSettings } from "@/lib/admin/settings-store";
 import { ENQUIRY_CATEGORIES } from "@/lib/validations/contact";
+import { breadcrumbJsonLd, JsonLd } from "@/lib/seo/json-ld";
 
 export const metadata: Metadata = {
   title: "Contact Us",
   description: "Get in touch with the Clink & Co by HEIMSIGHT team — order questions, product questions, returns and more.",
+  alternates: { canonical: "/contact" },
 };
 
 function isEnquiryCategory(value: string | undefined): value is (typeof ENQUIRY_CATEGORIES)[number] {
@@ -26,6 +28,7 @@ export default async function ContactPage({ searchParams }: PageProps<"/contact"
 
   return (
     <div className="mx-auto max-w-5xl px-6 py-10 sm:px-8">
+      <JsonLd data={breadcrumbJsonLd([{ label: "Home", href: "/" }, { label: "Contact" }])} />
       <Breadcrumbs items={[{ label: "Home", href: "/" }, { label: "Contact" }]} className="mb-6" />
 
       <div className="mb-10 max-w-2xl">

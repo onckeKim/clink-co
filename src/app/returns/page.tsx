@@ -4,10 +4,12 @@ import { RotateCcw, CheckCircle2, XCircle, AlertTriangle, Clock } from "lucide-r
 import { Breadcrumbs } from "@/components/catalogue/Breadcrumbs";
 import { ReturnsPageClient } from "@/components/account/ReturnsPageClient";
 import { getStoreSettings } from "@/lib/admin/settings-store";
+import { breadcrumbJsonLd, JsonLd } from "@/lib/seo/json-ld";
 
 export const metadata: Metadata = {
   title: "Returns",
   description: "Our returns policy, eligibility conditions and how to request a return for your Clink & Co by HEIMSIGHT order.",
+  alternates: { canonical: "/returns" },
 };
 
 export default function ReturnsPage() {
@@ -15,6 +17,7 @@ export default function ReturnsPage() {
 
   return (
     <div className="mx-auto max-w-3xl px-6 py-10 sm:px-8">
+      <JsonLd data={breadcrumbJsonLd([{ label: "Home", href: "/" }, { label: "Returns" }])} />
       <Breadcrumbs items={[{ label: "Home", href: "/" }, { label: "Returns" }]} className="mb-6" />
 
       <h1 className="font-display text-display-2xl text-charcoal">Returns</h1>

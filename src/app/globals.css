@@ -20,7 +20,8 @@
 
   /* Accents — used sparingly */
   --color-green: #697262; /* muted green — eco / availability / secondary accent */
-  --color-champagne: #b69a68; /* gifting, editorial highlights */
+  --color-champagne: #b69a68; /* gifting, editorial highlights — decorative use (backgrounds, borders) and text/icons on dark (charcoal) surfaces only; contrast on porcelain/warm-white is ~2.5:1, below WCAG AA. */
+  --color-champagne-ink: #7f6c49; /* same hue, darkened to ~4.6:1 on porcelain/warm-white — use for champagne text/icons on light surfaces (rating stars, low-stock notices, etc). */
 
   /* Signal */
   --color-success: #287a4b;
@@ -49,6 +50,7 @@
   --color-pure-black: var(--color-pure-black);
   --color-green: var(--color-green);
   --color-champagne: var(--color-champagne);
+  --color-champagne-ink: var(--color-champagne-ink);
   --color-success: var(--color-success);
   --color-error: var(--color-error);
 

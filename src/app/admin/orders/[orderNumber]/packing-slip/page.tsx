@@ -5,7 +5,7 @@ import { getOrderByNumber } from "@/lib/orders/store";
 import { getStoreSettings } from "@/lib/admin/settings-store";
 import { PackingSlipView } from "@/components/admin/orders/PackingSlipView";
 
-export const metadata: Metadata = { title: "Packing Slip" };
+export const metadata: Metadata = { title: "Packing Slip", robots: { index: false, follow: false } };
 
 export default async function AdminPackingSlipPage({
   params,

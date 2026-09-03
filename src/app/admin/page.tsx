@@ -23,6 +23,7 @@ import { formatPrice } from "@/lib/utils";
 
 export const metadata: Metadata = {
   title: "Admin Dashboard",
+  robots: { index: false, follow: false },
 };
 
 export default async function AdminDashboardPage() {
