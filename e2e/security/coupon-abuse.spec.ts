@@ -1,4 +1,4 @@
-import { test, expect } from "@playwright/test";
+import { test, expect } from "../utils/fixtures";
 
 const baseAddress = {
   fullName: "Att Acker",

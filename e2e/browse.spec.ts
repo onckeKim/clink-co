@@ -1,11 +1,28 @@
-import { test, expect } from "@playwright/test";
+import { test, expect } from "./utils/fixtures";
 
 test.describe("Browse products", () => {
   test("homepage loads and links into the shop", async ({ page }) => {
     await page.goto("/");
     await expect(page).toHaveTitle(/Clink & Co/i);
-    await page.getByRole("link", { name: "Shop", exact: true }).first().click();
-    await expect(page).toHaveURL(/\/shop/);
+
+    const desktopShopLink = page.getByRole("navigation", { name: "Primary" }).getByRole("link", { name: "Shop", exact: true });
+    if (await desktopShopLink.isVisible().catch(() => false)) {
+      // Desktop: the header nav's "Shop" is a direct link to /shop.
+      await desktopShopLink.click();
+      await expect(page).toHaveURL(/\/shop/);
+      return;
+    }
+
+    // Mobile: the header nav is collapsed behind a hamburger menu, and
+    // "Shop" there is an expand/collapse button (it opens a category
+    // sub-list, same as the desktop mega menu) rather than a direct link —
+    // so the equivalent journey is open menu -> expand Shop -> pick a category.
+    await page.getByRole("button", { name: "Open menu" }).click();
+    const drawer = page.getByRole("dialog", { name: "Site menu" });
+    await expect(drawer).toBeVisible();
+    await drawer.getByRole("button", { name: "Shop" }).click();
+    await drawer.locator("a[href^='/shop/']").first().click();
+    await expect(page).toHaveURL(/\/shop\//);
   });
 
   test("shop grid lists products with name and price", async ({ page }) => {
@@ -40,8 +57,12 @@ test.describe("Filter and sort products", () => {
 
   test("applying an in-stock filter narrows the result count and updates the URL", async ({ page }) => {
     await page.goto("/shop");
-    const openFilters = page.getByRole("button", { name: /filters/i }).first();
-    if (await openFilters.isVisible().catch(() => false)) {
+    const openFilters = page.getByRole("button", { name: /^filter/i }).first();
+    // Mobile only: the drawer keeps a separate draft and only commits to the
+    // URL once "Apply filters" is pressed — the desktop sidebar has no such
+    // drawer/button and applies each change immediately.
+    const isMobileDrawer = await openFilters.isVisible().catch(() => false);
+    if (isMobileDrawer) {
       await openFilters.click();
     }
     const availabilitySection = page.getByRole("button", { name: "Availability" });
@@ -49,6 +70,9 @@ test.describe("Filter and sort products", () => {
       await availabilitySection.click();
     }
     await page.getByText("In stock only").click();
+    if (isMobileDrawer) {
+      await page.getByRole("button", { name: /^apply filters/i }).click();
+    }
     await expect(page).toHaveURL(/availability=in-stock/);
   });
 

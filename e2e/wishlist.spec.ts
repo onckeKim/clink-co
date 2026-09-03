@@ -1,4 +1,4 @@
-import { test, expect } from "@playwright/test";
+import { test, expect } from "./utils/fixtures";
 
 test.describe("Add to wishlist", () => {
   test("adding a product from the shop grid marks the heart icon as pressed", async ({ page }) => {
@@ -21,11 +21,22 @@ test.describe("Add to wishlist", () => {
     if (productName) await expect(page.getByText(productName)).toBeVisible();
   });
 
-  test("the header wishlist icon shows an item count badge", async ({ page }) => {
+  test("the wishlist count is reflected in the header", async ({ page }) => {
     await page.goto("/shop");
     const firstCard = page.locator("a[href^='/products/']:has(h3)").first();
     await firstCard.hover();
     await page.getByRole("button", { name: "Add to wishlist" }).first().click();
-    await expect(page.getByRole("link", { name: /wishlist, 1 item/i })).toBeVisible();
+
+    const headerIcon = page.getByRole("link", { name: /wishlist, 1 item/i });
+    if (await headerIcon.isVisible().catch(() => false)) {
+      // Desktop: a dedicated header icon carries the count in its accessible name.
+      return;
+    }
+    // Mobile: that icon is hidden below the header's xl breakpoint — the
+    // equivalent surface is the "Wishlist" entry in the slide-out menu,
+    // which shows the same count as a visible badge instead.
+    await page.getByRole("button", { name: "Open menu" }).click();
+    const drawer = page.getByRole("dialog", { name: "Site menu" });
+    await expect(drawer.getByRole("link", { name: "Wishlist" })).toContainText("1");
   });
 });

@@ -1,4 +1,4 @@
-import { test, expect } from "@playwright/test";
+import { test, expect } from "./utils/fixtures";
 import { SUPABASE_CONFIGURED, SKIP_REASON } from "./utils/env";
 
 test.describe("Account registration", () => {

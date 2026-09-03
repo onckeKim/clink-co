@@ -1,4 +1,4 @@
-import { test, expect } from "@playwright/test";
+import { test, expect } from "../utils/fixtures";
 
 /**
  * The media upload endpoint (POST /api/admin/media) requires admin auth,

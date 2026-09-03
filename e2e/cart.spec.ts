@@ -1,4 +1,4 @@
-import { test, expect } from "@playwright/test";
+import { test, expect } from "./utils/fixtures";
 
 test.describe("Add a product to the cart", () => {
   test("adding from a product card opens the mini-cart with the item in it", async ({ page }) => {

@@ -1,4 +1,4 @@
-import { test, expect } from "@playwright/test";
+import { test, expect } from "../utils/fixtures";
 
 /**
  * The checkout API (POST /api/checkout) never accepts a client-supplied

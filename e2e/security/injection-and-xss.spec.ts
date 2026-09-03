@@ -1,4 +1,4 @@
-import { test, expect } from "@playwright/test";
+import { test, expect } from "../utils/fixtures";
 
 /**
  * There is no SQL database in this environment (in-memory TypeScript

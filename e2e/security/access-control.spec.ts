@@ -1,4 +1,4 @@
-import { test, expect } from "@playwright/test";
+import { test, expect } from "../utils/fixtures";
 
 test.describe("Unauthorised admin access", () => {
   test("the admin dashboard page redirects an unauthenticated browser to /login", async ({ page }) => {

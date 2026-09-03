@@ -60,9 +60,11 @@ export function PurchaseActions({
   return (
     <div className="flex flex-col gap-3">
       <div className="flex items-center gap-3">
-        <Button type="button" size="lg" disabled={disabled} onClick={handleAddToCart} className="flex-1">
-          <ShoppingBag className="h-4 w-4" />
-          {isDraft ? "Not yet published" : product.discontinued ? "Discontinued" : product.inStock ? "Add to cart" : "Notify me"}
+        <Button type="button" size="lg" disabled={disabled} onClick={handleAddToCart} className="min-w-0 flex-1">
+          <ShoppingBag className="h-4 w-4 shrink-0" />
+          <span className="truncate">
+            {isDraft ? "Not yet published" : product.discontinued ? "Discontinued" : product.inStock ? "Add to cart" : "Notify me"}
+          </span>
         </Button>
         <Button
           type="button"

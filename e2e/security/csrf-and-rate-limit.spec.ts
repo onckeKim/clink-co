@@ -1,4 +1,4 @@
-import { test, expect } from "@playwright/test";
+import { test, expect } from "../utils/fixtures";
 
 /**
  * There's no explicit CSRF token in this app — its defense is (a) Supabase

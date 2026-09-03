@@ -11,9 +11,24 @@ export const TEST_ADDRESS = {
   phone: "0821234567",
 };
 
+/**
+ * Dismisses the first-visit cookie consent banner if present. On a narrow
+ * (mobile) viewport it's a fixed bottom-anchored panel that overlaps the
+ * lower part of the page — a real visitor has to deal with it before
+ * reaching content underneath it, same as this does, rather than it being
+ * a test-only artifact.
+ */
+export async function dismissCookieBanner(page: Page) {
+  const acceptButton = page.getByRole("button", { name: "Accept all" });
+  if (await acceptButton.isVisible().catch(() => false)) {
+    await acceptButton.click();
+  }
+}
+
 /** Adds the first shop product to the cart and starts checkout. */
 export async function addFirstProductAndGoToCheckout(page: Page) {
   await page.goto("/shop");
+  await dismissCookieBanner(page);
   await page.locator("a[href^='/products/']").first().click();
   await page.getByRole("button", { name: "Add to cart" }).click();
   await page.goto("/checkout");

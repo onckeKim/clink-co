@@ -1,4 +1,4 @@
-import { test, expect } from "@playwright/test";
+import { test, expect } from "./utils/fixtures";
 
 /**
  * Runs identically across every viewport-* project (320/375/430/768/1024/
@@ -19,7 +19,11 @@ for (const path of PAGES) {
 
     const response = await page.goto(path);
     expect(response?.status(), `${path} should respond successfully`).toBeLessThan(400);
-    await page.waitForLoadState("networkidle").catch(() => {});
+    // Bounded: some pages (checkout in particular) never satisfy Playwright's
+    // strict "zero requests for 500ms" definition of network-idle, so an
+    // unbounded wait here would eat the whole test timeout before ever
+    // measuring anything. 4s is enough to let above-the-fold content settle.
+    await page.waitForLoadState("networkidle", { timeout: 4000 }).catch(() => {});
 
     const overflow = await page.evaluate(() => {
       const doc = document.documentElement;
@@ -40,7 +44,7 @@ for (const path of PAGES) {
 test("the product detail page has no horizontal overflow at this viewport", async ({ page }) => {
   await page.goto("/shop");
   await page.locator("a[href^='/products/']").first().click();
-  await page.waitForLoadState("networkidle").catch(() => {});
+  await page.waitForLoadState("networkidle", { timeout: 4000 }).catch(() => {});
   const overflow = await page.evaluate(() => ({
     scrollWidth: document.documentElement.scrollWidth,
     clientWidth: document.documentElement.clientWidth,
