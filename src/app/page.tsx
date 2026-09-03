@@ -14,6 +14,7 @@ import { RecentlyViewed } from "@/components/sections/RecentlyViewed";
 import { siteConfig } from "@/config/site";
 import { getEditorialSection, getHomepageSectionsConfig } from "@/lib/admin/content-store";
 import { getStoreSettings } from "@/lib/admin/settings-store";
+import { safeJsonLdStringify } from "@/lib/seo/json-ld";
 
 export default function Home() {
   const editorial = getEditorialSection();
@@ -92,11 +93,11 @@ export default function Home() {
       {/* Structured data for SEO — helps search engines surface the brand, social profiles and sitelinks search box. */}
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationJsonLd) }}
+        dangerouslySetInnerHTML={{ __html: safeJsonLdStringify(organizationJsonLd) }}
       />
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteJsonLd) }}
+        dangerouslySetInnerHTML={{ __html: safeJsonLdStringify(websiteJsonLd) }}
       />
 
       {order.filter((key) => !hidden.includes(key) && sections[key]).map((key) => sections[key])}

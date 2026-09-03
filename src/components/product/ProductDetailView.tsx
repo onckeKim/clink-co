@@ -118,8 +118,8 @@ export function ProductDetailView({
         </div>
       )}
 
-      <div className="grid gap-10 lg:grid-cols-2 lg:gap-14">
-        <div className="relative">
+      <div className="grid min-w-0 gap-10 lg:grid-cols-2 lg:gap-14">
+        <div className="relative min-w-0">
           <ProductGallery images={resolvedImages} videoUrl={product.videoUrl} productName={product.name} />
           <div className="pointer-events-none absolute left-4 top-4 z-10 flex flex-col gap-1.5">
             {isDraft && <Badge variant="champagne">Draft</Badge>}
@@ -134,7 +134,7 @@ export function ProductDetailView({
           </div>
         </div>
 
-        <div className="flex flex-col gap-5">
+        <div className="flex min-w-0 flex-col gap-5">
           <div>
             <div className="flex flex-wrap items-center gap-2 text-xs font-semibold uppercase tracking-[0.14em] text-stone">
               {category && <span>{category.name}</span>}

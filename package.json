@@ -7,7 +7,16 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "generate:placeholders": "node scripts/generate-placeholders.mjs"
+    "generate:placeholders": "node scripts/generate-placeholders.mjs",
+    "test": "npm run test:unit && npm run test:e2e",
+    "test:unit": "vitest run",
+    "test:unit:watch": "vitest",
+    "test:unit:coverage": "vitest run --coverage",
+    "test:e2e": "playwright test --project=chromium --project=edge --project=chrome-android",
+    "test:e2e:ui": "playwright test --ui",
+    "test:security": "playwright test --project=chromium e2e/security",
+    "test:responsive": "playwright test --project=viewport-320 --project=viewport-375 --project=viewport-430 --project=viewport-768 --project=viewport-1024 --project=viewport-1280 --project=viewport-1440",
+    "test:browsers": "playwright test --project=chromium --project=edge --project=firefox --project=webkit --project=mobile-safari --project=chrome-android"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.9.1",
@@ -26,13 +35,22 @@
     "zustand": "^5.0.15"
   },
   "devDependencies": {
+    "@playwright/test": "^1.56.1",
     "@tailwindcss/postcss": "^4",
-    "@types/node": "^20",
+    "@testing-library/jest-dom": "^7.0.1",
+    "@testing-library/react": "^16.3.3",
+    "@testing-library/user-event": "^14.6.7",
+    "@types/node": "^22.20.1",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "@vitejs/plugin-react": "^6.1.1",
+    "@vitest/coverage-v8": "^5.0.0",
     "eslint": "^9",
     "eslint-config-next": "16.3.4",
+    "jsdom": "^30.0.1",
     "tailwindcss": "^4",
-    "typescript": "^5"
+    "typescript": "^5",
+    "vite-tsconfig-paths": "^6.1.1",
+    "vitest": "^5.0.0"
   }
 }

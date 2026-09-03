@@ -170,7 +170,7 @@ export function ShopExperience({
             <p className="text-sm text-stone">
               {results.length} {results.length === 1 ? "product" : "products"}
             </p>
-            <div className="flex items-center gap-3">
+            <div className="flex flex-wrap items-center gap-3">
               <button
                 type="button"
                 onClick={() => setFilterDrawerOpen(true)}
