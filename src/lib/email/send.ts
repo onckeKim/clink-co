@@ -46,7 +46,7 @@ export interface SendTransactionalEmailResult {
  */
 export async function sendTransactionalEmail(input: SendTransactionalEmailInput): Promise<SendTransactionalEmailResult> {
   const provider = getEmailProvider();
-  const settings = getStoreSettings();
+  const settings = await getStoreSettings();
   const fromHost = (() => {
     try {
       return new URL(siteConfig.url).hostname;

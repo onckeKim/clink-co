@@ -1,4 +1,5 @@
 import "server-only";
+import type { StoreSettings } from "@/types/settings";
 import { siteConfig } from "@/config/site";
 import { formatPrice } from "@/lib/utils";
 import type { Order } from "@/lib/orders/types";
@@ -30,7 +31,7 @@ function orderUrl(order: Pick<Order, "orderNumber">): string {
   return `${siteConfig.url}/account/orders/${order.orderNumber}`;
 }
 
-export function orderConfirmationTemplate(order: Order): EmailContent {
+export function orderConfirmationTemplate(order: Order, settings: StoreSettings): EmailContent {
   const subject = `Order confirmed — ${order.orderNumber}`;
   const previewText = `We've got it — order ${order.orderNumber} is confirmed.`;
   const eftNote =
@@ -74,12 +75,12 @@ export function orderConfirmationTemplate(order: Order): EmailContent {
   return {
     subject,
     previewText,
-    html: renderEmailHtml({ previewText, bodyHtml, category: "transactional" }),
-    text: renderEmailText({ bodyText, category: "transactional" }),
+    html: renderEmailHtml({ previewText, bodyHtml, category: "transactional" }, settings),
+    text: renderEmailText({ bodyText, category: "transactional" }, settings),
   };
 }
 
-export function paymentReceivedTemplate(order: Order): EmailContent {
+export function paymentReceivedTemplate(order: Order, settings: StoreSettings): EmailContent {
   const subject = `Payment received — ${order.orderNumber}`;
   const previewText = `We've received your payment of ${formatPrice(order.total)}.`;
   const bodyHtml = [
@@ -98,12 +99,12 @@ export function paymentReceivedTemplate(order: Order): EmailContent {
   return {
     subject,
     previewText,
-    html: renderEmailHtml({ previewText, bodyHtml, category: "transactional" }),
-    text: renderEmailText({ bodyText, category: "transactional" }),
+    html: renderEmailHtml({ previewText, bodyHtml, category: "transactional" }, settings),
+    text: renderEmailText({ bodyText, category: "transactional" }, settings),
   };
 }
 
-export function paymentFailedTemplate(order: Order): EmailContent {
+export function paymentFailedTemplate(order: Order, settings: StoreSettings): EmailContent {
   const subject = `We couldn't process your payment — ${order.orderNumber}`;
   const previewText = "Your payment didn't go through — no charge was made.";
   const retryUrl = `${siteConfig.url}/checkout/pay/${order.orderNumber}`;
@@ -123,12 +124,12 @@ export function paymentFailedTemplate(order: Order): EmailContent {
   return {
     subject,
     previewText,
-    html: renderEmailHtml({ previewText, bodyHtml, category: "transactional" }),
-    text: renderEmailText({ bodyText, category: "transactional" }),
+    html: renderEmailHtml({ previewText, bodyHtml, category: "transactional" }, settings),
+    text: renderEmailText({ bodyText, category: "transactional" }, settings),
   };
 }
 
-export function orderProcessingTemplate(order: Order): EmailContent {
+export function orderProcessingTemplate(order: Order, settings: StoreSettings): EmailContent {
   const subject = `Your order is being prepared — ${order.orderNumber}`;
   const previewText = "Your order is being prepared for packing.";
   const bodyHtml = [
@@ -145,12 +146,12 @@ export function orderProcessingTemplate(order: Order): EmailContent {
   return {
     subject,
     previewText,
-    html: renderEmailHtml({ previewText, bodyHtml, category: "transactional" }),
-    text: renderEmailText({ bodyText, category: "transactional" }),
+    html: renderEmailHtml({ previewText, bodyHtml, category: "transactional" }, settings),
+    text: renderEmailText({ bodyText, category: "transactional" }, settings),
   };
 }
 
-export function orderPackedTemplate(order: Order): EmailContent {
+export function orderPackedTemplate(order: Order, settings: StoreSettings): EmailContent {
   const subject = `Your order has been packed — ${order.orderNumber}`;
   const previewText = "Packed with care — ready for the courier.";
   const bodyHtml = [
@@ -167,12 +168,12 @@ export function orderPackedTemplate(order: Order): EmailContent {
   return {
     subject,
     previewText,
-    html: renderEmailHtml({ previewText, bodyHtml, category: "transactional" }),
-    text: renderEmailText({ bodyText, category: "transactional" }),
+    html: renderEmailHtml({ previewText, bodyHtml, category: "transactional" }, settings),
+    text: renderEmailText({ bodyText, category: "transactional" }, settings),
   };
 }
 
-export function orderShippedTemplate(order: Order): EmailContent {
+export function orderShippedTemplate(order: Order, settings: StoreSettings): EmailContent {
   const subject = `Your order is on its way — ${order.orderNumber}`;
   const previewText = order.trackingNumber ? `Tracking: ${order.trackingNumber}` : "Your order has shipped.";
   const trackingBox = order.trackingNumber
@@ -204,12 +205,12 @@ export function orderShippedTemplate(order: Order): EmailContent {
   return {
     subject,
     previewText,
-    html: renderEmailHtml({ previewText, bodyHtml, category: "transactional" }),
-    text: renderEmailText({ bodyText, category: "transactional" }),
+    html: renderEmailHtml({ previewText, bodyHtml, category: "transactional" }, settings),
+    text: renderEmailText({ bodyText, category: "transactional" }, settings),
   };
 }
 
-export function deliveryConfirmationTemplate(order: Order): EmailContent {
+export function deliveryConfirmationTemplate(order: Order, settings: StoreSettings): EmailContent {
   const subject = `Delivered — ${order.orderNumber}`;
   const previewText = "Your order has arrived.";
   const bodyHtml = [
@@ -228,12 +229,12 @@ export function deliveryConfirmationTemplate(order: Order): EmailContent {
   return {
     subject,
     previewText,
-    html: renderEmailHtml({ previewText, bodyHtml, category: "transactional" }),
-    text: renderEmailText({ bodyText, category: "transactional" }),
+    html: renderEmailHtml({ previewText, bodyHtml, category: "transactional" }, settings),
+    text: renderEmailText({ bodyText, category: "transactional" }, settings),
   };
 }
 
-export function orderCancelledTemplate(order: Order): EmailContent {
+export function orderCancelledTemplate(order: Order, settings: StoreSettings): EmailContent {
   const subject = `Order cancelled — ${order.orderNumber}`;
   const previewText = "Your order has been cancelled.";
   const willRefund = order.status !== "pending_payment" && order.status !== "payment_failed";
@@ -257,12 +258,12 @@ export function orderCancelledTemplate(order: Order): EmailContent {
   return {
     subject,
     previewText,
-    html: renderEmailHtml({ previewText, bodyHtml, category: "transactional" }),
-    text: renderEmailText({ bodyText, category: "transactional" }),
+    html: renderEmailHtml({ previewText, bodyHtml, category: "transactional" }, settings),
+    text: renderEmailText({ bodyText, category: "transactional" }, settings),
   };
 }
 
-export function refundProcessedTemplate(order: Order): EmailContent {
+export function refundProcessedTemplate(order: Order, settings: StoreSettings): EmailContent {
   const amount = order.refundAmount ?? order.total;
   const subject = `Refund processed — ${order.orderNumber}`;
   const previewText = `A refund of ${formatPrice(amount)} is on its way.`;
@@ -282,8 +283,8 @@ export function refundProcessedTemplate(order: Order): EmailContent {
   return {
     subject,
     previewText,
-    html: renderEmailHtml({ previewText, bodyHtml, category: "transactional" }),
-    text: renderEmailText({ bodyText, category: "transactional" }),
+    html: renderEmailHtml({ previewText, bodyHtml, category: "transactional" }, settings),
+    text: renderEmailText({ bodyText, category: "transactional" }, settings),
   };
 }
 

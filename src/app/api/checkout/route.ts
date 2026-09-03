@@ -9,6 +9,7 @@ import { getPaymentProvider } from "@/lib/payments";
 import { sendAdminOrderNotification, sendOrderConfirmationEmail } from "@/lib/email";
 import type { OrderLineItem } from "@/lib/orders/types";
 import { getUser } from "@/lib/supabase/dal";
+import { getStoreSettings } from "@/lib/admin/settings-store";
 
 /**
  * Creates an order and initiates payment for it. This is the one route
@@ -78,18 +79,26 @@ export async function POST(request: Request) {
     freeDeliveryFromCoupon = couponResult.freeDelivery;
   }
 
+  const settings = await getStoreSettings();
   const deliveryQuote = quoteDelivery({
     methodId: data.deliveryMethodId,
     province: data.deliveryAddress.province,
     postalCode: data.deliveryAddress.postalCode,
     orderValue: subtotal - discountAmount,
     freeDeliveryOverride: freeDeliveryFromCoupon,
+    freeDeliveryThreshold: settings.freeDeliveryThreshold,
+    enabledDeliveryMethodIds: settings.enabledDeliveryMethodIds,
   });
   if (!deliveryQuote.ok) {
     return NextResponse.json({ error: deliveryQuote.error, field: "deliveryMethodId" }, { status: 409 });
   }
 
-  const totals = computeCartTotals({ subtotal, discountAmount, deliveryFee: deliveryQuote.quote.fee });
+  const totals = computeCartTotals({
+    subtotal,
+    discountAmount,
+    deliveryFee: deliveryQuote.quote.fee,
+    taxRatePercent: settings.taxRatePercent,
+  });
 
   const orderLines: OrderLineItem[] = cartValidation.lines.map((line) => ({
     productId: line.productId,
@@ -111,7 +120,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: `${provider.label} isn't available right now.` }, { status: 400 });
   }
 
-  const order = createOrder({
+  const order = await createOrder({
     idempotencyKey: data.idempotencyKey,
     customerEmail: data.customer.email,
     customerName: customerFullName,

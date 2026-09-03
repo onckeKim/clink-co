@@ -27,6 +27,7 @@ import {
   type NewReviewNotification,
 } from "@/lib/email/templates/admin";
 import { getStoreSettings } from "@/lib/admin/settings-store";
+import type { StoreSettings } from "@/types/settings";
 
 /**
  * Every trigger point in the app that sends a transactional email goes
@@ -41,8 +42,7 @@ function customerRecipient(order: Pick<Order, "customerName" | "customerEmail">)
   return { name: order.customerName, email: order.customerEmail };
 }
 
-function adminRecipient() {
-  const settings = getStoreSettings();
+function adminRecipient(settings: StoreSettings) {
   return { name: `${settings.businessName} Team`, email: settings.orderNotificationEmail };
 }
 
@@ -50,10 +50,11 @@ function adminRecipient() {
 // Customer — order lifecycle
 // ---------------------------------------------------------------------------
 
-export function sendOrderConfirmationEmail(order: Order) {
+export async function sendOrderConfirmationEmail(order: Order) {
+  const settings = await getStoreSettings();
   return sendTransactionalEmail({
     to: customerRecipient(order),
-    content: orderConfirmationTemplate(order),
+    content: orderConfirmationTemplate(order, settings),
     category: "transactional",
     templateKey: "order-confirmation",
     relatedEntityType: "order",
@@ -61,10 +62,11 @@ export function sendOrderConfirmationEmail(order: Order) {
   });
 }
 
-export function sendPaymentReceivedEmail(order: Order) {
+export async function sendPaymentReceivedEmail(order: Order) {
+  const settings = await getStoreSettings();
   return sendTransactionalEmail({
     to: customerRecipient(order),
-    content: paymentReceivedTemplate(order),
+    content: paymentReceivedTemplate(order, settings),
     category: "transactional",
     templateKey: "payment-received",
     relatedEntityType: "order",
@@ -72,10 +74,11 @@ export function sendPaymentReceivedEmail(order: Order) {
   });
 }
 
-export function sendPaymentFailedEmail(order: Order) {
+export async function sendPaymentFailedEmail(order: Order) {
+  const settings = await getStoreSettings();
   return sendTransactionalEmail({
     to: customerRecipient(order),
-    content: paymentFailedTemplate(order),
+    content: paymentFailedTemplate(order, settings),
     category: "transactional",
     templateKey: "payment-failed",
     relatedEntityType: "order",
@@ -84,10 +87,11 @@ export function sendPaymentFailedEmail(order: Order) {
 }
 
 /** Not yet triggered anywhere — the app's OrderStatus enum has no discrete "processing" stage (see src/lib/orders/types.ts). Ready to call once a granular fulfilment sub-status exists. */
-export function sendOrderProcessingEmail(order: Order) {
+export async function sendOrderProcessingEmail(order: Order) {
+  const settings = await getStoreSettings();
   return sendTransactionalEmail({
     to: customerRecipient(order),
-    content: orderProcessingTemplate(order),
+    content: orderProcessingTemplate(order, settings),
     category: "transactional",
     templateKey: "order-processing",
     relatedEntityType: "order",
@@ -96,10 +100,11 @@ export function sendOrderProcessingEmail(order: Order) {
 }
 
 /** Same status-model caveat as sendOrderProcessingEmail(). */
-export function sendOrderPackedEmail(order: Order) {
+export async function sendOrderPackedEmail(order: Order) {
+  const settings = await getStoreSettings();
   return sendTransactionalEmail({
     to: customerRecipient(order),
-    content: orderPackedTemplate(order),
+    content: orderPackedTemplate(order, settings),
     category: "transactional",
     templateKey: "order-packed",
     relatedEntityType: "order",
@@ -107,10 +112,11 @@ export function sendOrderPackedEmail(order: Order) {
   });
 }
 
-export function sendOrderShippedEmail(order: Order) {
+export async function sendOrderShippedEmail(order: Order) {
+  const settings = await getStoreSettings();
   return sendTransactionalEmail({
     to: customerRecipient(order),
-    content: orderShippedTemplate(order),
+    content: orderShippedTemplate(order, settings),
     category: "transactional",
     templateKey: "order-shipped",
     relatedEntityType: "order",
@@ -118,10 +124,11 @@ export function sendOrderShippedEmail(order: Order) {
   });
 }
 
-export function sendDeliveryConfirmationEmail(order: Order) {
+export async function sendDeliveryConfirmationEmail(order: Order) {
+  const settings = await getStoreSettings();
   return sendTransactionalEmail({
     to: customerRecipient(order),
-    content: deliveryConfirmationTemplate(order),
+    content: deliveryConfirmationTemplate(order, settings),
     category: "transactional",
     templateKey: "delivery-confirmation",
     relatedEntityType: "order",
@@ -129,10 +136,11 @@ export function sendDeliveryConfirmationEmail(order: Order) {
   });
 }
 
-export function sendOrderCancelledEmail(order: Order) {
+export async function sendOrderCancelledEmail(order: Order) {
+  const settings = await getStoreSettings();
   return sendTransactionalEmail({
     to: customerRecipient(order),
-    content: orderCancelledTemplate(order),
+    content: orderCancelledTemplate(order, settings),
     category: "transactional",
     templateKey: "order-cancelled",
     relatedEntityType: "order",
@@ -140,10 +148,11 @@ export function sendOrderCancelledEmail(order: Order) {
   });
 }
 
-export function sendRefundProcessedEmail(order: Order) {
+export async function sendRefundProcessedEmail(order: Order) {
+  const settings = await getStoreSettings();
   return sendTransactionalEmail({
     to: customerRecipient(order),
-    content: refundProcessedTemplate(order),
+    content: refundProcessedTemplate(order, settings),
     category: "transactional",
     templateKey: "refund-processed",
     relatedEntityType: "order",
@@ -155,10 +164,11 @@ export function sendRefundProcessedEmail(order: Order) {
 // Customer — returns
 // ---------------------------------------------------------------------------
 
-export function sendReturnRequestReceivedEmail(order: Order, reason: ReturnReason, notes?: string) {
+export async function sendReturnRequestReceivedEmail(order: Order, reason: ReturnReason, notes?: string) {
+  const settings = await getStoreSettings();
   return sendTransactionalEmail({
     to: customerRecipient(order),
-    content: returnRequestReceivedTemplate(order, reason, notes),
+    content: returnRequestReceivedTemplate(order, reason, notes, settings),
     category: "transactional",
     templateKey: "return-request-received",
     relatedEntityType: "order",
@@ -167,10 +177,11 @@ export function sendReturnRequestReceivedEmail(order: Order, reason: ReturnReaso
 }
 
 /** Not yet triggered — approving/rejecting a return has no admin action in this build yet (src/lib/account/returns-store.ts's own doc comment names this exact gap). Ready to call from that flow once it exists. */
-export function sendReturnApprovedEmail(order: Order, instructions?: string) {
+export async function sendReturnApprovedEmail(order: Order, instructions?: string) {
+  const settings = await getStoreSettings();
   return sendTransactionalEmail({
     to: customerRecipient(order),
-    content: returnApprovedTemplate(order, instructions),
+    content: returnApprovedTemplate(order, instructions, settings),
     category: "transactional",
     templateKey: "return-approved",
     relatedEntityType: "order",
@@ -178,10 +189,11 @@ export function sendReturnApprovedEmail(order: Order, instructions?: string) {
   });
 }
 
-export function sendReturnRejectedEmail(order: Order, reason: string) {
+export async function sendReturnRejectedEmail(order: Order, reason: string) {
+  const settings = await getStoreSettings();
   return sendTransactionalEmail({
     to: customerRecipient(order),
-    content: returnRejectedTemplate(order, reason),
+    content: returnRejectedTemplate(order, reason, settings),
     category: "transactional",
     templateKey: "return-rejected",
     relatedEntityType: "order",
@@ -193,10 +205,11 @@ export function sendReturnRejectedEmail(order: Order, reason: string) {
 // Admin
 // ---------------------------------------------------------------------------
 
-export function sendAdminOrderNotification(order: Order) {
+export async function sendAdminOrderNotification(order: Order) {
+  const settings = await getStoreSettings();
   return sendTransactionalEmail({
-    to: adminRecipient(),
-    content: newOrderAdminTemplate(order),
+    to: adminRecipient(settings),
+    content: newOrderAdminTemplate(order, settings),
     category: "transactional",
     templateKey: "admin-new-order",
     relatedEntityType: "order",
@@ -204,10 +217,11 @@ export function sendAdminOrderNotification(order: Order) {
   });
 }
 
-export function sendPaymentFailureAdminNotification(order: Order) {
+export async function sendPaymentFailureAdminNotification(order: Order) {
+  const settings = await getStoreSettings();
   return sendTransactionalEmail({
-    to: adminRecipient(),
-    content: paymentFailureAdminTemplate(order),
+    to: adminRecipient(settings),
+    content: paymentFailureAdminTemplate(order, settings),
     category: "transactional",
     templateKey: "admin-payment-failure",
     relatedEntityType: "order",
@@ -215,10 +229,11 @@ export function sendPaymentFailureAdminNotification(order: Order) {
   });
 }
 
-export function sendLowStockAdminWarning(product: StockAlertProduct) {
+export async function sendLowStockAdminWarning(product: StockAlertProduct) {
+  const settings = await getStoreSettings();
   return sendTransactionalEmail({
-    to: adminRecipient(),
-    content: lowStockAdminTemplate(product),
+    to: adminRecipient(settings),
+    content: lowStockAdminTemplate(product, settings),
     category: "transactional",
     templateKey: "admin-low-stock",
     relatedEntityType: "product",
@@ -226,10 +241,11 @@ export function sendLowStockAdminWarning(product: StockAlertProduct) {
   });
 }
 
-export function sendOutOfStockAdminWarning(product: Pick<StockAlertProduct, "id" | "name" | "sku">) {
+export async function sendOutOfStockAdminWarning(product: Pick<StockAlertProduct, "id" | "name" | "sku">) {
+  const settings = await getStoreSettings();
   return sendTransactionalEmail({
-    to: adminRecipient(),
-    content: outOfStockAdminTemplate(product),
+    to: adminRecipient(settings),
+    content: outOfStockAdminTemplate(product, settings),
     category: "transactional",
     templateKey: "admin-out-of-stock",
     relatedEntityType: "product",
@@ -237,10 +253,11 @@ export function sendOutOfStockAdminWarning(product: Pick<StockAlertProduct, "id"
   });
 }
 
-export function sendReturnRequestAdminNotification(order: Order, reason: ReturnReason, notes?: string) {
+export async function sendReturnRequestAdminNotification(order: Order, reason: ReturnReason, notes?: string) {
+  const settings = await getStoreSettings();
   return sendTransactionalEmail({
-    to: adminRecipient(),
-    content: returnRequestAdminTemplate(order, reason, notes),
+    to: adminRecipient(settings),
+    content: returnRequestAdminTemplate(order, reason, notes, settings),
     category: "transactional",
     templateKey: "admin-return-request",
     relatedEntityType: "order",
@@ -249,10 +266,11 @@ export function sendReturnRequestAdminNotification(order: Order, reason: ReturnR
 }
 
 /** Not yet triggered — there's no contact form in this build yet to submit from. Ready to call from POST /api/contact once that page/route exists. */
-export function sendContactFormAdminNotification(submission: ContactSubmission) {
+export async function sendContactFormAdminNotification(submission: ContactSubmission) {
+  const settings = await getStoreSettings();
   return sendTransactionalEmail({
-    to: adminRecipient(),
-    content: contactFormAdminTemplate(submission),
+    to: adminRecipient(settings),
+    content: contactFormAdminTemplate(submission, settings),
     category: "transactional",
     templateKey: "admin-contact-form",
     relatedEntityType: "contact",
@@ -261,10 +279,11 @@ export function sendContactFormAdminNotification(submission: ContactSubmission) 
 }
 
 /** Not yet triggered — src/components/product/ReviewsSection.tsx's submission flow is client-only (no server persistence yet), so there's no server-side moment to call this from. Ready to call once review submission is wired to a real store/table. */
-export function sendNewReviewAdminNotification(review: NewReviewNotification) {
+export async function sendNewReviewAdminNotification(review: NewReviewNotification) {
+  const settings = await getStoreSettings();
   return sendTransactionalEmail({
-    to: adminRecipient(),
-    content: newReviewAdminTemplate(review),
+    to: adminRecipient(settings),
+    content: newReviewAdminTemplate(review, settings),
     category: "transactional",
     templateKey: "admin-new-review",
     relatedEntityType: "product",

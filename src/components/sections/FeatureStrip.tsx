@@ -2,8 +2,8 @@ import { Truck, Lock, Gem, RotateCcw } from "lucide-react";
 import { getStoreSettings } from "@/lib/admin/settings-store";
 import { formatPrice } from "@/lib/utils";
 
-export function FeatureStrip() {
-  const settings = getStoreSettings();
+export async function FeatureStrip() {
+  const settings = await getStoreSettings();
   const features = [
     {
       icon: Truck,

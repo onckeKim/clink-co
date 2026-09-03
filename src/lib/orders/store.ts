@@ -25,15 +25,15 @@ const processedWebhookEvents = new Set<string>();
 let counterDate = "";
 let dailyCounter = 0;
 
-function nextOrderNumber(): string {
+async function nextOrderNumber(): Promise<string> {
   const datePart = new Date().toISOString().slice(2, 10).replace(/-/g, "");
   if (counterDate !== datePart) {
     counterDate = datePart;
     dailyCounter = 0;
   }
   dailyCounter += 1;
-  const prefix = getStoreSettings().orderNumberPrefix;
-  return `${prefix}-${datePart}-${String(dailyCounter).padStart(4, "0")}`;
+  const settings = await getStoreSettings();
+  return `${settings.orderNumberPrefix}-${datePart}-${String(dailyCounter).padStart(4, "0")}`;
 }
 
 export function findOrderByIdempotencyKey(key: string): Order | undefined {
@@ -46,9 +46,9 @@ export function findOrderByIdempotencyKey(key: string): Order | undefined {
  * `idempotencyKey` (a retried request, a double-click, a network replay),
  * returns the existing one unchanged instead of creating a duplicate.
  */
-export function createOrder(
+export async function createOrder(
   input: Omit<Order, "id" | "orderNumber" | "status" | "createdAt" | "updatedAt">,
-): Order {
+): Promise<Order> {
   const existing = findOrderByIdempotencyKey(input.idempotencyKey);
   if (existing) return existing;
 
@@ -56,7 +56,7 @@ export function createOrder(
   const order: Order = {
     ...input,
     id: crypto.randomUUID(),
-    orderNumber: nextOrderNumber(),
+    orderNumber: await nextOrderNumber(),
     status: "pending_payment",
     createdAt: now,
     updatedAt: now,

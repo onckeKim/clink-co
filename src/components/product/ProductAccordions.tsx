@@ -1,13 +1,15 @@
+"use client";
+
 import type { Product } from "@/types/product";
 import { Disclosure } from "@/components/ui/Disclosure";
-import { getStoreSettings } from "@/lib/admin/settings-store";
+import { useStoreSettings } from "@/components/providers/StoreSettingsProvider";
 import { formatPrice } from "@/lib/utils";
 
 const DEFAULT_PACKAGING_INFO =
   "Arrives boxed with protective wrapping around each piece. Gift note and gift wrap options are available at checkout.";
 
 export function ProductAccordions({ product }: { product: Product }) {
-  const settings = getStoreSettings();
+  const settings = useStoreSettings();
   return (
     <div className="flex flex-col">
       <Disclosure title="Description" defaultOpen>

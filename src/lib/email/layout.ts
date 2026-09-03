@@ -1,6 +1,6 @@
 import "server-only";
 import { siteConfig } from "@/config/site";
-import { getStoreSettings } from "@/lib/admin/settings-store";
+import type { StoreSettings } from "@/types/settings";
 import type { EmailCategory } from "./types";
 
 /**
@@ -42,8 +42,10 @@ export interface EmailLayoutInput {
   unsubscribeUrl?: string;
 }
 
-export function renderEmailHtml({ previewText, bodyHtml, category, unsubscribeUrl }: EmailLayoutInput): string {
-  const settings = getStoreSettings();
+export function renderEmailHtml(
+  { previewText, bodyHtml, category, unsubscribeUrl }: EmailLayoutInput,
+  settings: StoreSettings,
+): string {
   const year = new Date().getFullYear();
 
   return `<!doctype html>
@@ -86,7 +88,7 @@ export function renderEmailHtml({ previewText, bodyHtml, category, unsubscribeUr
           </tr>
           <tr>
             <td class="cco-px" style="padding:28px 40px 36px; border-top:1px solid ${COLORS.softGrey}; font-family:${FONT_STACK};">
-              ${footerHtml(category, unsubscribeUrl)}
+              ${footerHtml(category, settings, unsubscribeUrl)}
             </td>
           </tr>
         </table>
@@ -105,8 +107,7 @@ export function renderEmailHtml({ previewText, bodyHtml, category, unsubscribeUr
 </html>`;
 }
 
-function footerHtml(category: EmailCategory, unsubscribeUrl?: string): string {
-  const settings = getStoreSettings();
+function footerHtml(category: EmailCategory, settings: StoreSettings, unsubscribeUrl?: string): string {
   const supportLines = [
     `<a href="mailto:${settings.contactEmail}" style="color:${COLORS.stone}; text-decoration:underline;">${escapeHtml(settings.contactEmail)}</a>`,
     settings.contactPhone ? escapeHtml(settings.contactPhone) : null,
@@ -149,8 +150,10 @@ export interface EmailTextLayoutInput {
   unsubscribeUrl?: string;
 }
 
-export function renderEmailText({ bodyText, category, unsubscribeUrl }: EmailTextLayoutInput): string {
-  const settings = getStoreSettings();
+export function renderEmailText(
+  { bodyText, category, unsubscribeUrl }: EmailTextLayoutInput,
+  settings: StoreSettings,
+): string {
   const year = new Date().getFullYear();
   const support = [
     settings.contactEmail,

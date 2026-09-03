@@ -10,6 +10,7 @@ import { getCategories } from "@/data/categories";
 import { getCuratedCollections } from "@/data/collections";
 import { InstagramIcon, FacebookIcon, TikTokIcon, PinterestIcon } from "@/components/icons/SocialIcons";
 import { useWishlistCount } from "@/store/wishlist-store";
+import { useStoreSettings } from "@/components/providers/StoreSettingsProvider";
 import { cn } from "@/lib/utils";
 import { useFocusTrap } from "@/lib/hooks/use-focus-trap";
 
@@ -23,7 +24,8 @@ const socialIconMap = {
 export function MobileDrawer({ open, onClose }: { open: boolean; onClose: () => void }) {
   const [expanded, setExpanded] = React.useState<string | null>(null);
   const wishlistCount = useWishlistCount();
-  const socialLinks = getSocialLinks();
+  const settings = useStoreSettings();
+  const socialLinks = getSocialLinks(settings);
   const panelRef = React.useRef<HTMLDivElement>(null);
 
   useFocusTrap(open, onClose, panelRef);

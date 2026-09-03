@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getTemplate } from "@/lib/email/templates/registry";
+import { getStoreSettings } from "@/lib/admin/settings-store";
 
 export const metadata = { title: "Email Template Preview", robots: { index: false, follow: false } };
 
@@ -11,7 +12,8 @@ export default async function EmailPreviewPage({ params }: PageProps<"/dev/email
   const template = getTemplate(key);
   if (!template) notFound();
 
-  const content = template.render();
+  const settings = await getStoreSettings();
+  const content = template.render(settings);
 
   return (
     <div style={{ fontFamily: "sans-serif" }}>

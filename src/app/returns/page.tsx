@@ -12,8 +12,8 @@ export const metadata: Metadata = {
   alternates: { canonical: "/returns" },
 };
 
-export default function ReturnsPage() {
-  const settings = getStoreSettings();
+export default async function ReturnsPage() {
+  const settings = await getStoreSettings();
 
   return (
     <div className="mx-auto max-w-3xl px-6 py-10 sm:px-8">

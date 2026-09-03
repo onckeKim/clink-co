@@ -1,8 +1,9 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, screen, fireEvent } from "@testing-library/react";
+import { screen, fireEvent } from "@testing-library/react";
 import { Header } from "@/components/layout/Header";
 import { useCartStore } from "@/store/cart-store";
 import { useWishlistStore } from "@/store/wishlist-store";
+import { renderWithStoreSettings as render } from "@/components/__tests__/test-utils/store-settings";
 
 vi.mock("next/navigation", () => ({
   usePathname: () => "/",

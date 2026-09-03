@@ -91,7 +91,7 @@ const TEMPLATE_KEY = "abandoned-cart";
 
 /** Fetches candidates from Supabase and sends the reminder to everyone the pure filter above selects, skipping anyone already emailed for this exact cart (see hasSentEmailFor — that's what makes a re-run of the cron job safe). */
 export async function runAbandonedCartCampaign(): Promise<{ sent: number; skipped: number; eligible: number }> {
-  const settings = getStoreSettings();
+  const settings = await getStoreSettings();
   const config: AbandonedCartConfig = { enabled: settings.abandonedCartEnabled, delayHours: settings.abandonedCartDelayHours };
   if (!config.enabled) return { sent: 0, skipped: 0, eligible: 0 };
 
@@ -108,12 +108,15 @@ export async function runAbandonedCartCampaign(): Promise<{ sent: number; skippe
     }
 
     const unsubscribeUrl = buildUnsubscribeUrl(candidate.userEmail);
-    const content = abandonedCartReminderTemplate({
-      firstName: candidate.userFirstName,
-      products: candidate.products,
-      cartTotal: candidate.cartTotal,
-      unsubscribeUrl,
-    });
+    const content = abandonedCartReminderTemplate(
+      {
+        firstName: candidate.userFirstName,
+        products: candidate.products,
+        cartTotal: candidate.cartTotal,
+        unsubscribeUrl,
+      },
+      settings,
+    );
 
     const result = await sendTransactionalEmail({
       to: { name: candidate.userFirstName, email: candidate.userEmail },

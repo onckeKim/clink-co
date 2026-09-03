@@ -22,8 +22,9 @@ export function getPaymentProvider(id: PaymentMethodId): PaymentProvider {
 }
 
 /** Every method whose credentials are currently present AND that the admin has enabled in store settings (Store Settings → Payment methods) — what the checkout UI should actually offer. */
-export function getAvailablePaymentMethods(): PaymentProvider[] {
-  const enabledIds = getStoreSettings().enabledPaymentMethodIds;
+export async function getAvailablePaymentMethods(): Promise<PaymentProvider[]> {
+  const settings = await getStoreSettings();
+  const enabledIds = settings.enabledPaymentMethodIds;
   return Object.values(paymentProviders).filter(
     (provider) => provider.isConfigured() && enabledIds.includes(provider.id),
   );

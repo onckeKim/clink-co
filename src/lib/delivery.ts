@@ -1,4 +1,3 @@
-import { getStoreSettings } from "@/lib/admin/settings-store";
 import {
   deliveryMethods,
   PICKUP_POSTAL_PREFIXES,
@@ -80,7 +79,8 @@ export function isValidSAPostalCode(postalCode: string): boolean {
   return /^\d{4}$/.test(postalCode.trim());
 }
 
-export function estimateDelivery(postalCode: string, orderValue: number): DeliveryEstimateResult {
+/** `freeDeliveryThreshold` comes from store settings — sourced from `await getStoreSettings()` server-side or `useStoreSettings()` client-side, never fetched by this function itself so it stays a pure, easily-testable calculation. */
+export function estimateDelivery(postalCode: string, orderValue: number, freeDeliveryThreshold: number): DeliveryEstimateResult {
   const trimmed = postalCode.trim();
   if (!isValidSAPostalCode(trimmed)) {
     return { ok: false, error: "Enter a valid 4-digit South African postal code." };
@@ -88,7 +88,6 @@ export function estimateDelivery(postalCode: string, orderValue: number): Delive
 
   const code = Number(trimmed);
   const zone = resolveZone(code);
-  const freeDeliveryThreshold = getStoreSettings().freeDeliveryThreshold;
   const freeDeliveryEligible = orderValue >= freeDeliveryThreshold;
 
   return {
@@ -116,15 +115,15 @@ export function isPickupPostalCode(postalCode: string): boolean {
   return PICKUP_POSTAL_PREFIXES.some((prefix) => postalCode.startsWith(prefix));
 }
 
-/** Which of the configured delivery methods can actually be offered for this address — also excludes any method the admin has switched off in store settings. */
+/** Which of the configured delivery methods can actually be offered for this address — also excludes any method the admin has switched off in store settings (`enabledDeliveryMethodIds`, sourced the same way as estimateDelivery's `freeDeliveryThreshold`). */
 export function getAvailableDeliveryMethods(
   province: SouthAfricanProvince,
   postalCode: string,
+  enabledDeliveryMethodIds: DeliveryMethodId[],
 ): DeliveryMethodConfig[] {
   const zone = PROVINCE_ZONE[province];
-  const enabledIds = getStoreSettings().enabledDeliveryMethodIds;
   return deliveryMethods.filter((method) => {
-    if (!enabledIds.includes(method.id)) return false;
+    if (!enabledDeliveryMethodIds.includes(method.id)) return false;
     if (method.id === "express") return zone === "metro";
     if (method.id === "pickup") return isPickupPostalCode(postalCode);
     return true;
@@ -162,6 +161,8 @@ export function quoteDelivery({
   postalCode,
   orderValue,
   freeDeliveryOverride = false,
+  freeDeliveryThreshold,
+  enabledDeliveryMethodIds,
 }: {
   methodId: DeliveryMethodId;
   province: SouthAfricanProvince;
@@ -170,6 +171,9 @@ export function quoteDelivery({
   orderValue: number;
   /** True when an applied coupon grants free delivery regardless of threshold. */
   freeDeliveryOverride?: boolean;
+  /** From store settings — see estimateDelivery's doc comment. */
+  freeDeliveryThreshold: number;
+  enabledDeliveryMethodIds: DeliveryMethodId[];
 }): DeliveryQuoteResult {
   if (!isValidSAPostalCode(postalCode)) {
     return { ok: false, error: "Enter a valid 4-digit postal code." };
@@ -178,7 +182,7 @@ export function quoteDelivery({
   const method = deliveryMethods.find((m) => m.id === methodId);
   if (!method) return { ok: false, error: "Select a delivery method." };
 
-  const available = getAvailableDeliveryMethods(province, postalCode);
+  const available = getAvailableDeliveryMethods(province, postalCode, enabledDeliveryMethodIds);
   if (!available.some((m) => m.id === methodId)) {
     return { ok: false, error: `${method.label} isn't available for this address.` };
   }
@@ -186,7 +190,7 @@ export function quoteDelivery({
   const zone = PROVINCE_ZONE[province];
   const adjustment = ZONE_ADJUSTMENT[zone];
   const freeDeliveryApplied =
-    method.id === "pickup" || freeDeliveryOverride || orderValue >= getStoreSettings().freeDeliveryThreshold;
+    method.id === "pickup" || freeDeliveryOverride || orderValue >= freeDeliveryThreshold;
 
   const fee = freeDeliveryApplied ? 0 : Math.round(method.baseFee * adjustment.feeMultiplier);
   const minDays = method.minDays + adjustment.extraDays;

@@ -1,8 +1,9 @@
 import { describe, it, expect, beforeEach } from "vitest";
-import { render, screen, waitFor, fireEvent } from "@testing-library/react";
+import { screen, waitFor, fireEvent } from "@testing-library/react";
 import { CartDrawer } from "@/components/cart/CartDrawer";
 import { useCartStore } from "@/store/cart-store";
 import type { Product } from "@/types/product";
+import { renderWithStoreSettings as render } from "@/components/__tests__/test-utils/store-settings";
 
 function makeProduct(overrides: Partial<Product> = {}): Product {
   return {

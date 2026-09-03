@@ -923,6 +923,8 @@ export interface Database {
           return_window_days: number;
           maintenance_mode: boolean;
           maintenance_message: string | null;
+          abandoned_cart_enabled: boolean;
+          abandoned_cart_delay_hours: number;
           updated_at: string;
           updated_by: string | null;
         };

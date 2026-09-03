@@ -4,7 +4,7 @@ import * as React from "react";
 import { X } from "lucide-react";
 import { useCartStore, useCartSubtotal } from "@/store/cart-store";
 import { computeCartTotals } from "@/lib/cart";
-import { getStoreSettings } from "@/lib/admin/settings-store";
+import { useStoreSettings } from "@/components/providers/StoreSettingsProvider";
 import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
 import { formatPrice } from "@/lib/utils";
@@ -25,12 +25,17 @@ export function CartSummary({ compact = false }: { compact?: boolean }) {
   const removeCoupon = useCartStore((state) => state.removeCoupon);
   const [code, setCode] = React.useState("");
 
-  const settings = getStoreSettings();
+  const settings = useStoreSettings();
   const discountAmount = coupon?.discountAmount ?? 0;
   const netSubtotal = Math.max(0, subtotal - discountAmount);
   const freeDelivery = Boolean(coupon?.freeDelivery) || netSubtotal >= settings.freeDeliveryThreshold;
   const estimatedDeliveryFee = freeDelivery ? 0 : 95;
-  const totals = computeCartTotals({ subtotal, discountAmount, deliveryFee: estimatedDeliveryFee });
+  const totals = computeCartTotals({
+    subtotal,
+    discountAmount,
+    deliveryFee: estimatedDeliveryFee,
+    taxRatePercent: settings.taxRatePercent,
+  });
 
   return (
     <div className="flex flex-col gap-4">

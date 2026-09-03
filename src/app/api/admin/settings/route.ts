@@ -11,7 +11,7 @@ export async function GET() {
   if (!hasPermission(ctx.profile.role, "settings:view")) {
     return NextResponse.json({ error: "You don't have permission to view store settings." }, { status: 403 });
   }
-  return NextResponse.json({ settings: getStoreSettings() });
+  return NextResponse.json({ settings: await getStoreSettings() });
 }
 
 export async function PATCH(request: Request) {
@@ -21,14 +21,14 @@ export async function PATCH(request: Request) {
     return NextResponse.json({ error: "You don't have permission to edit store settings." }, { status: 403 });
   }
 
-  const before = getStoreSettings();
+  const before = await getStoreSettings();
   const body = await request.json().catch(() => null);
   const parsed = storeSettingsPatchSchema.safeParse(body);
   if (!parsed.success) {
     return NextResponse.json({ error: parsed.error.issues[0]?.message ?? "Invalid settings." }, { status: 400 });
   }
 
-  const settings = updateStoreSettings(parsed.data);
+  const settings = await updateStoreSettings(parsed.data);
 
   recordAuditLog({
     userId: ctx.user.id,

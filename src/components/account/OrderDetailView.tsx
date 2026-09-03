@@ -25,7 +25,7 @@ import { Button, buttonVariants } from "@/components/ui/Button";
 import { Modal } from "@/components/ui/Modal";
 import { Label } from "@/components/ui/Label";
 import { Textarea } from "@/components/ui/Textarea";
-import { getStoreSettings } from "@/lib/admin/settings-store";
+import { useStoreSettings } from "@/components/providers/StoreSettingsProvider";
 import { cn, formatPrice } from "@/lib/utils";
 
 const RETURN_REASONS: { value: ReturnReason; label: string }[] = [
@@ -61,6 +61,7 @@ function AddressCard({ title, address }: { title: string; address: OrderAddress 
 
 export function OrderDetailView({ orderNumber }: { orderNumber: string }) {
   const router = useRouter();
+  const settings = useStoreSettings();
   const [order, setOrder] = React.useState<Order | null>(null);
   const [returnRequest, setReturnRequest] = React.useState<ReturnRequest | null>(null);
   const [loading, setLoading] = React.useState(true);
@@ -111,7 +112,7 @@ export function OrderDetailView({ orderNumber }: { orderNumber: string }) {
   const payment = getPaymentStatusLabel(order.status);
   const fulfilment = getFulfilmentStatusLabel(order.status);
   const canReturn = (order.status === "paid" || order.status === "fulfilled") && !returnRequest;
-  const supportMailto = `mailto:${getStoreSettings().contactEmail}?subject=${encodeURIComponent(`Order ${order.orderNumber}`)}`;
+  const supportMailto = `mailto:${settings.contactEmail}?subject=${encodeURIComponent(`Order ${order.orderNumber}`)}`;
 
   return (
     <div className="flex flex-col gap-6">

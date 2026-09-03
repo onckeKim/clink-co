@@ -1,4 +1,5 @@
 import "server-only";
+import type { StoreSettings } from "@/types/settings";
 import { siteConfig } from "@/config/site";
 import { formatPrice } from "@/lib/utils";
 import type { Order } from "@/lib/orders/types";
@@ -26,7 +27,7 @@ function productUrl(product: EmailProductRef): string {
  * src/lib/email/abandoned-cart.ts for where that check actually happens.
  */
 
-export function backInStockTemplate(data: { firstName: string; product: EmailProductRef; unsubscribeUrl: string }): EmailContent {
+export function backInStockTemplate(data: { firstName: string; product: EmailProductRef; unsubscribeUrl: string }, settings: StoreSettings): EmailContent {
   const subject = `Back in stock: ${data.product.name}`;
   const previewText = `${data.product.name} is back — while it lasts.`;
   const bodyHtml = [
@@ -45,12 +46,12 @@ export function backInStockTemplate(data: { firstName: string; product: EmailPro
   return {
     subject,
     previewText,
-    html: renderEmailHtml({ previewText, bodyHtml, category: "marketing", unsubscribeUrl: data.unsubscribeUrl }),
-    text: renderEmailText({ bodyText, category: "marketing", unsubscribeUrl: data.unsubscribeUrl }),
+    html: renderEmailHtml({ previewText, bodyHtml, category: "marketing", unsubscribeUrl: data.unsubscribeUrl }, settings),
+    text: renderEmailText({ bodyText, category: "marketing", unsubscribeUrl: data.unsubscribeUrl }, settings),
   };
 }
 
-export function wishlistReminderTemplate(data: { firstName: string; products: EmailProductRef[]; unsubscribeUrl: string }): EmailContent {
+export function wishlistReminderTemplate(data: { firstName: string; products: EmailProductRef[]; unsubscribeUrl: string }, settings: StoreSettings): EmailContent {
   const subject = "Your wishlist is waiting";
   const previewText = `${data.products.length} saved piece${data.products.length === 1 ? "" : "s"} still up for grabs.`;
   const bodyHtml = [
@@ -69,17 +70,20 @@ export function wishlistReminderTemplate(data: { firstName: string; products: Em
   return {
     subject,
     previewText,
-    html: renderEmailHtml({ previewText, bodyHtml, category: "marketing", unsubscribeUrl: data.unsubscribeUrl }),
-    text: renderEmailText({ bodyText, category: "marketing", unsubscribeUrl: data.unsubscribeUrl }),
+    html: renderEmailHtml({ previewText, bodyHtml, category: "marketing", unsubscribeUrl: data.unsubscribeUrl }, settings),
+    text: renderEmailText({ bodyText, category: "marketing", unsubscribeUrl: data.unsubscribeUrl }, settings),
   };
 }
 
-export function abandonedCartReminderTemplate(data: {
-  firstName: string;
-  products: EmailProductRef[];
-  cartTotal: number;
-  unsubscribeUrl: string;
-}): EmailContent {
+export function abandonedCartReminderTemplate(
+  data: {
+    firstName: string;
+    products: EmailProductRef[];
+    cartTotal: number;
+    unsubscribeUrl: string;
+  },
+  settings: StoreSettings,
+): EmailContent {
   const subject = "You left something behind";
   const previewText = "Your cart is still here, whenever you're ready.";
   const bodyHtml = [
@@ -100,13 +104,13 @@ export function abandonedCartReminderTemplate(data: {
   return {
     subject,
     previewText,
-    html: renderEmailHtml({ previewText, bodyHtml, category: "marketing", unsubscribeUrl: data.unsubscribeUrl }),
-    text: renderEmailText({ bodyText, category: "marketing", unsubscribeUrl: data.unsubscribeUrl }),
+    html: renderEmailHtml({ previewText, bodyHtml, category: "marketing", unsubscribeUrl: data.unsubscribeUrl }, settings),
+    text: renderEmailText({ bodyText, category: "marketing", unsubscribeUrl: data.unsubscribeUrl }, settings),
   };
 }
 
 /** Transactional, not marketing: this is a direct follow-up to a purchase the customer already made, not a promotional message — so no marketing consent or unsubscribe link is required, same reasoning as an order-status email. */
-export function reviewRequestTemplate(order: Order): EmailContent {
+export function reviewRequestTemplate(order: Order, settings: StoreSettings): EmailContent {
   const firstName = order.customerName.split(" ")[0] || order.customerName;
   const subject = "How are you enjoying your order?";
   const previewText = "We'd love to hear what you think.";
@@ -130,7 +134,7 @@ export function reviewRequestTemplate(order: Order): EmailContent {
   return {
     subject,
     previewText,
-    html: renderEmailHtml({ previewText, bodyHtml, category: "transactional" }),
-    text: renderEmailText({ bodyText, category: "transactional" }),
+    html: renderEmailHtml({ previewText, bodyHtml, category: "transactional" }, settings),
+    text: renderEmailText({ bodyText, category: "transactional" }, settings),
   };
 }

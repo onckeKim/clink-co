@@ -13,8 +13,9 @@ const galleryImages = [
   { id: "social-6", image: "/images/social-6.svg", alt: "Candles and coasters styled on a side table" },
 ];
 
-export function SocialGallery() {
-  const instagramHref = getStoreSettings().social.instagram;
+export async function SocialGallery() {
+  const settings = await getStoreSettings();
+  const instagramHref = settings.social.instagram;
   return (
     <section className="mx-auto max-w-7xl px-6 py-20 sm:px-8">
       <Reveal>

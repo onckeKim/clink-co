@@ -1,7 +1,6 @@
 import Image from "next/image";
 import { ShieldCheck } from "lucide-react";
 import type { CartLine } from "@/store/cart-store";
-import { getStoreSettings } from "@/lib/admin/settings-store";
 import { formatPrice } from "@/lib/utils";
 
 export function CheckoutSummarySidebar({
@@ -13,6 +12,7 @@ export function CheckoutSummarySidebar({
   deliveryFeeKnown,
   taxAmount,
   total,
+  taxRatePercent,
 }: {
   lines: CartLine[];
   subtotal: number;
@@ -22,8 +22,8 @@ export function CheckoutSummarySidebar({
   deliveryFeeKnown: boolean;
   taxAmount: number;
   total: number;
+  taxRatePercent: number;
 }) {
-  const taxRatePercent = getStoreSettings().taxRatePercent;
   return (
     <div className="flex h-fit flex-col gap-5 rounded-3xl border border-sand p-6 lg:sticky lg:top-28">
       <ul className="flex flex-col gap-3">

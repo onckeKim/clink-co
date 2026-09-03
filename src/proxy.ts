@@ -1,11 +1,38 @@
 import { type NextRequest, NextResponse } from "next/server";
 import { createServerClient } from "@supabase/ssr";
-import { isMaintenanceModeOn } from "@/lib/admin/settings-store";
+import { getStoreSettings } from "@/lib/admin/settings-store";
 
 const PROTECTED_PREFIXES = ["/account", "/admin"];
 const AUTH_ONLY_PATHS = ["/login", "/signup"];
 /** Always reachable even while maintenance mode is on — store staff need /login and /admin to turn it back off, and the maintenance page itself must not redirect to itself. */
 const MAINTENANCE_MODE_EXEMPT_PREFIXES = ["/admin", "/api/admin", "/api/auth", "/login", "/maintenance", "/dev"];
+
+/**
+ * Maintenance mode runs on every single request (including every asset the
+ * matcher doesn't already exclude), so this can't be a fresh Supabase round
+ * trip each time — it caches the flag for MAINTENANCE_CACHE_MS and only
+ * re-fetches once that's stale. Next.js 16's proxy runs on the Node.js
+ * runtime by default (see the comment below), which is what makes sharing
+ * this module-level cache across requests reliable, unlike the old Edge
+ * runtime. A fetch failure (env vars unset, Supabase unreachable) falls
+ * back to "not in maintenance" rather than risking the whole site behind a
+ * false positive — same resilience posture as the rest of this file.
+ */
+const MAINTENANCE_CACHE_MS = 30_000;
+let maintenanceCache: { value: boolean; expiresAt: number } | null = null;
+
+async function isMaintenanceModeOn(): Promise<boolean> {
+  if (maintenanceCache && maintenanceCache.expiresAt > Date.now()) {
+    return maintenanceCache.value;
+  }
+  try {
+    const settings = await getStoreSettings();
+    maintenanceCache = { value: settings.maintenanceMode, expiresAt: Date.now() + MAINTENANCE_CACHE_MS };
+    return settings.maintenanceMode;
+  } catch {
+    return maintenanceCache?.value ?? false;
+  }
+}
 
 /**
  * Refreshes the Supabase auth session on every request so server components
@@ -34,7 +61,7 @@ const MAINTENANCE_MODE_EXEMPT_PREFIXES = ["/admin", "/api/admin", "/api/auth", "
 export async function proxy(request: NextRequest) {
   const { pathname: maintenancePathname } = request.nextUrl;
   if (
-    isMaintenanceModeOn() &&
+    (await isMaintenanceModeOn()) &&
     !MAINTENANCE_MODE_EXEMPT_PREFIXES.some((prefix) => maintenancePathname.startsWith(prefix))
   ) {
     return NextResponse.rewrite(new URL("/maintenance", request.url));

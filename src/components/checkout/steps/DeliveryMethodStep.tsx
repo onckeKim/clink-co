@@ -5,6 +5,7 @@ import type { AddressInput } from "@/lib/validations/checkout";
 import type { DeliveryMethodId } from "@/config/delivery";
 import { Button } from "@/components/ui/Button";
 import { cn, formatPrice } from "@/lib/utils";
+import { useStoreSettings } from "@/components/providers/StoreSettingsProvider";
 
 export function DeliveryMethodStep({
   deliveryAddress,
@@ -23,7 +24,12 @@ export function DeliveryMethodStep({
   onBack: () => void;
   onNext: () => void;
 }) {
-  const availableMethods = getAvailableDeliveryMethods(deliveryAddress.province, deliveryAddress.postalCode);
+  const settings = useStoreSettings();
+  const availableMethods = getAvailableDeliveryMethods(
+    deliveryAddress.province,
+    deliveryAddress.postalCode,
+    settings.enabledDeliveryMethodIds,
+  );
 
   return (
     <div className="flex flex-col gap-5">
@@ -36,6 +42,8 @@ export function DeliveryMethodStep({
             postalCode: deliveryAddress.postalCode,
             orderValue,
             freeDeliveryOverride,
+            freeDeliveryThreshold: settings.freeDeliveryThreshold,
+            enabledDeliveryMethodIds: settings.enabledDeliveryMethodIds,
           });
           const selected = selectedMethodId === method.id;
           return (

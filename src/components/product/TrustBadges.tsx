@@ -1,9 +1,11 @@
+"use client";
+
 import { BadgeCheck, RotateCcw, ShieldCheck, Truck } from "lucide-react";
 import { paymentIcons } from "@/components/icons/PaymentIcons";
-import { getStoreSettings } from "@/lib/admin/settings-store";
+import { useStoreSettings } from "@/components/providers/StoreSettingsProvider";
 
 export function TrustBadges() {
-  const settings = getStoreSettings();
+  const settings = useStoreSettings();
   const signals = [
     { Icon: ShieldCheck, label: "Secure checkout" },
     { Icon: Truck, label: "Delivered across South Africa" },

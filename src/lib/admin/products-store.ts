@@ -1,6 +1,5 @@
 import type { Product } from "@/types/product";
 import { productsSeed } from "@/data/products-seed";
-import { getAllOrders } from "@/lib/orders/store";
 
 /**
  * In-memory products store — a development/demo substitute for a real
@@ -270,19 +269,16 @@ export function duplicateProduct(id: string): Product | undefined {
   return duplicate;
 }
 
-export type DeleteProductResult = { ok: true } | { ok: false; reason: string };
-
 /**
- * Refuses to delete a product referenced by any past order — archive it
- * instead so order history stays intact. Safe otherwise: `OrderLineItem` is
- * a fully denormalized snapshot (name/image/price at time of purchase), so
- * nothing else in the app depends on the product record surviving deletion.
+ * Removes the product record with no cross-store checks — this module's
+ * read functions (getActiveProducts, getProductBySlug, ...) are used from
+ * client components via src/data/products.ts, so it must never import
+ * orders/store.ts itself (that module depends on the DB-backed,
+ * server-only settings store, which cannot be reachable from a client
+ * bundle). The "refuse to delete a product referenced by a past order"
+ * safety check lives in src/lib/admin/products-delete.ts instead, which
+ * calls this and is only ever imported from the admin DELETE route.
  */
-export function deleteProduct(id: string): DeleteProductResult {
-  const referenced = getAllOrders().some((order) => order.lines.some((line) => line.productId === id));
-  if (referenced) {
-    return { ok: false, reason: "This product appears in past orders and can't be deleted — archive it instead." };
-  }
+export function removeProductRecord(id: string): void {
   productsById.delete(id);
-  return { ok: true };
 }

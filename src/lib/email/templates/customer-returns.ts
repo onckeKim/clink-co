@@ -1,4 +1,5 @@
 import "server-only";
+import type { StoreSettings } from "@/types/settings";
 import { siteConfig } from "@/config/site";
 import type { Order } from "@/lib/orders/types";
 import type { ReturnReason } from "@/lib/account/returns-store";
@@ -22,7 +23,7 @@ function orderUrl(order: Pick<Order, "orderNumber">): string {
   return `${siteConfig.url}/account/orders/${order.orderNumber}`;
 }
 
-export function returnRequestReceivedTemplate(order: Order, reason: ReturnReason, notes?: string): EmailContent {
+export function returnRequestReceivedTemplate(order: Order, reason: ReturnReason, notes: string | undefined, settings: StoreSettings): EmailContent {
   const subject = `We've received your return request — ${order.orderNumber}`;
   const previewText = "Your return request is with our team.";
   const bodyHtml = [
@@ -43,12 +44,12 @@ export function returnRequestReceivedTemplate(order: Order, reason: ReturnReason
   return {
     subject,
     previewText,
-    html: renderEmailHtml({ previewText, bodyHtml, category: "transactional" }),
-    text: renderEmailText({ bodyText, category: "transactional" }),
+    html: renderEmailHtml({ previewText, bodyHtml, category: "transactional" }, settings),
+    text: renderEmailText({ bodyText, category: "transactional" }, settings),
   };
 }
 
-export function returnApprovedTemplate(order: Order, instructions?: string): EmailContent {
+export function returnApprovedTemplate(order: Order, instructions: string | undefined, settings: StoreSettings): EmailContent {
   const subject = `Your return has been approved — ${order.orderNumber}`;
   const previewText = "Your return is approved — here's how to send it back.";
   const bodyHtml = [
@@ -71,12 +72,12 @@ export function returnApprovedTemplate(order: Order, instructions?: string): Ema
   return {
     subject,
     previewText,
-    html: renderEmailHtml({ previewText, bodyHtml, category: "transactional" }),
-    text: renderEmailText({ bodyText, category: "transactional" }),
+    html: renderEmailHtml({ previewText, bodyHtml, category: "transactional" }, settings),
+    text: renderEmailText({ bodyText, category: "transactional" }, settings),
   };
 }
 
-export function returnRejectedTemplate(order: Order, reason: string): EmailContent {
+export function returnRejectedTemplate(order: Order, reason: string, settings: StoreSettings): EmailContent {
   const subject = `An update on your return request — ${order.orderNumber}`;
   const previewText = "An update on your return request.";
   const bodyHtml = [
@@ -97,7 +98,7 @@ export function returnRejectedTemplate(order: Order, reason: string): EmailConte
   return {
     subject,
     previewText,
-    html: renderEmailHtml({ previewText, bodyHtml, category: "transactional" }),
-    text: renderEmailText({ bodyText, category: "transactional" }),
+    html: renderEmailHtml({ previewText, bodyHtml, category: "transactional" }, settings),
+    text: renderEmailText({ bodyText, category: "transactional" }, settings),
   };
 }

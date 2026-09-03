@@ -6,16 +6,18 @@ import { estimateDelivery, type DeliveryEstimate } from "@/lib/delivery";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { formatPrice } from "@/lib/utils";
+import { useStoreSettings } from "@/components/providers/StoreSettingsProvider";
 
 /** South African delivery estimator — postal code in, an illustrative range/fee/free-delivery read-out out. See src/lib/delivery.ts. */
 export function DeliveryEstimator({ orderValue }: { orderValue: number }) {
+  const settings = useStoreSettings();
   const [postalCode, setPostalCode] = React.useState("");
   const [estimate, setEstimate] = React.useState<DeliveryEstimate | null>(null);
   const [error, setError] = React.useState<string | null>(null);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    const result = estimateDelivery(postalCode, orderValue);
+    const result = estimateDelivery(postalCode, orderValue, settings.freeDeliveryThreshold);
     if (result.ok) {
       setEstimate(result.estimate);
       setError(null);

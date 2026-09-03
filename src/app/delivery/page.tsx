@@ -23,8 +23,8 @@ for (const [province, zone] of Object.entries(PROVINCE_ZONE)) {
   ZONE_LABELS[zone].provinces.push(province);
 }
 
-export default function DeliveryPage() {
-  const settings = getStoreSettings();
+export default async function DeliveryPage() {
+  const settings = await getStoreSettings();
   const enabledMethods = deliveryMethods.filter((m) => settings.enabledDeliveryMethodIds.includes(m.id));
 
   return (

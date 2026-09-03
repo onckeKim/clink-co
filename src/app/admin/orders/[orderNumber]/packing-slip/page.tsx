@@ -16,5 +16,6 @@ export default async function AdminPackingSlipPage({
   const order = getOrderByNumber(orderNumber);
   if (!order) notFound();
 
-  return <PackingSlipView order={order} businessName={getStoreSettings().businessName} />;
+  const settings = await getStoreSettings();
+  return <PackingSlipView order={order} businessName={settings.businessName} />;
 }

@@ -6,10 +6,11 @@ import { Printer } from "lucide-react";
 import type { Order } from "@/lib/orders/types";
 import { InvoiceDocument } from "@/components/orders/InvoiceDocument";
 import { Button, buttonVariants } from "@/components/ui/Button";
-import { getStoreSettings } from "@/lib/admin/settings-store";
+import { useStoreSettings } from "@/components/providers/StoreSettingsProvider";
 import { cn } from "@/lib/utils";
 
 export function InvoiceView({ orderNumber }: { orderNumber: string }) {
+  const settings = useStoreSettings();
   const [order, setOrder] = React.useState<Order | null>(null);
   const [loading, setLoading] = React.useState(true);
   const [notFound, setNotFound] = React.useState(false);
@@ -54,7 +55,7 @@ export function InvoiceView({ orderNumber }: { orderNumber: string }) {
         </Button>
       </div>
 
-      <InvoiceDocument order={order} contactEmail={getStoreSettings().contactEmail} />
+      <InvoiceDocument order={order} contactEmail={settings.contactEmail} />
     </div>
   );
 }

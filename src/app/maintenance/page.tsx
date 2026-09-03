@@ -5,8 +5,8 @@ import { getStoreSettings } from "@/lib/admin/settings-store";
 export const metadata: Metadata = { title: "We'll be right back" };
 
 /** The full-site holding page proxy.ts rewrites every non-admin, non-API request to while maintenance mode is on (Store Settings → Maintenance mode). */
-export default function MaintenancePage() {
-  const settings = getStoreSettings();
+export default async function MaintenancePage() {
+  const settings = await getStoreSettings();
 
   return (
     <div className="flex min-h-screen flex-col items-center justify-center gap-6 bg-porcelain px-6 text-center">

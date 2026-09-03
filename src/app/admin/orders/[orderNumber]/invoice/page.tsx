@@ -14,5 +14,6 @@ export default async function AdminOrderInvoicePage({ params }: PageProps<"/admi
   const order = getOrderByNumber(orderNumber);
   if (!order) notFound();
 
-  return <AdminInvoiceView order={order} contactEmail={getStoreSettings().contactEmail} />;
+  const settings = await getStoreSettings();
+  return <AdminInvoiceView order={order} contactEmail={settings.contactEmail} />;
 }

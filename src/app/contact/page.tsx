@@ -23,8 +23,8 @@ export default async function ContactPage({ searchParams }: PageProps<"/contact"
   const categoryParam = typeof params.category === "string" ? params.category : undefined;
   const defaultCategory = isEnquiryCategory(categoryParam) ? categoryParam : undefined;
 
-  const contactInfo = getContactInfo();
-  const settings = getStoreSettings();
+  const settings = await getStoreSettings();
+  const contactInfo = getContactInfo(settings);
 
   return (
     <div className="mx-auto max-w-5xl px-6 py-10 sm:px-8">

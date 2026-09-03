@@ -1,4 +1,5 @@
 import "server-only";
+import type { StoreSettings } from "@/types/settings";
 import { siteConfig } from "@/config/site";
 import { renderEmailHtml, renderEmailText } from "../layout";
 import { heading, paragraph, paragraphText, ctaButton, ctaButtonText, calloutBox, calloutBoxText } from "../components";
@@ -22,7 +23,7 @@ import type { EmailContent } from "../types";
  * system owns auth email delivery, not one this task makes for you.
  */
 
-export function welcomeEmailTemplate(data: { firstName: string }): EmailContent {
+export function welcomeEmailTemplate(data: { firstName: string }, settings: StoreSettings): EmailContent {
   const subject = "Welcome to Clink & Co";
   const previewText = `You're in, ${data.firstName} — here's what's next.`;
   const bodyHtml = [
@@ -40,12 +41,12 @@ export function welcomeEmailTemplate(data: { firstName: string }): EmailContent 
   return {
     subject,
     previewText,
-    html: renderEmailHtml({ previewText, bodyHtml, category: "transactional" }),
-    text: renderEmailText({ bodyText, category: "transactional" }),
+    html: renderEmailHtml({ previewText, bodyHtml, category: "transactional" }, settings),
+    text: renderEmailText({ bodyText, category: "transactional" }, settings),
   };
 }
 
-export function emailVerificationTemplate(data: { firstName: string; verifyUrl: string; expiresInHours: number }): EmailContent {
+export function emailVerificationTemplate(data: { firstName: string; verifyUrl: string; expiresInHours: number }, settings: StoreSettings): EmailContent {
   const subject = "Confirm your email address";
   const previewText = "One click and you're verified.";
   const bodyHtml = [
@@ -64,12 +65,12 @@ export function emailVerificationTemplate(data: { firstName: string; verifyUrl: 
   return {
     subject,
     previewText,
-    html: renderEmailHtml({ previewText, bodyHtml, category: "transactional" }),
-    text: renderEmailText({ bodyText, category: "transactional" }),
+    html: renderEmailHtml({ previewText, bodyHtml, category: "transactional" }, settings),
+    text: renderEmailText({ bodyText, category: "transactional" }, settings),
   };
 }
 
-export function passwordResetTemplate(data: { firstName: string; resetUrl: string; expiresInMinutes: number }): EmailContent {
+export function passwordResetTemplate(data: { firstName: string; resetUrl: string; expiresInMinutes: number }, settings: StoreSettings): EmailContent {
   const subject = "Reset your password";
   const previewText = "Here's your password reset link.";
   const bodyHtml = [
@@ -91,7 +92,7 @@ export function passwordResetTemplate(data: { firstName: string; resetUrl: strin
   return {
     subject,
     previewText,
-    html: renderEmailHtml({ previewText, bodyHtml, category: "transactional" }),
-    text: renderEmailText({ bodyText, category: "transactional" }),
+    html: renderEmailHtml({ previewText, bodyHtml, category: "transactional" }, settings),
+    text: renderEmailText({ bodyText, category: "transactional" }, settings),
   };
 }

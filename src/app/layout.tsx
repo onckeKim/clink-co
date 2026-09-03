@@ -8,6 +8,8 @@ import { AuthCartSync } from "@/components/layout/AuthCartSync";
 import { PromoBannerBar } from "@/components/layout/PromoBannerBar";
 import { SiteChrome } from "@/components/layout/SiteChrome";
 import { Analytics } from "@/components/analytics/Analytics";
+import { StoreSettingsProvider } from "@/components/providers/StoreSettingsProvider";
+import { getStoreSettings } from "@/lib/admin/settings-store";
 
 const inter = Inter({
   variable: "--font-inter",
@@ -74,30 +76,33 @@ export const metadata: Metadata = {
   },
 };
 
-export default function RootLayout({ children }: LayoutProps<"/">) {
+export default async function RootLayout({ children }: LayoutProps<"/">) {
+  const settings = await getStoreSettings();
   return (
     <html
       lang="en"
       className={`${inter.variable} ${fraunces.variable} h-full antialiased`}
     >
       <body className="flex min-h-full flex-col bg-porcelain text-charcoal">
-        <SiteChrome
-          skipLink={
-            <a
-              href="#main-content"
-              className="focus-ring sr-only rounded-full bg-charcoal px-5 py-2.5 text-sm font-medium text-warm-white focus:not-sr-only focus:fixed focus:left-3 focus:top-3 focus:z-[100]"
-            >
-              Skip to content
-            </a>
-          }
-          header={<Header />}
-          banners={<PromoBannerBar />}
-          footer={<Footer />}
-          cookieBanner={<CookieBannerLoader />}
-          authCartSync={<AuthCartSync />}
-        >
-          {children}
-        </SiteChrome>
+        <StoreSettingsProvider settings={settings}>
+          <SiteChrome
+            skipLink={
+              <a
+                href="#main-content"
+                className="focus-ring sr-only rounded-full bg-charcoal px-5 py-2.5 text-sm font-medium text-warm-white focus:not-sr-only focus:fixed focus:left-3 focus:top-3 focus:z-[100]"
+              >
+                Skip to content
+              </a>
+            }
+            header={<Header />}
+            banners={<PromoBannerBar />}
+            footer={<Footer />}
+            cookieBanner={<CookieBannerLoader />}
+            authCartSync={<AuthCartSync />}
+          >
+            {children}
+          </SiteChrome>
+        </StoreSettingsProvider>
         <Analytics />
       </body>
     </html>

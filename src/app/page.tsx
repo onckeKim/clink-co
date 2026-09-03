@@ -16,10 +16,10 @@ import { getEditorialSection, getHomepageSectionsConfig } from "@/lib/admin/cont
 import { getStoreSettings } from "@/lib/admin/settings-store";
 import { safeJsonLdStringify } from "@/lib/seo/json-ld";
 
-export default function Home() {
+export default async function Home() {
   const editorial = getEditorialSection();
   const { order, hidden } = getHomepageSectionsConfig();
-  const settings = getStoreSettings();
+  const settings = await getStoreSettings();
 
   const organizationJsonLd = {
     "@context": "https://schema.org",

@@ -18,12 +18,12 @@ const socialIconMap = {
   Pinterest: PinterestIcon,
 } as const;
 
-export function Footer() {
+export async function Footer() {
   const shopLinks: NavLink[] = getCategories().map((c) => ({ label: c.name, href: `/shop/${c.slug}` }));
-  const socialLinks = getSocialLinks();
+  const settings = await getStoreSettings();
+  const socialLinks = getSocialLinks(settings);
   const newsletter = getNewsletterContent();
-  const contactInfo = getContactInfo();
-  const settings = getStoreSettings();
+  const contactInfo = getContactInfo(settings);
   return (
     <footer className="mt-24 bg-charcoal text-warm-white print:hidden">
       <div className="mx-auto max-w-7xl px-6 py-16 sm:px-8 lg:py-20">

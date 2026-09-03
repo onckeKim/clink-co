@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useCartStore, useCartSubtotal } from "@/store/cart-store";
 import { quoteDelivery } from "@/lib/delivery";
 import { computeCartTotals } from "@/lib/cart";
+import { useStoreSettings } from "@/components/providers/StoreSettingsProvider";
 import type { DeliveryMethodId } from "@/config/delivery";
 import type { PaymentMethodId } from "@/lib/orders/types";
 import type { AddressInput, CustomerDetailsInput } from "@/lib/validations/checkout";
@@ -34,6 +35,7 @@ function readOrCreateIdempotencyKey(): string {
 export function CheckoutView() {
   const mounted = useMounted();
   const router = useRouter();
+  const settings = useStoreSettings();
   const lines = useCartStore((state) => state.lines);
   const subtotal = useCartSubtotal();
   const coupon = useCartStore((state) => state.coupon);
@@ -103,12 +105,14 @@ export function CheckoutView() {
       postalCode: deliveryAddress.postalCode,
       orderValue: Math.max(0, subtotal - discountAmount),
       freeDeliveryOverride: coupon?.freeDelivery ?? false,
+      freeDeliveryThreshold: settings.freeDeliveryThreshold,
+      enabledDeliveryMethodIds: settings.enabledDeliveryMethodIds,
     });
     return result.ok ? result.quote : null;
-  }, [deliveryAddress, deliveryMethodId, subtotal, discountAmount, coupon]);
+  }, [deliveryAddress, deliveryMethodId, subtotal, discountAmount, coupon, settings]);
 
   const deliveryFee = deliveryQuote?.fee ?? 0;
-  const totals = computeCartTotals({ subtotal, discountAmount, deliveryFee });
+  const totals = computeCartTotals({ subtotal, discountAmount, deliveryFee, taxRatePercent: settings.taxRatePercent });
 
   const goTo = (next: number) => {
     setStep(next);
@@ -284,6 +288,7 @@ export function CheckoutView() {
           deliveryFeeKnown={Boolean(deliveryQuote)}
           taxAmount={totals.taxAmount}
           total={totals.total}
+          taxRatePercent={settings.taxRatePercent}
         />
       </div>
     </div>

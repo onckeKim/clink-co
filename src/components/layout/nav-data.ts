@@ -46,16 +46,16 @@ export const policyLinks: NavLink[] = [
   { label: "Accessibility", href: "/accessibility" },
 ];
 
-import { getStoreSettings } from "@/lib/admin/settings-store";
+import type { StoreSettings } from "@/types/settings";
 
 export interface SocialLink {
   label: string;
   href: string;
 }
 
-/** Reads live from the store settings (Store Settings → Social media profiles) so an admin edit shows up without a redeploy. */
-export function getSocialLinks(): SocialLink[] {
-  const { social } = getStoreSettings();
+/** Reads live from the store settings (Store Settings → Social media profiles) so an admin edit shows up without a redeploy. Takes settings explicitly so both server callers (await getStoreSettings()) and client callers (useStoreSettings()) can supply it. */
+export function getSocialLinks(settings: StoreSettings): SocialLink[] {
+  const { social } = settings;
   return [
     { label: "Instagram", href: social.instagram },
     { label: "Facebook", href: social.facebook },
@@ -64,8 +64,7 @@ export function getSocialLinks(): SocialLink[] {
   ];
 }
 
-export function getContactInfo() {
-  const settings = getStoreSettings();
+export function getContactInfo(settings: StoreSettings) {
   return {
     email: settings.contactEmail,
     whatsappHref: settings.social.whatsapp,

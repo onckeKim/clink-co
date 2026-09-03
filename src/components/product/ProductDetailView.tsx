@@ -32,7 +32,7 @@ import { useRecentlyViewedStore } from "@/store/recently-viewed-store";
 import { getCategoryBySlug } from "@/data/categories";
 import { getCollectionBySlug } from "@/data/collections";
 import { getDiscountPercent } from "@/lib/catalogue";
-import { getStoreSettings } from "@/lib/admin/settings-store";
+import { useStoreSettings } from "@/components/providers/StoreSettingsProvider";
 import { formatPrice } from "@/lib/utils";
 import { track } from "@/lib/analytics/track";
 
@@ -58,6 +58,7 @@ export function ProductDetailView({
   breadcrumbs: BreadcrumbItem[];
 }) {
   const recordView = useRecentlyViewedStore((state) => state.add);
+  const settings = useStoreSettings();
 
   const [activeVariantId, setActiveVariantId] = React.useState(product.variants?.[0]?.id);
   const [activeSetSizeId, setActiveSetSizeId] = React.useState(product.setSizeOptions?.[0]?.id);
@@ -166,7 +167,7 @@ export function ProductDetailView({
               <span className="text-2xl font-medium text-charcoal">{formatPrice(displayPrice)}</span>
             </div>
             <p className="mt-1 text-xs text-stone">
-              Inclusive of {getStoreSettings().taxRatePercent}% VAT. Delivery calculated below.
+              Inclusive of {settings.taxRatePercent}% VAT. Delivery calculated below.
             </p>
           </div>
 

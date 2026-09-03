@@ -2,7 +2,8 @@ import { NextResponse } from "next/server";
 import { getAdminContext } from "@/lib/supabase/dal";
 import { hasPermission } from "@/lib/admin/roles";
 import { recordAuditLog } from "@/lib/admin/audit-log-store";
-import { getAdminProductById, updateProduct, deleteProduct, getLowStockThreshold } from "@/lib/admin/products-store";
+import { getAdminProductById, updateProduct, getLowStockThreshold } from "@/lib/admin/products-store";
+import { deleteProduct } from "@/lib/admin/products-delete";
 import { adminProductPatchSchema } from "@/lib/validations/admin-products";
 import { sendLowStockAdminWarning, sendOutOfStockAdminWarning } from "@/lib/email";
 

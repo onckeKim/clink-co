@@ -1,4 +1,4 @@
-import { describe, it, expect, afterEach } from "vitest";
+import { describe, it, expect } from "vitest";
 import {
   isValidSAPostalCode,
   estimateDelivery,
@@ -6,12 +6,10 @@ import {
   getAvailableDeliveryMethods,
   quoteDelivery,
 } from "@/lib/delivery";
-import { updateStoreSettings, getStoreSettings } from "@/lib/admin/settings-store";
+import type { DeliveryMethodId } from "@/config/delivery";
 
-const originalSettings = getStoreSettings();
-afterEach(() => {
-  updateStoreSettings(originalSettings);
-});
+const FREE_DELIVERY_THRESHOLD = 950;
+const ALL_METHODS: DeliveryMethodId[] = ["standard", "express", "pickup"];
 
 describe("isValidSAPostalCode", () => {
   it("accepts a 4-digit code", () => {
@@ -38,30 +36,30 @@ describe("isValidSAPostalCode", () => {
 
 describe("estimateDelivery (PDP quick estimate)", () => {
   it("rejects an invalid postal code", () => {
-    const result = estimateDelivery("abc", 1000);
+    const result = estimateDelivery("abc", 1000, FREE_DELIVERY_THRESHOLD);
     expect(result.ok).toBe(false);
   });
 
   it("resolves a Cape Town CBD code to the metro zone", () => {
-    const result = estimateDelivery("8001", 100);
+    const result = estimateDelivery("8001", 100, FREE_DELIVERY_THRESHOLD);
     expect(result.ok).toBe(true);
     if (result.ok) expect(result.estimate.zoneLabel).toBe("Major metro");
   });
 
   it("resolves an unmapped code to the regional zone by default", () => {
-    const result = estimateDelivery("5000", 100);
+    const result = estimateDelivery("5000", 100, FREE_DELIVERY_THRESHOLD);
     expect(result.ok).toBe(true);
     if (result.ok) expect(result.estimate.zoneLabel).toBe("Regional town");
   });
 
   it("resolves a Northern Cape code to the outlying zone", () => {
-    const result = estimateDelivery("8500", 100);
+    const result = estimateDelivery("8500", 100, FREE_DELIVERY_THRESHOLD);
     expect(result.ok).toBe(true);
     if (result.ok) expect(result.estimate.zoneLabel).toBe("Outlying / rural area");
   });
 
   it("charges the zone fee when under the free-delivery threshold", () => {
-    const result = estimateDelivery("8001", 100);
+    const result = estimateDelivery("8001", 100, FREE_DELIVERY_THRESHOLD);
     expect(result.ok).toBe(true);
     if (result.ok) {
       expect(result.estimate.fee).toBe(65);
@@ -70,8 +68,7 @@ describe("estimateDelivery (PDP quick estimate)", () => {
   });
 
   it("waives the fee once the order value meets the free-delivery threshold", () => {
-    const threshold = getStoreSettings().freeDeliveryThreshold;
-    const result = estimateDelivery("8001", threshold);
+    const result = estimateDelivery("8001", FREE_DELIVERY_THRESHOLD, FREE_DELIVERY_THRESHOLD);
     expect(result.ok).toBe(true);
     if (result.ok) {
       expect(result.estimate.fee).toBe(0);
@@ -96,29 +93,28 @@ describe("isPickupPostalCode", () => {
 
 describe("getAvailableDeliveryMethods", () => {
   it("offers standard delivery everywhere", () => {
-    const methods = getAvailableDeliveryMethods("Limpopo", "0700");
+    const methods = getAvailableDeliveryMethods("Limpopo", "0700", ALL_METHODS);
     expect(methods.some((m) => m.id === "standard")).toBe(true);
   });
 
   it("only offers express delivery in metro provinces", () => {
-    const metro = getAvailableDeliveryMethods("Gauteng", "2000");
+    const metro = getAvailableDeliveryMethods("Gauteng", "2000", ALL_METHODS);
     expect(metro.some((m) => m.id === "express")).toBe(true);
 
-    const nonMetro = getAvailableDeliveryMethods("Limpopo", "0700");
+    const nonMetro = getAvailableDeliveryMethods("Limpopo", "0700", ALL_METHODS);
     expect(nonMetro.some((m) => m.id === "express")).toBe(false);
   });
 
   it("only offers pickup within the pickup postal-code prefixes", () => {
-    const inRange = getAvailableDeliveryMethods("Western Cape", "8001");
+    const inRange = getAvailableDeliveryMethods("Western Cape", "8001", ALL_METHODS);
     expect(inRange.some((m) => m.id === "pickup")).toBe(true);
 
-    const outOfRange = getAvailableDeliveryMethods("Western Cape", "7001");
+    const outOfRange = getAvailableDeliveryMethods("Western Cape", "7001", ALL_METHODS);
     expect(outOfRange.some((m) => m.id === "pickup")).toBe(false);
   });
 
   it("excludes a method the admin has disabled in store settings", () => {
-    updateStoreSettings({ enabledDeliveryMethodIds: ["standard"] });
-    const methods = getAvailableDeliveryMethods("Gauteng", "2000");
+    const methods = getAvailableDeliveryMethods("Gauteng", "2000", ["standard"]);
     expect(methods.map((m) => m.id)).toEqual(["standard"]);
   });
 });
@@ -130,6 +126,8 @@ describe("quoteDelivery (checkout-time quote)", () => {
       province: "Gauteng",
       postalCode: "bad",
       orderValue: 500,
+      freeDeliveryThreshold: FREE_DELIVERY_THRESHOLD,
+      enabledDeliveryMethodIds: ALL_METHODS,
     });
     expect(result.ok).toBe(false);
   });
@@ -140,6 +138,8 @@ describe("quoteDelivery (checkout-time quote)", () => {
       province: "Limpopo",
       postalCode: "0700",
       orderValue: 500,
+      freeDeliveryThreshold: FREE_DELIVERY_THRESHOLD,
+      enabledDeliveryMethodIds: ALL_METHODS,
     });
     expect(result.ok).toBe(false);
     if (!result.ok) expect(result.error).toMatch(/isn't available/i);
@@ -151,6 +151,8 @@ describe("quoteDelivery (checkout-time quote)", () => {
       province: "Gauteng",
       postalCode: "2000",
       orderValue: 100,
+      freeDeliveryThreshold: FREE_DELIVERY_THRESHOLD,
+      enabledDeliveryMethodIds: ALL_METHODS,
     });
     expect(result.ok).toBe(true);
     if (result.ok) {
@@ -166,6 +168,8 @@ describe("quoteDelivery (checkout-time quote)", () => {
       province: "Northern Cape",
       postalCode: "8500",
       orderValue: 100,
+      freeDeliveryThreshold: FREE_DELIVERY_THRESHOLD,
+      enabledDeliveryMethodIds: ALL_METHODS,
     });
     expect(result.ok).toBe(true);
     if (result.ok) {
@@ -181,18 +185,21 @@ describe("quoteDelivery (checkout-time quote)", () => {
       province: "Western Cape",
       postalCode: "8001",
       orderValue: 1,
+      freeDeliveryThreshold: FREE_DELIVERY_THRESHOLD,
+      enabledDeliveryMethodIds: ALL_METHODS,
     });
     expect(result.ok).toBe(true);
     if (result.ok) expect(result.quote.fee).toBe(0);
   });
 
   it("waives the fee once order value meets the free-delivery threshold", () => {
-    const threshold = getStoreSettings().freeDeliveryThreshold;
     const result = quoteDelivery({
       methodId: "standard",
       province: "Gauteng",
       postalCode: "2000",
-      orderValue: threshold,
+      orderValue: FREE_DELIVERY_THRESHOLD,
+      freeDeliveryThreshold: FREE_DELIVERY_THRESHOLD,
+      enabledDeliveryMethodIds: ALL_METHODS,
     });
     expect(result.ok).toBe(true);
     if (result.ok) expect(result.quote.fee).toBe(0);
@@ -205,6 +212,8 @@ describe("quoteDelivery (checkout-time quote)", () => {
       postalCode: "2000",
       orderValue: 1,
       freeDeliveryOverride: true,
+      freeDeliveryThreshold: FREE_DELIVERY_THRESHOLD,
+      enabledDeliveryMethodIds: ALL_METHODS,
     });
     expect(result.ok).toBe(true);
     if (result.ok) expect(result.quote.fee).toBe(0);
@@ -217,6 +226,8 @@ describe("quoteDelivery (checkout-time quote)", () => {
       province: "Western Cape",
       postalCode: "8001",
       orderValue: 1,
+      freeDeliveryThreshold: FREE_DELIVERY_THRESHOLD,
+      enabledDeliveryMethodIds: ALL_METHODS,
     });
     expect(result.ok).toBe(true);
     if (result.ok) {

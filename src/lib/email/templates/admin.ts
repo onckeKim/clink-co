@@ -1,4 +1,5 @@
 import "server-only";
+import type { StoreSettings } from "@/types/settings";
 import { siteConfig } from "@/config/site";
 import { formatPrice } from "@/lib/utils";
 import type { Order } from "@/lib/orders/types";
@@ -39,7 +40,7 @@ const REASON_LABELS: Record<ReturnReason, string> = {
   other: "Other",
 };
 
-export function newOrderAdminTemplate(order: Order): EmailContent {
+export function newOrderAdminTemplate(order: Order, settings: StoreSettings): EmailContent {
   const subject = `New order: ${order.orderNumber}`;
   const previewText = `${order.customerName} · ${formatPrice(order.total)}`;
   const bodyHtml = [
@@ -70,12 +71,12 @@ export function newOrderAdminTemplate(order: Order): EmailContent {
   return {
     subject,
     previewText,
-    html: renderEmailHtml({ previewText, bodyHtml, category: "transactional" }),
-    text: renderEmailText({ bodyText, category: "transactional" }),
+    html: renderEmailHtml({ previewText, bodyHtml, category: "transactional" }, settings),
+    text: renderEmailText({ bodyText, category: "transactional" }, settings),
   };
 }
 
-export function paymentFailureAdminTemplate(order: Order): EmailContent {
+export function paymentFailureAdminTemplate(order: Order, settings: StoreSettings): EmailContent {
   const subject = `Payment failed: ${order.orderNumber}`;
   const previewText = `${order.customerName}'s payment for ${formatPrice(order.total)} failed.`;
   const bodyHtml = [
@@ -94,8 +95,8 @@ export function paymentFailureAdminTemplate(order: Order): EmailContent {
   return {
     subject,
     previewText,
-    html: renderEmailHtml({ previewText, bodyHtml, category: "transactional" }),
-    text: renderEmailText({ bodyText, category: "transactional" }),
+    html: renderEmailHtml({ previewText, bodyHtml, category: "transactional" }, settings),
+    text: renderEmailText({ bodyText, category: "transactional" }, settings),
   };
 }
 
@@ -107,7 +108,7 @@ export interface StockAlertProduct {
   lowStockThreshold: number;
 }
 
-export function lowStockAdminTemplate(product: StockAlertProduct): EmailContent {
+export function lowStockAdminTemplate(product: StockAlertProduct, settings: StoreSettings): EmailContent {
   const subject = `Low stock: ${product.name}`;
   const previewText = `${product.stockQuantity} left — below the ${product.lowStockThreshold} threshold.`;
   const bodyHtml = [
@@ -124,12 +125,12 @@ export function lowStockAdminTemplate(product: StockAlertProduct): EmailContent 
   return {
     subject,
     previewText,
-    html: renderEmailHtml({ previewText, bodyHtml, category: "transactional" }),
-    text: renderEmailText({ bodyText, category: "transactional" }),
+    html: renderEmailHtml({ previewText, bodyHtml, category: "transactional" }, settings),
+    text: renderEmailText({ bodyText, category: "transactional" }, settings),
   };
 }
 
-export function outOfStockAdminTemplate(product: Pick<StockAlertProduct, "id" | "name" | "sku">): EmailContent {
+export function outOfStockAdminTemplate(product: Pick<StockAlertProduct, "id" | "name" | "sku">, settings: StoreSettings): EmailContent {
   const subject = `Out of stock: ${product.name}`;
   const previewText = "This product just sold out.";
   const bodyHtml = [
@@ -148,12 +149,12 @@ export function outOfStockAdminTemplate(product: Pick<StockAlertProduct, "id" | 
   return {
     subject,
     previewText,
-    html: renderEmailHtml({ previewText, bodyHtml, category: "transactional" }),
-    text: renderEmailText({ bodyText, category: "transactional" }),
+    html: renderEmailHtml({ previewText, bodyHtml, category: "transactional" }, settings),
+    text: renderEmailText({ bodyText, category: "transactional" }, settings),
   };
 }
 
-export function returnRequestAdminTemplate(order: Order, reason: ReturnReason, notes?: string): EmailContent {
+export function returnRequestAdminTemplate(order: Order, reason: ReturnReason, notes: string | undefined, settings: StoreSettings): EmailContent {
   const subject = `Return requested: ${order.orderNumber}`;
   const previewText = `${order.customerName} requested a return.`;
   const bodyHtml = [
@@ -172,8 +173,8 @@ export function returnRequestAdminTemplate(order: Order, reason: ReturnReason, n
   return {
     subject,
     previewText,
-    html: renderEmailHtml({ previewText, bodyHtml, category: "transactional" }),
-    text: renderEmailText({ bodyText, category: "transactional" }),
+    html: renderEmailHtml({ previewText, bodyHtml, category: "transactional" }, settings),
+    text: renderEmailText({ bodyText, category: "transactional" }, settings),
   };
 }
 
@@ -188,7 +189,7 @@ export interface ContactSubmission {
   message: string;
 }
 
-export function contactFormAdminTemplate(submission: ContactSubmission): EmailContent {
+export function contactFormAdminTemplate(submission: ContactSubmission, settings: StoreSettings): EmailContent {
   const subject = `Contact form: ${submission.category}${submission.orderNumber ? ` — ${submission.orderNumber}` : ""}`;
   const previewText = `${submission.name} sent a ${submission.category.toLowerCase()} enquiry.`;
   const detailLines = [
@@ -226,8 +227,8 @@ export function contactFormAdminTemplate(submission: ContactSubmission): EmailCo
   return {
     subject,
     previewText,
-    html: renderEmailHtml({ previewText, bodyHtml, category: "transactional" }),
-    text: renderEmailText({ bodyText, category: "transactional" }),
+    html: renderEmailHtml({ previewText, bodyHtml, category: "transactional" }, settings),
+    text: renderEmailText({ bodyText, category: "transactional" }, settings),
   };
 }
 
@@ -240,7 +241,7 @@ export interface NewReviewNotification {
   body: string;
 }
 
-export function newReviewAdminTemplate(review: NewReviewNotification): EmailContent {
+export function newReviewAdminTemplate(review: NewReviewNotification, settings: StoreSettings): EmailContent {
   const subject = `New review to moderate: ${review.productName}`;
   const previewText = `${review.customerName} left a ${review.rating}-star review.`;
   const stars = "★".repeat(review.rating) + "☆".repeat(5 - review.rating);
@@ -262,7 +263,7 @@ export function newReviewAdminTemplate(review: NewReviewNotification): EmailCont
   return {
     subject,
     previewText,
-    html: renderEmailHtml({ previewText, bodyHtml, category: "transactional" }),
-    text: renderEmailText({ bodyText, category: "transactional" }),
+    html: renderEmailHtml({ previewText, bodyHtml, category: "transactional" }, settings),
+    text: renderEmailText({ bodyText, category: "transactional" }, settings),
   };
 }
