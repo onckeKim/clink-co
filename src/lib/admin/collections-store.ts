@@ -1,17 +1,27 @@
+import "server-only";
 import type { CuratedCollection } from "@/types/collection";
-import { collectionsSeed } from "@/data/collections-seed";
 import { getActiveProducts } from "@/lib/admin/products-store";
+import * as db from "@/lib/db/collections";
+import type { CollectionWithHref } from "@/lib/db/collections";
 
 /**
- * In-memory curated-collections store — same rationale/pattern as
- * products-store.ts and categories-store.ts. src/data/collections.ts
- * re-exports the storefront-facing functions below unchanged. Assigning a
- * product to a collection stays a product-side edit (Product.collectionSlugs,
- * managed from the product form) — this store owns the collection's own
- * name/description/image, not its membership list.
+ * Async wrapper over src/lib/db/collections.ts (the real `collections`
+ * table). `id` maps from the DB row's `slug` column, not its internal
+ * uuid `id` — CuratedCollection.id (src/types/collection.ts) has always
+ * doubled as the /collections/[id] route slug and the value stored in
+ * Product.collectionSlugs, and is immutable after creation, so every
+ * admin operation here keys off it the same way storefront reads do.
  */
 
-const collectionsById = new Map<string, CuratedCollection>(collectionsSeed.map((c) => [c.id, structuredClone(c)]));
+function fromRow(row: CollectionWithHref): CuratedCollection {
+  return {
+    id: row.slug,
+    name: row.name,
+    description: row.description ?? "",
+    image: row.image ?? "",
+    href: row.href,
+  };
+}
 
 function slugify(value: string): string {
   return value
@@ -21,41 +31,22 @@ function slugify(value: string): string {
     .replace(/(^-|-$)/g, "");
 }
 
-function isSlugTaken(id: string, excludeId?: string): boolean {
-  for (const c of collectionsById.values()) {
-    if (c.id === id && c.id !== excludeId) return true;
-  }
-  return false;
-}
-
-function uniqueId(base: string, excludeId?: string): string {
-  let id = base || "collection";
-  let n = 2;
-  while (isSlugTaken(id, excludeId)) {
-    id = `${base}-${n}`;
-    n += 1;
-  }
-  return id;
-}
-
-function readAll(): CuratedCollection[] {
-  return [...collectionsById.values()];
-}
-
 // ---------------------------------------------------------------------------
 // Storefront-facing reads — identical names/signatures to the pre-admin
 // src/data/collections.ts, re-exported from there unchanged.
 // ---------------------------------------------------------------------------
 
-export function getCuratedCollections(): CuratedCollection[] {
-  return readAll();
+export async function getCuratedCollections(): Promise<CuratedCollection[]> {
+  const rows = await db.getCollections();
+  return rows.map(fromRow);
 }
 
-export function getCollectionBySlug(slug: string): CuratedCollection | undefined {
-  return collectionsById.get(slug);
+export async function getCollectionBySlug(slug: string): Promise<CuratedCollection | undefined> {
+  const row = await db.getCollectionBySlug(slug);
+  return row ? fromRow(row) : undefined;
 }
 
-export function getCollectionProductCount(slug: string): number {
+export async function getCollectionProductCount(slug: string): Promise<number> {
   return getActiveProducts().filter((product) => product.collectionSlugs.includes(slug)).length;
 }
 
@@ -63,46 +54,45 @@ export function getCollectionProductCount(slug: string): number {
 // Admin-facing reads/writes — /admin/collections and /api/admin/collections/**.
 // ---------------------------------------------------------------------------
 
-export function listAdminCollections(): CuratedCollection[] {
-  return readAll();
+export async function listAdminCollections(): Promise<CuratedCollection[]> {
+  const rows = await db.listAllCollections();
+  return rows.map(fromRow);
 }
 
-export function getAdminCollectionById(id: string): CuratedCollection | undefined {
-  return collectionsById.get(id);
+export async function getAdminCollectionById(id: string): Promise<CuratedCollection | undefined> {
+  const row = await db.getCollectionById(id);
+  return row ? fromRow(row) : undefined;
 }
 
-export type CreateCollectionInput = {
+export interface CreateCollectionInput {
   name: string;
   description: string;
   image: string;
   /** Optional explicit id/slug — defaults to a slugified name. Also becomes the /collections/[id] route and href. */
   id?: string;
-};
+}
 
-export function createCollection(input: CreateCollectionInput): CuratedCollection {
-  const id = uniqueId(slugify(input.id || input.name));
-  const collection: CuratedCollection = {
-    id,
+export async function createCollection(input: CreateCollectionInput): Promise<CuratedCollection> {
+  const row = await db.createCollection({
+    slug: slugify(input.id || input.name),
     name: input.name,
     description: input.description,
     image: input.image,
-    href: `/collections/${id}`,
-  };
-  collectionsById.set(id, collection);
-  return collection;
+  });
+  return fromRow(row);
 }
 
 export type UpdateCollectionInput = Partial<Omit<CuratedCollection, "id" | "href">>;
 
-export function updateCollection(id: string, patch: UpdateCollectionInput): CuratedCollection | undefined {
-  const existing = collectionsById.get(id);
-  if (!existing) return undefined;
-
-  const updated: CuratedCollection = { ...existing, ...patch };
-  collectionsById.set(id, updated);
-  return updated;
+export async function updateCollection(id: string, patch: UpdateCollectionInput): Promise<CuratedCollection> {
+  const row = await db.updateCollection(id, {
+    name: patch.name,
+    description: patch.description,
+    image: patch.image,
+  });
+  return fromRow(row);
 }
 
-export function deleteCollection(id: string): boolean {
-  return collectionsById.delete(id);
+export async function deleteCollection(id: string): Promise<void> {
+  await db.deleteCollection(id);
 }

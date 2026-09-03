@@ -15,8 +15,8 @@ export default async function AdminEditProductPage({ params }: PageProps<"/admin
   const product = getAdminProductById(id);
   if (!product) notFound();
 
-  const categories = getCategories();
-  const collections = getCuratedCollections();
+  const categories = await getCategories();
+  const collections = await getCuratedCollections();
 
   return <ProductForm product={product} categories={categories} collections={collections} />;
 }

@@ -8,8 +8,8 @@ import { getCategories } from "@/data/categories";
  * swipeable, snap-scrolling row on mobile where 6 cards can't fit; a 3-up
  * grid at the tablet breakpoint in between.
  */
-export function CategoryShowcase() {
-  const categories = getCategories();
+export async function CategoryShowcase() {
+  const categories = await getCategories();
   return (
     <section className="mx-auto max-w-7xl px-6 py-20 sm:px-8" aria-labelledby="shop-by-category">
       <Reveal>

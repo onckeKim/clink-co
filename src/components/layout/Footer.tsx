@@ -19,7 +19,8 @@ const socialIconMap = {
 } as const;
 
 export async function Footer() {
-  const shopLinks: NavLink[] = getCategories().map((c) => ({ label: c.name, href: `/shop/${c.slug}` }));
+  const categories = await getCategories();
+  const shopLinks: NavLink[] = categories.map((c) => ({ label: c.name, href: `/shop/${c.slug}` }));
   const settings = await getStoreSettings();
   const socialLinks = getSocialLinks(settings);
   const newsletter = getNewsletterContent();

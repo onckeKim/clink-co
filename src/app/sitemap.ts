@@ -11,7 +11,7 @@ import { getCuratedCollections } from "@/data/collections";
  * because it keeps this one small as the catalogue grows past the
  * per-sitemap URL guidance.
  */
-export default function sitemap(): MetadataRoute.Sitemap {
+export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const now = new Date();
 
   const staticPages: MetadataRoute.Sitemap = [
@@ -34,14 +34,14 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { url: `${siteConfig.url}/disclaimer`, lastModified: now, changeFrequency: "yearly", priority: 0.2 },
   ];
 
-  const categoryPages: MetadataRoute.Sitemap = getCategories().map((category) => ({
+  const categoryPages: MetadataRoute.Sitemap = (await getCategories()).map((category) => ({
     url: `${siteConfig.url}/shop/${category.slug}`,
     lastModified: now,
     changeFrequency: "daily",
     priority: 0.8,
   }));
 
-  const collectionPages: MetadataRoute.Sitemap = getCuratedCollections().map((collection) => ({
+  const collectionPages: MetadataRoute.Sitemap = (await getCuratedCollections()).map((collection) => ({
     url: `${siteConfig.url}/collections/${collection.id}`,
     lastModified: now,
     changeFrequency: "weekly",

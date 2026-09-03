@@ -4,6 +4,7 @@ import { hasPermission } from "@/lib/admin/roles";
 import { recordAuditLog } from "@/lib/admin/audit-log-store";
 import { reorderCategories } from "@/lib/admin/categories-store";
 import { reorderCategoriesSchema } from "@/lib/validations/admin-categories";
+import { dbErrorResponse } from "@/lib/db/errors";
 
 export async function POST(request: Request) {
   const ctx = await getAdminContext();
@@ -18,7 +19,12 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: parsed.error.issues[0]?.message ?? "Invalid order." }, { status: 400 });
   }
 
-  const categories = reorderCategories(parsed.data.orderedIds);
+  let categories;
+  try {
+    categories = await reorderCategories(parsed.data.orderedIds);
+  } catch (err) {
+    return dbErrorResponse(err);
+  }
 
   recordAuditLog({
     userId: ctx.user.id,

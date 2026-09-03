@@ -109,21 +109,22 @@ export function replaceMedia(id: string, input: ReplaceMediaInput): MediaAsset |
   return updated;
 }
 
-function isUrlReferenced(url: string): boolean {
+async function isUrlReferenced(url: string): Promise<boolean> {
   if (getProducts().some((p) => p.images.includes(url) || p.lifestyleImage === url)) return true;
-  if (listAdminCategories().some((c) => c.image === url)) return true;
-  if (listAdminCollections().some((c) => c.image === url)) return true;
+  const [categories, collections] = await Promise.all([listAdminCategories(), listAdminCollections()]);
+  if (categories.some((c) => c.image === url)) return true;
+  if (collections.some((c) => c.image === url)) return true;
   return false;
 }
 
 export type DeleteMediaResult = { ok: true } | { ok: false; reason: string };
 
 /** Refuses to delete an image still used by a product, category or collection — a real "delete unused image" guard, not just a UI label. */
-export function deleteMedia(id: string): DeleteMediaResult {
+export async function deleteMedia(id: string): Promise<DeleteMediaResult> {
   const existing = mediaById.get(id);
   if (!existing) return { ok: false, reason: "Media not found." };
 
-  if (isUrlReferenced(existing.url)) {
+  if (await isUrlReferenced(existing.url)) {
     return { ok: false, reason: "This image is still in use by a product, category or collection and can't be deleted." };
   }
   mediaById.delete(id);

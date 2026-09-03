@@ -14,8 +14,13 @@ export const metadata: Metadata = {
 
 export const revalidate = 3600;
 
-export default function CollectionsIndexPage() {
-  const curatedCollections = getCuratedCollections();
+export default async function CollectionsIndexPage() {
+  const curatedCollections = await getCuratedCollections();
+  const productCounts = new Map(
+    await Promise.all(
+      curatedCollections.map(async (c) => [c.id, await getCollectionProductCount(c.id)] as const),
+    ),
+  );
   return (
     <div className="mx-auto max-w-7xl px-6 py-10 sm:px-8">
       <JsonLd data={breadcrumbJsonLd([{ label: "Home", href: "/" }, { label: "Collections" }])} />
@@ -47,7 +52,7 @@ export default function CollectionsIndexPage() {
               <p className="font-display text-2xl text-warm-white">{collection.name}</p>
               <p className="mt-2 max-w-xs text-sm text-warm-white/75">{collection.description}</p>
               <span className="mt-3 block text-xs uppercase tracking-wide text-warm-white/60">
-                {getCollectionProductCount(collection.id)} items
+                {productCounts.get(collection.id) ?? 0} items
               </span>
               <span className="mt-4 inline-flex items-center gap-1.5 text-sm font-medium text-warm-white">
                 Shop the edit

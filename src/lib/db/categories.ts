@@ -35,6 +35,20 @@ export async function getCategoryBySlug(slug: string): Promise<CategoryRow | nul
   return unwrapNullable({ data, error });
 }
 
+/** Admin lookup by id — no is_published filter (categories:view is the real gate; the app has no draft-category concept today, but this matches products:view's own "admins see everything" behavior). */
+export async function getCategoryById(id: string): Promise<CategoryRow | null> {
+  const db = await getDb();
+  const { data, error } = await db.from("categories").select("*").eq("id", id).is("deleted_at", null).maybeSingle();
+  return unwrapNullable({ data, error });
+}
+
+/** Every non-deleted category regardless of publish status — the admin category list. */
+export async function listAllCategories(): Promise<CategoryRow[]> {
+  const db = await getDb();
+  const { data, error } = await db.from("categories").select("*").is("deleted_at", null).order("sort_order", { ascending: true });
+  return unwrap({ data, error });
+}
+
 type CategoryInsert = Database["public"]["Tables"]["categories"]["Insert"];
 type CategoryUpdate = Database["public"]["Tables"]["categories"]["Update"];
 
@@ -63,4 +77,15 @@ export async function deleteCategory(id: string): Promise<void> {
   const db = await getDb();
   const { error } = await db.from("categories").delete().eq("id", id);
   if (error) throw mapPostgrestError(error);
+}
+
+/** Reassigns sort_order sequentially from an admin-supplied display order (drag-and-drop reorder) — one update per row, since Postgres has no bulk "set column from an array of (id, value) pairs" through PostgREST. */
+export async function reorderCategories(orderedIds: string[]): Promise<CategoryRow[]> {
+  const db = await getDb();
+  const results = await Promise.all(
+    orderedIds.map((id, index) => db.from("categories").update({ sort_order: index }).eq("id", id)),
+  );
+  const failed = results.find((r) => r.error);
+  if (failed?.error) throw mapPostgrestError(failed.error);
+  return listAllCategories();
 }

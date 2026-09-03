@@ -7,8 +7,8 @@ import { ShopExperience } from "@/components/catalogue/ShopExperience";
 import { ShopSkeleton } from "@/components/catalogue/ShopSkeleton";
 import { breadcrumbJsonLd, JsonLd } from "@/lib/seo/json-ld";
 
-export function generateStaticParams() {
-  return getCategories().map((category) => ({ category: category.slug }));
+export async function generateStaticParams() {
+  return (await getCategories()).map((category) => ({ category: category.slug }));
 }
 
 export const revalidate = 3600;
@@ -17,7 +17,7 @@ export async function generateMetadata({
   params,
 }: PageProps<"/shop/[category]">): Promise<Metadata> {
   const { category: slug } = await params;
-  const category = getCategoryBySlug(slug);
+  const category = await getCategoryBySlug(slug);
   if (!category) return {};
   const title = category.seoTitle || category.name;
   const description = category.seoDescription || category.description;
@@ -33,7 +33,7 @@ export async function generateMetadata({
 
 export default async function ShopCategoryPage({ params }: PageProps<"/shop/[category]">) {
   const { category: slug } = await params;
-  const category = getCategoryBySlug(slug);
+  const category = await getCategoryBySlug(slug);
   if (!category) notFound();
 
   const scopedProducts = getProductsByCategory(category.slug);

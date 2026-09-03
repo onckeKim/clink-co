@@ -4,6 +4,7 @@ import { hasPermission } from "@/lib/admin/roles";
 import { recordAuditLog } from "@/lib/admin/audit-log-store";
 import { getAdminCategoryById, updateCategory, deleteCategory } from "@/lib/admin/categories-store";
 import { adminCategoryPatchSchema } from "@/lib/validations/admin-categories";
+import { dbErrorResponse } from "@/lib/db/errors";
 
 export async function GET(_request: Request, { params }: RouteContext<"/api/admin/categories/[id]">) {
   const ctx = await getAdminContext();
@@ -13,10 +14,13 @@ export async function GET(_request: Request, { params }: RouteContext<"/api/admi
   }
 
   const { id } = await params;
-  const category = getAdminCategoryById(id);
-  if (!category) return NextResponse.json({ error: "Category not found." }, { status: 404 });
-
-  return NextResponse.json({ category });
+  try {
+    const category = await getAdminCategoryById(id);
+    if (!category) return NextResponse.json({ error: "Category not found." }, { status: 404 });
+    return NextResponse.json({ category });
+  } catch (err) {
+    return dbErrorResponse(err);
+  }
 }
 
 export async function PATCH(request: Request, { params }: RouteContext<"/api/admin/categories/[id]">) {
@@ -27,30 +31,33 @@ export async function PATCH(request: Request, { params }: RouteContext<"/api/adm
   }
 
   const { id } = await params;
-  const before = getAdminCategoryById(id);
-  if (!before) return NextResponse.json({ error: "Category not found." }, { status: 404 });
-
   const body = await request.json().catch(() => null);
   const parsed = adminCategoryPatchSchema.safeParse(body);
   if (!parsed.success) {
     return NextResponse.json({ error: parsed.error.issues[0]?.message ?? "Invalid category." }, { status: 400 });
   }
 
-  const category = updateCategory(id, parsed.data);
-  if (!category) return NextResponse.json({ error: "Category not found." }, { status: 404 });
+  try {
+    const before = await getAdminCategoryById(id);
+    if (!before) return NextResponse.json({ error: "Category not found." }, { status: 404 });
 
-  recordAuditLog({
-    userId: ctx.user.id,
-    userEmail: ctx.user.email ?? "",
-    action: "Updated category",
-    entityType: "category",
-    entityId: category.id,
-    entityLabel: category.name,
-    before,
-    after: category,
-  });
+    const category = await updateCategory(id, parsed.data);
 
-  return NextResponse.json({ category });
+    recordAuditLog({
+      userId: ctx.user.id,
+      userEmail: ctx.user.email ?? "",
+      action: "Updated category",
+      entityType: "category",
+      entityId: category.id,
+      entityLabel: category.name,
+      before,
+      after: category,
+    });
+
+    return NextResponse.json({ category });
+  } catch (err) {
+    return dbErrorResponse(err);
+  }
 }
 
 export async function DELETE(_request: Request, { params }: RouteContext<"/api/admin/categories/[id]">) {
@@ -61,10 +68,15 @@ export async function DELETE(_request: Request, { params }: RouteContext<"/api/a
   }
 
   const { id } = await params;
-  const before = getAdminCategoryById(id);
+  const before = await getAdminCategoryById(id);
   if (!before) return NextResponse.json({ error: "Category not found." }, { status: 404 });
 
-  const result = deleteCategory(id);
+  let result;
+  try {
+    result = await deleteCategory(id);
+  } catch (err) {
+    return dbErrorResponse(err);
+  }
   if (!result.ok) return NextResponse.json({ error: result.reason }, { status: 409 });
 
   recordAuditLog({

@@ -7,7 +7,7 @@ export const contentType = "image/png";
 
 export default async function Image({ params }: { params: Promise<{ collection: string }> }) {
   const { collection: slug } = await params;
-  const collection = getCollectionBySlug(slug);
+  const collection = await getCollectionBySlug(slug);
 
   return new ImageResponse(
     <SocialCard

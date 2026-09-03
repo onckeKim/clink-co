@@ -1,4 +1,5 @@
 import "server-only";
+import { NextResponse } from "next/server";
 import type { PostgrestError } from "@supabase/supabase-js";
 
 /**
@@ -134,4 +135,20 @@ export function unwrap<T>({ data, error }: { data: T | null; error: PostgrestErr
 export function unwrapNullable<T>({ data, error }: { data: T | null; error: PostgrestError | null }): T | null {
   if (error) throw mapPostgrestError(error);
   return data;
+}
+
+/**
+ * Turns whatever a Route Handler's try/catch caught into the
+ * `{ error, status }` JSON shape every admin API route already returns for
+ * its own hand-checked failures (see the file header). A DbError (or
+ * subclass) carries its own status; anything else is an unexpected server
+ * fault, logged and reported as a generic 500 rather than leaking internal
+ * detail to the client.
+ */
+export function dbErrorResponse(err: unknown): NextResponse {
+  if (err instanceof DbError) {
+    return NextResponse.json({ error: err.message }, { status: err.status });
+  }
+  console.error("[db] unexpected error", err);
+  return NextResponse.json({ error: "Something went wrong." }, { status: 500 });
 }

@@ -5,8 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { AnimatePresence, motion } from "framer-motion";
 import { ArrowUpRight } from "lucide-react";
-import { getCategories } from "@/data/categories";
-import { getCuratedCollections } from "@/data/collections";
+import { useCatalog } from "@/components/providers/CatalogProvider";
 
 export type MegaMenuKey = "shop" | "collections";
 
@@ -72,7 +71,7 @@ export function MegaMenu({
 }
 
 function ShopMenu({ onNavigate }: { onNavigate: () => void }) {
-  const categories = getCategories();
+  const { categories } = useCatalog();
   return (
     <div className="grid grid-cols-[1.4fr_1fr] gap-8 p-8">
       <div>
@@ -130,7 +129,7 @@ function ShopMenu({ onNavigate }: { onNavigate: () => void }) {
 }
 
 function CollectionsMenu({ onNavigate }: { onNavigate: () => void }) {
-  const curatedCollections = getCuratedCollections();
+  const { collections: curatedCollections } = useCatalog();
   return (
     <div className="p-8">
       <p className="mb-4 text-xs font-semibold uppercase tracking-[0.2em] text-stone">

@@ -4,6 +4,7 @@ import { hasPermission } from "@/lib/admin/roles";
 import { recordAuditLog } from "@/lib/admin/audit-log-store";
 import { getAdminCollectionById, updateCollection, deleteCollection } from "@/lib/admin/collections-store";
 import { adminCollectionPatchSchema } from "@/lib/validations/admin-categories";
+import { dbErrorResponse } from "@/lib/db/errors";
 
 export async function GET(_request: Request, { params }: RouteContext<"/api/admin/collections/[id]">) {
   const ctx = await getAdminContext();
@@ -13,10 +14,13 @@ export async function GET(_request: Request, { params }: RouteContext<"/api/admi
   }
 
   const { id } = await params;
-  const collection = getAdminCollectionById(id);
-  if (!collection) return NextResponse.json({ error: "Collection not found." }, { status: 404 });
-
-  return NextResponse.json({ collection });
+  try {
+    const collection = await getAdminCollectionById(id);
+    if (!collection) return NextResponse.json({ error: "Collection not found." }, { status: 404 });
+    return NextResponse.json({ collection });
+  } catch (err) {
+    return dbErrorResponse(err);
+  }
 }
 
 export async function PATCH(request: Request, { params }: RouteContext<"/api/admin/collections/[id]">) {
@@ -27,30 +31,33 @@ export async function PATCH(request: Request, { params }: RouteContext<"/api/adm
   }
 
   const { id } = await params;
-  const before = getAdminCollectionById(id);
-  if (!before) return NextResponse.json({ error: "Collection not found." }, { status: 404 });
-
   const body = await request.json().catch(() => null);
   const parsed = adminCollectionPatchSchema.safeParse(body);
   if (!parsed.success) {
     return NextResponse.json({ error: parsed.error.issues[0]?.message ?? "Invalid collection." }, { status: 400 });
   }
 
-  const collection = updateCollection(id, parsed.data);
-  if (!collection) return NextResponse.json({ error: "Collection not found." }, { status: 404 });
+  try {
+    const before = await getAdminCollectionById(id);
+    if (!before) return NextResponse.json({ error: "Collection not found." }, { status: 404 });
 
-  recordAuditLog({
-    userId: ctx.user.id,
-    userEmail: ctx.user.email ?? "",
-    action: "Updated collection",
-    entityType: "collection",
-    entityId: collection.id,
-    entityLabel: collection.name,
-    before,
-    after: collection,
-  });
+    const collection = await updateCollection(id, parsed.data);
 
-  return NextResponse.json({ collection });
+    recordAuditLog({
+      userId: ctx.user.id,
+      userEmail: ctx.user.email ?? "",
+      action: "Updated collection",
+      entityType: "collection",
+      entityId: collection.id,
+      entityLabel: collection.name,
+      before,
+      after: collection,
+    });
+
+    return NextResponse.json({ collection });
+  } catch (err) {
+    return dbErrorResponse(err);
+  }
 }
 
 export async function DELETE(_request: Request, { params }: RouteContext<"/api/admin/collections/[id]">) {
@@ -61,10 +68,14 @@ export async function DELETE(_request: Request, { params }: RouteContext<"/api/a
   }
 
   const { id } = await params;
-  const before = getAdminCollectionById(id);
+  const before = await getAdminCollectionById(id);
   if (!before) return NextResponse.json({ error: "Collection not found." }, { status: 404 });
 
-  deleteCollection(id);
+  try {
+    await deleteCollection(id);
+  } catch (err) {
+    return dbErrorResponse(err);
+  }
 
   recordAuditLog({
     userId: ctx.user.id,

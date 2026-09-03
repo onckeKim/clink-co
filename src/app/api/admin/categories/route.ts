@@ -4,6 +4,7 @@ import { hasPermission } from "@/lib/admin/roles";
 import { recordAuditLog } from "@/lib/admin/audit-log-store";
 import { createCategory, listAdminCategories } from "@/lib/admin/categories-store";
 import { adminCategorySchema } from "@/lib/validations/admin-categories";
+import { dbErrorResponse } from "@/lib/db/errors";
 
 export async function GET() {
   const ctx = await getAdminContext();
@@ -12,7 +13,11 @@ export async function GET() {
     return NextResponse.json({ error: "You don't have permission to view categories." }, { status: 403 });
   }
 
-  return NextResponse.json({ categories: listAdminCategories() });
+  try {
+    return NextResponse.json({ categories: await listAdminCategories() });
+  } catch (err) {
+    return dbErrorResponse(err);
+  }
 }
 
 export async function POST(request: Request) {
@@ -28,7 +33,12 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: parsed.error.issues[0]?.message ?? "Invalid category." }, { status: 400 });
   }
 
-  const category = createCategory(parsed.data);
+  let category;
+  try {
+    category = await createCategory(parsed.data);
+  } catch (err) {
+    return dbErrorResponse(err);
+  }
 
   recordAuditLog({
     userId: ctx.user.id,

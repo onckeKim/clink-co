@@ -1,10 +1,13 @@
+"use client";
+
 import type { Product } from "@/types/product";
 import { LifestyleSplit } from "@/components/sections/LifestyleSplit";
-import { getCategoryBySlug } from "@/data/categories";
+import { useCatalog } from "@/components/providers/CatalogProvider";
 
 /** Reuses the homepage's editorial LifestyleSplit, falling back to the product's category image/copy when no product-specific lifestyle image is authored. */
 export function ProductLifestyleSection({ product }: { product: Product }) {
-  const category = getCategoryBySlug(product.categorySlug);
+  const { categories } = useCatalog();
+  const category = categories.find((c) => c.slug === product.categorySlug);
   const image = product.lifestyleImage ?? category?.image;
   if (!image) return null;
 

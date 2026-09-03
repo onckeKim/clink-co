@@ -2,8 +2,7 @@
 
 import { Star } from "lucide-react";
 import type { CatalogueFacets, CatalogueFilters } from "@/lib/catalogue";
-import { getCategories } from "@/data/categories";
-import { getCuratedCollections } from "@/data/collections";
+import { useCatalog } from "@/components/providers/CatalogProvider";
 import { Checkbox } from "@/components/ui/Checkbox";
 import { Disclosure } from "@/components/ui/Disclosure";
 import { Input } from "@/components/ui/Input";
@@ -67,11 +66,10 @@ export function FilterPanel({
   lockedCategory?: string;
   lockedCollection?: string;
 }) {
+  const { categories, collections: curatedCollections } = useCatalog();
   const toggle = (key: MultiSelectKey, value: string) => {
     onChange((prev) => ({ ...prev, [key]: toggleValue(prev[key], value) }));
   };
-  const categories = getCategories();
-  const curatedCollections = getCuratedCollections();
 
   return (
     <div className="flex flex-col">

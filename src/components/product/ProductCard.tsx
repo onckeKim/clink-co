@@ -9,7 +9,7 @@ import { Rating } from "@/components/ui/Rating";
 import { useCartStore } from "@/store/cart-store";
 import { useWishlistStore } from "@/store/wishlist-store";
 import { useRecentlyViewedStore } from "@/store/recently-viewed-store";
-import { getCategoryBySlug } from "@/data/categories";
+import { useCatalog } from "@/components/providers/CatalogProvider";
 import { useMounted } from "@/lib/hooks/use-mounted";
 import { cn, formatPrice } from "@/lib/utils";
 
@@ -37,8 +37,9 @@ export function ProductCard({
   const wishlisted = useWishlistStore((state) => state.has(product.id)) && mounted;
   const toggleWishlist = useWishlistStore((state) => state.toggle);
   const recordView = useRecentlyViewedStore((state) => state.add);
+  const { categories } = useCatalog();
   const secondImage = product.images[1] ?? product.images[0];
-  const categoryName = getCategoryBySlug(product.categorySlug)?.name;
+  const categoryName = categories.find((c) => c.slug === product.categorySlug)?.name;
   const discountPercent = product.compareAtPrice
     ? Math.round((1 - product.price / product.compareAtPrice) * 100)
     : null;

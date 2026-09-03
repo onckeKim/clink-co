@@ -9,7 +9,10 @@ import { PromoBannerBar } from "@/components/layout/PromoBannerBar";
 import { SiteChrome } from "@/components/layout/SiteChrome";
 import { Analytics } from "@/components/analytics/Analytics";
 import { StoreSettingsProvider } from "@/components/providers/StoreSettingsProvider";
+import { CatalogProvider } from "@/components/providers/CatalogProvider";
 import { getStoreSettings } from "@/lib/admin/settings-store";
+import { getCategories } from "@/data/categories";
+import { getCuratedCollections } from "@/data/collections";
 
 const inter = Inter({
   variable: "--font-inter",
@@ -77,7 +80,11 @@ export const metadata: Metadata = {
 };
 
 export default async function RootLayout({ children }: LayoutProps<"/">) {
-  const settings = await getStoreSettings();
+  const [settings, categories, collections] = await Promise.all([
+    getStoreSettings(),
+    getCategories(),
+    getCuratedCollections(),
+  ]);
   return (
     <html
       lang="en"
@@ -85,23 +92,25 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
     >
       <body className="flex min-h-full flex-col bg-porcelain text-charcoal">
         <StoreSettingsProvider settings={settings}>
-          <SiteChrome
-            skipLink={
-              <a
-                href="#main-content"
-                className="focus-ring sr-only rounded-full bg-charcoal px-5 py-2.5 text-sm font-medium text-warm-white focus:not-sr-only focus:fixed focus:left-3 focus:top-3 focus:z-[100]"
-              >
-                Skip to content
-              </a>
-            }
-            header={<Header />}
-            banners={<PromoBannerBar />}
-            footer={<Footer />}
-            cookieBanner={<CookieBannerLoader />}
-            authCartSync={<AuthCartSync />}
-          >
-            {children}
-          </SiteChrome>
+          <CatalogProvider categories={categories} collections={collections}>
+            <SiteChrome
+              skipLink={
+                <a
+                  href="#main-content"
+                  className="focus-ring sr-only rounded-full bg-charcoal px-5 py-2.5 text-sm font-medium text-warm-white focus:not-sr-only focus:fixed focus:left-3 focus:top-3 focus:z-[100]"
+                >
+                  Skip to content
+                </a>
+              }
+              header={<Header />}
+              banners={<PromoBannerBar />}
+              footer={<Footer />}
+              cookieBanner={<CookieBannerLoader />}
+              authCartSync={<AuthCartSync />}
+            >
+              {children}
+            </SiteChrome>
+          </CatalogProvider>
         </StoreSettingsProvider>
         <Analytics />
       </body>

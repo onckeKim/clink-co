@@ -8,7 +8,7 @@ export const metadata: Metadata = { title: "Products", robots: { index: false, f
 
 export default async function AdminProductsPage() {
   await requirePermission("products:view");
-  const categories = getCategories().map((c) => ({ slug: c.slug, name: c.name }));
+  const categories = (await getCategories()).map((c) => ({ slug: c.slug, name: c.name }));
 
   return (
     <Suspense>

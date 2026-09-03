@@ -7,8 +7,8 @@ import { ShopExperience } from "@/components/catalogue/ShopExperience";
 import { ShopSkeleton } from "@/components/catalogue/ShopSkeleton";
 import { breadcrumbJsonLd, JsonLd } from "@/lib/seo/json-ld";
 
-export function generateStaticParams() {
-  return getCuratedCollections().map((collection) => ({ collection: collection.id }));
+export async function generateStaticParams() {
+  return (await getCuratedCollections()).map((collection) => ({ collection: collection.id }));
 }
 
 export const revalidate = 3600;
@@ -17,7 +17,7 @@ export async function generateMetadata({
   params,
 }: PageProps<"/collections/[collection]">): Promise<Metadata> {
   const { collection: slug } = await params;
-  const collection = getCollectionBySlug(slug);
+  const collection = await getCollectionBySlug(slug);
   if (!collection) return {};
   const canonical = `/collections/${collection.id}`;
   return {
@@ -39,7 +39,7 @@ export async function generateMetadata({
 
 export default async function CollectionPage({ params }: PageProps<"/collections/[collection]">) {
   const { collection: slug } = await params;
-  const collection = getCollectionBySlug(slug);
+  const collection = await getCollectionBySlug(slug);
   if (!collection) notFound();
 
   const scopedProducts = getProductsByCollection(collection.id);

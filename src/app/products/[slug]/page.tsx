@@ -48,7 +48,7 @@ export default async function ProductPage({ params }: PageProps<"/products/[slug
   const product = getProductBySlug(slug);
   if (!product) notFound();
 
-  const category = getCategoryBySlug(product.categorySlug);
+  const category = await getCategoryBySlug(product.categorySlug);
   const relatedProducts = getRelatedProducts(product);
   const pairedProducts = getPairedProducts(product);
   const seedReviews = getReviewsForProduct(product.slug);

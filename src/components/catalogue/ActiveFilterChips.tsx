@@ -2,8 +2,7 @@
 
 import { X } from "lucide-react";
 import { DEFAULT_FILTERS, type CatalogueFilters } from "@/lib/catalogue";
-import { getCategories } from "@/data/categories";
-import { getCuratedCollections } from "@/data/collections";
+import { useCatalog } from "@/components/providers/CatalogProvider";
 import { formatPrice } from "@/lib/utils";
 
 interface Chip {
@@ -24,9 +23,8 @@ export function ActiveFilterChips({
   priceFloor: number;
   priceCeiling: number;
 }) {
+  const { categories, collections: curatedCollections } = useCatalog();
   const chips: Chip[] = [];
-  const categories = getCategories();
-  const curatedCollections = getCuratedCollections();
 
   if (filters.search) {
     chips.push({

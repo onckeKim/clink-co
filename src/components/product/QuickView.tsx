@@ -11,7 +11,7 @@ import { Rating } from "@/components/ui/Rating";
 import { Button } from "@/components/ui/Button";
 import { useCartStore } from "@/store/cart-store";
 import { useWishlistStore } from "@/store/wishlist-store";
-import { getCategoryBySlug } from "@/data/categories";
+import { useCatalog } from "@/components/providers/CatalogProvider";
 import { cn, formatPrice } from "@/lib/utils";
 
 /** A lightweight preview of the full PDP, opened from a product card's quick-view button without leaving the grid. */
@@ -19,6 +19,7 @@ export function QuickView({ product, onClose }: { product: Product | null; onClo
   const addItem = useCartStore((state) => state.addItem);
   const wishlisted = useWishlistStore((state) => state.has(product?.id ?? ""));
   const toggleWishlist = useWishlistStore((state) => state.toggle);
+  const { categories } = useCatalog();
   const [selectedVariantId, setSelectedVariantId] = React.useState<string | undefined>(
     product?.variants?.[0]?.id,
   );
@@ -38,7 +39,7 @@ export function QuickView({ product, onClose }: { product: Product | null; onClo
 
   const selectedVariant = product.variants?.find((v) => v.id === selectedVariantId);
   const displayPrice = product.price + (selectedVariant?.priceDelta ?? 0);
-  const categoryName = getCategoryBySlug(product.categorySlug)?.name;
+  const categoryName = categories.find((c) => c.slug === product.categorySlug)?.name;
   const discountPercent = product.compareAtPrice
     ? Math.round((1 - product.price / product.compareAtPrice) * 100)
     : null;

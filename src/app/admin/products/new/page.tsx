@@ -8,8 +8,8 @@ export const metadata: Metadata = { title: "New Product", robots: { index: false
 
 export default async function AdminNewProductPage() {
   await requirePermission("products:write");
-  const categories = getCategories();
-  const collections = getCuratedCollections();
+  const categories = await getCategories();
+  const collections = await getCuratedCollections();
 
   return <ProductForm categories={categories} collections={collections} />;
 }

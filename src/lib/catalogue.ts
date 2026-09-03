@@ -1,7 +1,7 @@
 import type { Product } from "@/types/product";
+import type { Category } from "@/types/category";
+import type { CuratedCollection } from "@/types/collection";
 import { getActiveProducts } from "@/data/products";
-import { getCategoryBySlug } from "@/data/categories";
-import { getCollectionBySlug } from "@/data/collections";
 
 /**
  * Pure catalogue logic: filtering, sorting, search and URL (de)serialization.
@@ -299,9 +299,9 @@ function fuzzyIncludes(haystack: string, needle: string): boolean {
   return hay.split(/\s+/).some((word) => word.length > 2 && levenshtein(word, query) <= 1);
 }
 
-function getSearchHaystacks(product: Product): string[] {
-  const categoryName = getCategoryBySlug(product.categorySlug)?.name ?? "";
-  const collectionNames = product.collectionSlugs.map((slug) => getCollectionBySlug(slug)?.name ?? "");
+function getSearchHaystacks(product: Product, categories: Category[], collections: CuratedCollection[]): string[] {
+  const categoryName = categories.find((c) => c.slug === product.categorySlug)?.name ?? "";
+  const collectionNames = product.collectionSlugs.map((slug) => collections.find((c) => c.id === slug)?.name ?? "");
   return [
     product.name,
     product.sku,
@@ -314,13 +314,24 @@ function getSearchHaystacks(product: Product): string[] {
   ];
 }
 
-/** Matches across name, SKU, description, category, collection and tags — every token in the query must match somewhere. */
-export function searchProducts(list: Product[], query: string): Product[] {
+/**
+ * Matches across name, SKU, description, category, collection and tags —
+ * every token in the query must match somewhere. `categories`/`collections`
+ * come from useCatalog() (client) or await getCategories()/
+ * getCuratedCollections() (server) — this stays a pure function over
+ * whatever the caller already has, rather than fetching them itself.
+ */
+export function searchProducts(
+  list: Product[],
+  query: string,
+  categories: Category[] = [],
+  collections: CuratedCollection[] = [],
+): Product[] {
   const trimmed = query.trim();
   if (!trimmed) return list;
   const tokens = trimmed.split(/\s+/).filter(Boolean);
   return list.filter((product) => {
-    const haystacks = getSearchHaystacks(product);
+    const haystacks = getSearchHaystacks(product, categories, collections);
     return tokens.every((token) => haystacks.some((haystack) => fuzzyIncludes(haystack, token)));
   });
 }
@@ -388,8 +399,14 @@ export function getFacetValues(list: Product[] = getActiveProducts()): Catalogue
 }
 
 /** The full pipeline — search narrows first, then facet filters, then sort — matching how the UI composes them. */
-export function applyCatalogue(list: Product[], filters: CatalogueFilters, sort: SortKey): Product[] {
-  const searched = filters.search ? searchProducts(list, filters.search) : list;
+export function applyCatalogue(
+  list: Product[],
+  filters: CatalogueFilters,
+  sort: SortKey,
+  categories: Category[] = [],
+  collections: CuratedCollection[] = [],
+): Product[] {
+  const searched = filters.search ? searchProducts(list, filters.search, categories, collections) : list;
   const filtered = filterProducts(searched, filters);
   return sortProducts(filtered, sort);
 }

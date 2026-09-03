@@ -7,11 +7,11 @@ import { useRouter } from "next/navigation";
 import { AnimatePresence, motion } from "framer-motion";
 import { Clock, Search, TrendingUp, X } from "lucide-react";
 import { getActiveProducts } from "@/data/products";
-import { getCategories } from "@/data/categories";
 import { highlightMatch, searchProducts } from "@/lib/catalogue";
 import { formatPrice, cn } from "@/lib/utils";
 import { useMounted } from "@/lib/hooks/use-mounted";
 import { track } from "@/lib/analytics/track";
+import { useCatalog } from "@/components/providers/CatalogProvider";
 
 /** Renders `text` with the portion matching `query` wrapped for emphasis. */
 function Highlighted({ text, query }: { text: string; query: string }) {
@@ -84,11 +84,12 @@ export function SearchModal({ open, onClose }: { open: boolean; onClose: () => v
     };
   }, [open]);
 
+  const { categories, collections } = useCatalog();
   const q = query.trim();
   const results = React.useMemo(() => {
     if (!q) return [];
-    return searchProducts(getActiveProducts(), q).slice(0, 6);
-  }, [q]);
+    return searchProducts(getActiveProducts(), q, categories, collections).slice(0, 6);
+  }, [q, categories, collections]);
 
   const commitSearch = React.useCallback(
     (term: string) => {
@@ -300,9 +301,10 @@ export function SearchModal({ open, onClose }: { open: boolean; onClose: () => v
 }
 
 function PopularCategories({ onNavigate }: { onNavigate: () => void }) {
+  const { categories } = useCatalog();
   return (
     <div className="flex flex-wrap justify-center gap-2 sm:justify-start">
-      {getCategories().slice(0, 5).map((category) => (
+      {categories.slice(0, 5).map((category) => (
         <Link
           key={category.id}
           href={`/shop/${category.slug}`}

@@ -6,11 +6,10 @@ import { AnimatePresence, motion } from "framer-motion";
 import { ChevronDown, Heart, Mail, User, X } from "lucide-react";
 import { Logo } from "./Logo";
 import { primaryNav, accountLinks, helpLinks, getSocialLinks } from "./nav-data";
-import { getCategories } from "@/data/categories";
-import { getCuratedCollections } from "@/data/collections";
 import { InstagramIcon, FacebookIcon, TikTokIcon, PinterestIcon } from "@/components/icons/SocialIcons";
 import { useWishlistCount } from "@/store/wishlist-store";
 import { useStoreSettings } from "@/components/providers/StoreSettingsProvider";
+import { useCatalog } from "@/components/providers/CatalogProvider";
 import { cn } from "@/lib/utils";
 import { useFocusTrap } from "@/lib/hooks/use-focus-trap";
 
@@ -26,6 +25,7 @@ export function MobileDrawer({ open, onClose }: { open: boolean; onClose: () => 
   const wishlistCount = useWishlistCount();
   const settings = useStoreSettings();
   const socialLinks = getSocialLinks(settings);
+  const { categories, collections } = useCatalog();
   const panelRef = React.useRef<HTMLDivElement>(null);
 
   useFocusTrap(open, onClose, panelRef);
@@ -117,8 +117,8 @@ export function MobileDrawer({ open, onClose }: { open: boolean; onClose: () => 
                                   className="overflow-hidden"
                                 >
                                   {(link.label === "Shop"
-                                    ? getCategories().map((c) => ({ label: c.name, href: `/shop/${c.slug}` }))
-                                    : getCuratedCollections().map((c) => ({ label: c.name, href: c.href }))
+                                    ? categories.map((c) => ({ label: c.name, href: `/shop/${c.slug}` }))
+                                    : collections.map((c) => ({ label: c.name, href: c.href }))
                                   ).map((item) => (
                                     <li key={item.href}>
                                       <Link

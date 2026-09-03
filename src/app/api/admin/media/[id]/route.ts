@@ -64,7 +64,7 @@ export async function DELETE(_request: Request, { params }: RouteContext<"/api/a
   const before = getMediaById(id);
   if (!before) return NextResponse.json({ error: "Media not found." }, { status: 404 });
 
-  const result = deleteMedia(id);
+  const result = await deleteMedia(id);
   if (!result.ok) return NextResponse.json({ error: result.reason }, { status: 409 });
 
   recordAuditLog({

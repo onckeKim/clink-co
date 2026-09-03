@@ -28,6 +28,7 @@ import { EmptyState } from "@/components/catalogue/EmptyState";
 import { ErrorState } from "@/components/catalogue/ErrorState";
 import { LoadMoreButton } from "@/components/catalogue/LoadMoreButton";
 import { track } from "@/lib/analytics/track";
+import { useCatalog } from "@/components/providers/CatalogProvider";
 
 // Only mounted once a shopper opens it — deferring keeps its JS out of the
 // shop grid's initial bundle.
@@ -75,6 +76,7 @@ export function ShopExperience({
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
+  const { categories, collections } = useCatalog();
 
   const filters = React.useMemo(() => parseFiltersFromSearchParams(searchParams), [searchParams]);
   const sort = React.useMemo(() => parseSortFromSearchParams(searchParams), [searchParams]);
@@ -125,11 +127,11 @@ export function ShopExperience({
 
   const { results, catalogueError } = React.useMemo(() => {
     try {
-      return { results: applyCatalogue(products, filters, sort), catalogueError: false };
+      return { results: applyCatalogue(products, filters, sort, categories, collections), catalogueError: false };
     } catch {
       return { results: [] as Product[], catalogueError: true };
     }
-  }, [products, filters, sort]);
+  }, [products, filters, sort, categories, collections]);
 
   const shownCount = Math.min(results.length, loadedPages * PRODUCTS_PER_PAGE);
   const pageItems = results.slice(0, shownCount);

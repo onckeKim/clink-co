@@ -1,8 +1,9 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, screen, fireEvent, waitFor } from "@testing-library/react";
+import { screen, fireEvent, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { SearchModal } from "@/components/search/SearchModal";
 import { mockRouter, resetMockRouter } from "@/components/__tests__/test-utils/next-mocks";
+import { renderWithCatalog as render } from "@/components/__tests__/test-utils/store-settings";
 
 vi.mock("next/navigation", () => ({
   useRouter: () => mockRouter,

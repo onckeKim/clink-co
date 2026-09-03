@@ -29,10 +29,9 @@ import { QandASection } from "@/components/product/QandASection";
 import { StickyAddToCart } from "@/components/product/StickyAddToCart";
 import { RecentlyViewed } from "@/components/sections/RecentlyViewed";
 import { useRecentlyViewedStore } from "@/store/recently-viewed-store";
-import { getCategoryBySlug } from "@/data/categories";
-import { getCollectionBySlug } from "@/data/collections";
 import { getDiscountPercent } from "@/lib/catalogue";
 import { useStoreSettings } from "@/components/providers/StoreSettingsProvider";
+import { useCatalog } from "@/components/providers/CatalogProvider";
 import { formatPrice } from "@/lib/utils";
 import { track } from "@/lib/analytics/track";
 
@@ -59,6 +58,7 @@ export function ProductDetailView({
 }) {
   const recordView = useRecentlyViewedStore((state) => state.add);
   const settings = useStoreSettings();
+  const { categories, collections } = useCatalog();
 
   const [activeVariantId, setActiveVariantId] = React.useState(product.variants?.[0]?.id);
   const [activeSetSizeId, setActiveSetSizeId] = React.useState(product.setSizeOptions?.[0]?.id);
@@ -95,9 +95,9 @@ export function ProductDetailView({
   const discountPercent = product.compareAtPrice ? getDiscountPercent(product) : null;
   const resolvedImages = activeVariant?.images ?? product.images;
 
-  const category = getCategoryBySlug(product.categorySlug);
+  const category = categories.find((c) => c.slug === product.categorySlug);
   const collectionNames = product.collectionSlugs
-    .map((slug) => getCollectionBySlug(slug))
+    .map((slug) => collections.find((c) => c.id === slug))
     .filter((c): c is NonNullable<typeof c> => Boolean(c));
 
   const isDraft = product.publishStatus === "draft";

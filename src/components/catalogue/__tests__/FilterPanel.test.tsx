@@ -1,8 +1,9 @@
 import { describe, it, expect } from "vitest";
-import { render, screen, fireEvent } from "@testing-library/react";
+import { screen, fireEvent } from "@testing-library/react";
 import * as React from "react";
 import { FilterPanel } from "@/components/catalogue/FilterPanel";
 import { DEFAULT_FILTERS, type CatalogueFilters, type CatalogueFacets } from "@/lib/catalogue";
+import { renderWithCatalog as render } from "@/components/__tests__/test-utils/store-settings";
 
 const facets: CatalogueFacets = {
   productTypes: ["Coupe Glasses", "Decanters"],
