@@ -29,7 +29,7 @@ export async function POST(request: Request) {
     email,
     password,
     options: {
-      data: { first_name: firstName, last_name: lastName },
+      data: { first_name: firstName, last_name: lastName, marketing_consent: marketingConsent },
       emailRedirectTo: `${siteConfig.url}/auth/confirm?type=signup`,
     },
   });
@@ -52,7 +52,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "We couldn't create your account. Please try again." }, { status: 500 });
   }
 
-  ensureProfile({ id: user.id, email: user.email, firstName, lastName, marketingConsent });
+  await ensureProfile({ id: user.id, email: user.email, firstName, lastName, marketingConsent });
   const linkedOrders = linkGuestOrdersToUser(email, user.id);
 
   // A session is only present here if the project has email confirmation

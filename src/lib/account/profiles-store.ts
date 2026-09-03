@@ -1,26 +1,19 @@
-import { type Role, getBootstrapAdminEmails } from "@/lib/admin/roles";
+import "server-only";
+import type { Role } from "@/lib/admin/roles";
+import { getBootstrapAdminEmails } from "@/lib/admin/roles";
+import * as db from "@/lib/db/profiles";
+import type { Database } from "@/lib/supabase/types";
 
 /**
- * In-memory profiles store — a development/demo substitute for a real
- * `profiles` table (see the `Database["public"]["Tables"]["profiles"]`
- * shape in src/lib/supabase/types.ts, which documents the target schema).
- * Deliberately NOT production-safe for the same reasons as
- * src/lib/orders/store.ts: it resets on restart and doesn't share state
- * across serverless instances.
- *
- * Authentication itself is real (Supabase Auth) — only this profile *data*
- * (name, phone, DOB, marketing consent, role) is stored here rather than in
- * a live Postgres table, since provisioning that table requires access to
- * the project's Supabase dashboard/migrations that this environment doesn't
- * have. Every function is keyed by the real, Supabase-Auth-issued user id,
- * so moving to a real `profiles` table later is a drop-in swap of these
- * function bodies for `supabase.from("profiles")` queries — call sites
- * don't change.
+ * Thin async wrapper over src/lib/db/profiles.ts (the real, RLS-backed
+ * `profiles` table) — kept as its own module, at its original import path,
+ * so every existing call site only had to add `await`, not change what it
+ * imports. Translates between the DB row's snake_case columns and this
+ * app's existing camelCase Profile shape.
  */
 
 export interface Profile {
   id: string;
-  /** Persisted from Supabase Auth at profile-creation time (see ensureProfile) so admin surfaces (customer list/search, audit log) can read it without a service-role Supabase Admin API call this dev environment doesn't have credentials for. */
   email: string | null;
   firstName: string;
   lastName: string;
@@ -28,89 +21,97 @@ export interface Profile {
   dateOfBirth: string | null;
   marketingConsent: boolean;
   role: Role;
-  /** Blocks login (checked in POST /api/auth/login) — see /admin/customers. Never deletes the account or its history. */
   isDisabled: boolean;
   disabledReason: string | null;
   createdAt: string;
   updatedAt: string;
 }
 
-const profilesById = new Map<string, Profile>();
+type ProfileRow = Database["public"]["Tables"]["profiles"]["Row"];
+
+function fromRow(row: ProfileRow): Profile {
+  return {
+    id: row.id,
+    email: row.email,
+    firstName: row.first_name ?? "",
+    lastName: row.last_name ?? "",
+    phone: row.phone,
+    dateOfBirth: row.date_of_birth,
+    marketingConsent: row.marketing_consent,
+    role: row.role,
+    isDisabled: row.is_disabled,
+    disabledReason: row.disabled_reason,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+  };
+}
 
 /**
- * Creates a default profile the first time a user is seen (e.g. right after
- * sign-up), otherwise no-ops. Passing `email` lets a fresh profile be
- * auto-granted `super_admin` when it matches ADMIN_BOOTSTRAP_EMAILS — the
- * one bootstrap mechanism for granting the very first admin, since there's
- * no existing admin yet to do it through /admin/team. See .env.local.example.
+ * Confirms a profile exists for this account (it already does by the time
+ * this runs — the DB's `handle_new_user()` trigger creates the row
+ * transactionally as part of Auth sign-up, before any app code sees the new
+ * user) and, the first time a bootstrap-eligible email is seen, promotes it
+ * to super_admin. Every other field (name, marketing consent) is already
+ * set from Auth signup metadata by the trigger; this function no longer
+ * needs to pass them through.
  */
-export function ensureProfile(input: {
+export async function ensureProfile(input: {
   id: string;
   email?: string | null;
   firstName?: string;
   lastName?: string;
   marketingConsent?: boolean;
-}): Profile {
-  const existing = profilesById.get(input.id);
-  if (existing) return existing;
+}): Promise<Profile> {
+  const existing = await db.getOwnProfile(input.id);
+  if (!existing) {
+    // The auth trigger fires transactionally on signup, so this should be
+    // unreachable in practice — surfaced loudly rather than silently
+    // treated as "not signed up yet", since it means the trigger didn't run.
+    throw new Error(`No profile row exists for user ${input.id} — the handle_new_user() trigger should have created one.`);
+  }
 
-  const isBootstrapAdmin = Boolean(input.email) && getBootstrapAdminEmails().has(input.email!.trim().toLowerCase());
+  const isBootstrapAdmin = Boolean(existing.email) && getBootstrapAdminEmails().has(existing.email!.trim().toLowerCase());
+  if (isBootstrapAdmin && existing.role === "customer") {
+    await db.grantBootstrapAdminRole(input.id);
+    const promoted = await db.getOwnProfile(input.id);
+    return fromRow(promoted!);
+  }
 
-  const now = new Date().toISOString();
-  const profile: Profile = {
-    id: input.id,
-    email: input.email?.trim() || null,
-    firstName: input.firstName?.trim() ?? "",
-    lastName: input.lastName?.trim() ?? "",
-    phone: null,
-    dateOfBirth: null,
-    marketingConsent: input.marketingConsent ?? false,
-    role: isBootstrapAdmin ? "super_admin" : "customer",
-    isDisabled: false,
-    disabledReason: null,
-    createdAt: now,
-    updatedAt: now,
-  };
-  profilesById.set(input.id, profile);
-  return profile;
+  return fromRow(existing);
 }
 
-export function getProfile(userId: string): Profile | undefined {
-  return profilesById.get(userId);
+export async function getProfile(userId: string): Promise<Profile | undefined> {
+  const row = await db.getOwnProfile(userId);
+  return row ? fromRow(row) : undefined;
 }
 
-export function listProfiles(): Profile[] {
-  return [...profilesById.values()].sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+export async function listProfiles(search?: string): Promise<Profile[]> {
+  const rows = await db.adminListProfiles(search);
+  return rows.map(fromRow);
 }
 
-export function updateProfile(
+export async function updateProfile(
   userId: string,
   patch: Partial<Pick<Profile, "firstName" | "lastName" | "phone" | "dateOfBirth" | "marketingConsent">>,
-): Profile {
-  const existing = ensureProfile({ id: userId });
-  const updated: Profile = { ...existing, ...patch, updatedAt: new Date().toISOString() };
-  profilesById.set(userId, updated);
-  return updated;
+): Promise<Profile> {
+  const row = await db.updateOwnProfile(userId, {
+    first_name: patch.firstName,
+    last_name: patch.lastName,
+    phone: patch.phone,
+    date_of_birth: patch.dateOfBirth,
+    marketing_consent: patch.marketingConsent,
+  });
+  return fromRow(row);
 }
 
 /** Admin-only mutations — role changes (/admin/team) and account disable/enable (/admin/customers). */
-export function setProfileRole(userId: string, role: Role): Profile | undefined {
-  const existing = profilesById.get(userId);
-  if (!existing) return undefined;
-  const updated: Profile = { ...existing, role, updatedAt: new Date().toISOString() };
-  profilesById.set(userId, updated);
-  return updated;
+export async function setProfileRole(userId: string, role: Role, grantedBy: string): Promise<Profile | undefined> {
+  await db.setUserRole(userId, role, grantedBy);
+  const row = await db.getOwnProfile(userId);
+  return row ? fromRow(row) : undefined;
 }
 
-export function setProfileDisabled(userId: string, isDisabled: boolean, reason?: string): Profile | undefined {
-  const existing = profilesById.get(userId);
-  if (!existing) return undefined;
-  const updated: Profile = {
-    ...existing,
-    isDisabled,
-    disabledReason: isDisabled ? (reason?.trim() || null) : null,
-    updatedAt: new Date().toISOString(),
-  };
-  profilesById.set(userId, updated);
-  return updated;
+export async function setProfileDisabled(userId: string, isDisabled: boolean, reason?: string): Promise<Profile | undefined> {
+  const row = await db.setAccountDisabled(userId, isDisabled, reason);
+  return fromRow(row);
 }

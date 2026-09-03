@@ -36,8 +36,8 @@ export interface AdminCustomerFilters {
 }
 
 /** Every customer-role profile (staff accounts are managed from /admin/team, not here), most recently created first. */
-export function listAdminCustomers(filters?: AdminCustomerFilters): AdminCustomerSummary[] {
-  let profiles = listProfiles().filter((p) => p.role === "customer");
+export async function listAdminCustomers(filters?: AdminCustomerFilters): Promise<AdminCustomerSummary[]> {
+  let profiles = (await listProfiles()).filter((p) => p.role === "customer");
 
   if (filters?.search) {
     const q = filters.search.trim().toLowerCase();
@@ -51,7 +51,7 @@ export function listAdminCustomers(filters?: AdminCustomerFilters): AdminCustome
   return profiles.map(toSummary);
 }
 
-export function getAdminCustomerById(id: string): AdminCustomerSummary | undefined {
-  const profile = getProfile(id);
+export async function getAdminCustomerById(id: string): Promise<AdminCustomerSummary | undefined> {
+  const profile = await getProfile(id);
   return profile ? toSummary(profile) : undefined;
 }

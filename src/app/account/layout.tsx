@@ -12,7 +12,7 @@ import { AccountNav } from "@/components/account/AccountNav";
  */
 export default async function AccountLayout({ children }: { children: React.ReactNode }) {
   const user = await requireUser();
-  ensureProfile({
+  await ensureProfile({
     id: user.id,
     email: user.email,
     firstName: user.user_metadata?.first_name,

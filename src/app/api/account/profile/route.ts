@@ -8,7 +8,7 @@ export async function GET() {
   const user = await getUser();
   if (!user) return NextResponse.json({ error: "Not signed in." }, { status: 401 });
 
-  const profile = ensureProfile({ id: user.id, email: user.email });
+  const profile = await ensureProfile({ id: user.id, email: user.email });
   return NextResponse.json({
     profile: {
       firstName: profile.firstName,
@@ -44,7 +44,7 @@ export async function PATCH(request: Request) {
     }
   }
 
-  const profile = updateProfile(user.id, {
+  const profile = await updateProfile(user.id, {
     firstName,
     lastName,
     phone: phone || null,

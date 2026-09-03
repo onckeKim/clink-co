@@ -47,7 +47,7 @@ export async function POST(request: Request) {
   // A disabled account (see /admin/customers) still has valid credentials —
   // signInWithPassword above already succeeded and set a session cookie —
   // so it must be explicitly signed back out here rather than just refused.
-  const profile = getProfile(data.user.id);
+  const profile = await getProfile(data.user.id);
   if (profile?.isDisabled) {
     await supabase.auth.signOut();
     return NextResponse.json(

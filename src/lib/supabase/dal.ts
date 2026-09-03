@@ -27,7 +27,7 @@ export const getUser = cache(async (): Promise<User | null> => {
     // everywhere from this point on, even if it's mid-session — an admin
     // disabling an account should cut off access immediately, not just
     // block the next login attempt (see POST /api/auth/login).
-    const profile = getProfile(user.id);
+    const profile = await getProfile(user.id);
     if (profile?.isDisabled) return null;
 
     return user;
@@ -56,7 +56,7 @@ export async function requireUser(redirectTo = "/login"): Promise<User> {
  */
 export async function requireAdmin(redirectTo = "/account"): Promise<{ user: User; profile: Profile }> {
   const user = await requireUser("/login?redirect=/admin");
-  const profile = getProfile(user.id);
+  const profile = await getProfile(user.id);
   if (!profile || !isAdminRole(profile.role)) redirect(redirectTo);
   return { user, profile };
 }
@@ -80,7 +80,7 @@ export async function requirePermission(
 export async function getAdminContext(): Promise<{ user: User; profile: Profile } | null> {
   const user = await getUser();
   if (!user) return null;
-  const profile = getProfile(user.id);
+  const profile = await getProfile(user.id);
   if (!profile || !isAdminRole(profile.role)) return null;
   return { user, profile };
 }

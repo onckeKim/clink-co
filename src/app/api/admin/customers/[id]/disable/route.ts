@@ -14,7 +14,7 @@ export async function POST(request: Request, { params }: RouteContext<"/api/admi
   }
 
   const { id } = await params;
-  const before = getAdminCustomerById(id);
+  const before = await getAdminCustomerById(id);
   if (!before) return NextResponse.json({ error: "Customer not found." }, { status: 404 });
 
   const body = await request.json().catch(() => null);
@@ -26,7 +26,7 @@ export async function POST(request: Request, { params }: RouteContext<"/api/admi
     return NextResponse.json({ error: "A reason is required to disable an account." }, { status: 400 });
   }
 
-  const profile = setProfileDisabled(id, parsed.data.isDisabled, parsed.data.reason);
+  const profile = await setProfileDisabled(id, parsed.data.isDisabled, parsed.data.reason);
   if (!profile) return NextResponse.json({ error: "Customer not found." }, { status: 404 });
 
   recordAuditLog({
@@ -40,5 +40,5 @@ export async function POST(request: Request, { params }: RouteContext<"/api/admi
     after: { isDisabled: profile.isDisabled, disabledReason: profile.disabledReason },
   });
 
-  return NextResponse.json({ customer: getAdminCustomerById(id) });
+  return NextResponse.json({ customer: await getAdminCustomerById(id) });
 }

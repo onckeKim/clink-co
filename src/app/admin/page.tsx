@@ -28,7 +28,7 @@ export const metadata: Metadata = {
 
 export default async function AdminDashboardPage() {
   await requirePermission("dashboard:view");
-  const stats = getDashboardStats();
+  const stats = await getDashboardStats();
 
   return (
     <div className="flex flex-col gap-8">

@@ -13,5 +13,5 @@ export async function GET(request: Request) {
   const url = new URL(request.url);
   const search = url.searchParams.get("search") ?? undefined;
 
-  return NextResponse.json({ customers: listAdminCustomers({ search }) });
+  return NextResponse.json({ customers: await listAdminCustomers({ search }) });
 }

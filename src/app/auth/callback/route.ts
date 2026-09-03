@@ -30,7 +30,7 @@ export async function GET(request: NextRequest) {
   const user = data.user;
   const meta = user.user_metadata as { first_name?: string; last_name?: string; full_name?: string; name?: string };
   const [fallbackFirst, ...fallbackRest] = (meta.full_name ?? meta.name ?? "").split(" ");
-  ensureProfile({
+  await ensureProfile({
     id: user.id,
     email: user.email,
     firstName: meta.first_name ?? fallbackFirst,

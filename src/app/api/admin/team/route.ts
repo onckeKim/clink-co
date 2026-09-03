@@ -13,7 +13,7 @@ export async function GET(request: Request) {
   const url = new URL(request.url);
   const search = url.searchParams.get("search")?.trim().toLowerCase();
 
-  let profiles = listProfiles();
+  let profiles = await listProfiles();
   if (search) {
     profiles = profiles.filter(
       (p) => (p.email ?? "").toLowerCase().includes(search) || `${p.firstName} ${p.lastName}`.toLowerCase().includes(search),

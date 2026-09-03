@@ -53,7 +53,7 @@ function daysAgo(days: number, from: Date): Date {
   return date;
 }
 
-export function getDashboardStats(now: Date = new Date()): DashboardStats {
+export async function getDashboardStats(now: Date = new Date()): Promise<DashboardStats> {
   const orders = getAllOrders();
   const paidOrders = orders.filter((o) => PAID_STATUSES.has(o.status));
 
@@ -85,7 +85,8 @@ export function getDashboardStats(now: Date = new Date()): DashboardStats {
     .slice(0, BESTSELLERS_LIMIT);
 
   const thirtyDaysAgo = daysAgo(TREND_DAYS, now);
-  const newCustomerCount30d = listProfiles().filter(
+  const allProfiles = await listProfiles();
+  const newCustomerCount30d = allProfiles.filter(
     (p) => p.role === "customer" && new Date(p.createdAt) >= thirtyDaysAgo,
   ).length;
 

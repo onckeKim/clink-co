@@ -14,7 +14,7 @@ export async function GET(_request: Request, { params }: RouteContext<"/api/admi
   }
 
   const { id } = await params;
-  const customer = getAdminCustomerById(id);
+  const customer = await getAdminCustomerById(id);
   if (!customer) return NextResponse.json({ error: "Customer not found." }, { status: 404 });
 
   return NextResponse.json({ customer });
@@ -28,7 +28,7 @@ export async function PATCH(request: Request, { params }: RouteContext<"/api/adm
   }
 
   const { id } = await params;
-  const before = getAdminCustomerById(id);
+  const before = await getAdminCustomerById(id);
   if (!before) return NextResponse.json({ error: "Customer not found." }, { status: 404 });
 
   const body = await request.json().catch(() => null);
@@ -37,8 +37,8 @@ export async function PATCH(request: Request, { params }: RouteContext<"/api/adm
     return NextResponse.json({ error: parsed.error.issues[0]?.message ?? "Invalid request." }, { status: 400 });
   }
 
-  updateProfile(id, parsed.data);
-  const customer = getAdminCustomerById(id);
+  await updateProfile(id, parsed.data);
+  const customer = await getAdminCustomerById(id);
 
   recordAuditLog({
     userId: ctx.user.id,

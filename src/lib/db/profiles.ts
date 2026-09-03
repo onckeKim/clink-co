@@ -1,6 +1,7 @@
 import "server-only";
+import { createServiceClient } from "@/lib/supabase/service";
 import { getDb } from "./client";
-import { mapPostgrestError, unwrap, unwrapNullable } from "./errors";
+import { DatabaseUnavailableError, mapPostgrestError, unwrap, unwrapNullable } from "./errors";
 import type { AppRole, Database } from "@/lib/supabase/types";
 
 type ProfileRow = Database["public"]["Tables"]["profiles"]["Row"];
@@ -73,4 +74,40 @@ export async function setAccountDisabled(userId: string, disabled: boolean, reas
     .select()
     .single();
   return unwrap({ data, error });
+}
+
+/**
+ * Flips marketing_consent off for the account matching this email —
+ * the one-click unsubscribe link handler (POST /api/unsubscribe). Runs
+ * unauthenticated (the visitor clicking the link has no session), so this
+ * needs the service-role client the same way grantBootstrapAdminRole does;
+ * the token itself (verified by the caller before this runs) is what makes
+ * this safe to expose with no session.
+ */
+export async function setMarketingConsentByEmail(email: string, consent: boolean): Promise<void> {
+  const db = createServiceClient();
+  if (!db) throw new DatabaseUnavailableError();
+  const { error } = await db.from("profiles").update({ marketing_consent: consent }).eq("email", email);
+  if (error) throw mapPostgrestError(error);
+}
+
+/**
+ * Self-grants an admin role to a brand-new account whose email matches
+ * ADMIN_BOOTSTRAP_EMAILS — the one mechanism for creating the very first
+ * admin, since there's no existing admin yet to grant one through
+ * /admin/team. Must run through the service-role client: a fresh signup's
+ * own session has no team:write permission yet (the RLS policy on
+ * user_roles would reject it), and guard_user_roles_self_change() blocks
+ * *any* session-scoped write to your own user_roles row regardless of
+ * permission — auth.uid() is null for a service-role connection, so that
+ * guard doesn't fire here. See src/lib/account/profiles-store.ts's
+ * ensureProfile() for the one call site.
+ */
+export async function grantBootstrapAdminRole(userId: string): Promise<void> {
+  const db = createServiceClient();
+  if (!db) throw new DatabaseUnavailableError();
+  const { error } = await db
+    .from("user_roles")
+    .upsert({ user_id: userId, role: "super_admin", granted_by: userId }, { onConflict: "user_id" });
+  if (error) throw mapPostgrestError(error);
 }

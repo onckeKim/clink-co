@@ -24,7 +24,7 @@ export async function POST(request: Request, { params }: RouteContext<"/api/admi
   }
 
   const { id } = await params;
-  const customer = getAdminCustomerById(id);
+  const customer = await getAdminCustomerById(id);
   if (!customer) return NextResponse.json({ error: "Customer not found." }, { status: 404 });
 
   const body = await request.json().catch(() => null);

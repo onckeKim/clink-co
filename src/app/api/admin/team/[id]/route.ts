@@ -17,7 +17,7 @@ export async function PATCH(request: Request, { params }: RouteContext<"/api/adm
     return NextResponse.json({ error: "You can't change your own role." }, { status: 400 });
   }
 
-  const before = getProfile(id);
+  const before = await getProfile(id);
   if (!before) return NextResponse.json({ error: "Account not found." }, { status: 404 });
 
   const body = await request.json().catch(() => null);
@@ -26,7 +26,7 @@ export async function PATCH(request: Request, { params }: RouteContext<"/api/adm
     return NextResponse.json({ error: parsed.error.issues[0]?.message ?? "Invalid role." }, { status: 400 });
   }
 
-  const profile = setProfileRole(id, parsed.data.role);
+  const profile = await setProfileRole(id, parsed.data.role, ctx.user.id);
   if (!profile) return NextResponse.json({ error: "Account not found." }, { status: 404 });
 
   recordAuditLog({
