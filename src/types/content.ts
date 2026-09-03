@@ -67,6 +67,11 @@ export interface JournalArticle {
   publishStatus: "draft" | "published";
   seoTitle?: string;
   seoDescription?: string;
+  /** A single topic grouping — drives the /journal category filter and "related articles". */
+  category: string;
+  tags: string[];
+  /** At most one article should be featured at a time — the journal listing surfaces it first, larger. */
+  featured: boolean;
 }
 
 /** Long-form legal/policy copy — paragraphs, one per array entry. */
@@ -77,7 +82,14 @@ export interface PolicyPageContent {
   sections: AboutPageSection[];
 }
 
-export type PolicyPageKey = "privacy" | "terms" | "cookie-policy";
+export type PolicyPageKey =
+  | "privacy"
+  | "terms"
+  | "cookie-policy"
+  | "delivery-policy"
+  | "returns-policy"
+  | "payment-policy"
+  | "disclaimer";
 
 export interface NewsletterContent {
   heading: string;

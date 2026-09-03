@@ -1,11 +1,20 @@
+import { AlertTriangle } from "lucide-react";
 import { Breadcrumbs } from "@/components/catalogue/Breadcrumbs";
 import type { PolicyPageContent } from "@/types/content";
 
-/** Shared layout for /privacy, /terms and /cookie-policy — all three read the same PolicyPageContent shape from the content store. */
+/** Shared layout for every policy page (/privacy, /terms, /cookie-policy, /delivery-policy, /returns-policy, /payment-policy, /disclaimer) — all read the same PolicyPageContent shape from the content store. */
 export function PolicyPageView({ content }: { content: PolicyPageContent }) {
   return (
     <div className="mx-auto max-w-3xl px-6 py-10 sm:px-8">
       <Breadcrumbs items={[{ label: "Home", href: "/" }, { label: content.title }]} className="mb-6" />
+
+      <div className="mb-8 flex items-start gap-3 rounded-2xl border border-champagne bg-champagne/20 px-4 py-3 text-sm text-charcoal">
+        <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
+        <p>
+          This page contains placeholder legal copy for development purposes only. It must be reviewed and approved
+          by a qualified South African legal professional before this site goes live.
+        </p>
+      </div>
 
       <h1 className="font-display text-display-2xl text-charcoal">{content.title}</h1>
       <p className="mt-2 text-xs text-stone">

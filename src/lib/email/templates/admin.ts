@@ -180,22 +180,45 @@ export function returnRequestAdminTemplate(order: Order, reason: ReturnReason, n
 export interface ContactSubmission {
   name: string;
   email: string;
+  phone?: string;
+  orderNumber?: string;
+  /** e.g. "Order Enquiry", "Product Question", "Returns & Refunds", "Corporate Gifting", "Other" — see src/lib/validations/contact.ts for the full list. */
+  category: string;
   subject?: string;
   message: string;
 }
 
 export function contactFormAdminTemplate(submission: ContactSubmission): EmailContent {
-  const subject = `Contact form: ${submission.subject || "New message"}`;
-  const previewText = `${submission.name} sent a message.`;
+  const subject = `Contact form: ${submission.category}${submission.orderNumber ? ` — ${submission.orderNumber}` : ""}`;
+  const previewText = `${submission.name} sent a ${submission.category.toLowerCase()} enquiry.`;
+  const detailLines = [
+    `<strong>From:</strong> ${submission.name} (${submission.email})`,
+    submission.phone ? `<strong>Phone:</strong> ${submission.phone}` : null,
+    `<strong>Category:</strong> ${submission.category}`,
+    submission.orderNumber ? `<strong>Order number:</strong> ${submission.orderNumber}` : null,
+  ]
+    .filter(Boolean)
+    .join("<br />");
+  const detailLinesText = [
+    `From: ${submission.name} (${submission.email})`,
+    submission.phone ? `Phone: ${submission.phone}` : null,
+    `Category: ${submission.category}`,
+    submission.orderNumber ? `Order number: ${submission.orderNumber}` : null,
+  ]
+    .filter(Boolean)
+    .join("\n");
+
   const bodyHtml = [
     heading("New contact form submission"),
-    paragraph(`From ${submission.name} (${submission.email})${submission.subject ? ` — "${submission.subject}"` : ""}`),
+    calloutBox(detailLines),
+    paragraph("Message:"),
     calloutBox(submission.message.replace(/\n/g, "<br />")),
     ctaButton("Reply by Email", `mailto:${submission.email}`),
   ].join("");
   const bodyText = [
     "New contact form submission",
-    paragraphText(`From ${submission.name} (${submission.email})${submission.subject ? ` — "${submission.subject}"` : ""}`),
+    calloutBoxText(detailLinesText),
+    "Message:",
     calloutBoxText(submission.message),
     ctaButtonText("Reply by Email", `mailto:${submission.email}`),
   ].join("\n\n");

@@ -69,6 +69,9 @@ export const articleSchema = z.object({
   publishStatus: z.enum(["draft", "published"]).default("draft"),
   seoTitle: z.string().trim().optional(),
   seoDescription: z.string().trim().optional(),
+  category: z.string().trim().min(1, "Enter a category."),
+  tags: z.array(z.string().trim().min(1)).default([]),
+  featured: z.boolean().default(false),
 });
 export const articlePatchSchema = articleSchema.partial();
 

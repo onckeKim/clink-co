@@ -124,5 +124,24 @@ export const returnRequestSchema = z.object({
     message: "Select a reason for your return.",
   }),
   notes: z.string().trim().max(500, "Keep your notes under 500 characters.").optional(),
+  /**
+   * Data-URI images — optional evidence, most useful for a "damaged" or
+   * "not-as-described" reason. Capped at 4 so a customer can't balloon the
+   * in-memory store with an unbounded upload. The client already enforces
+   * MAX_IMAGE_SIZE_BYTES/ACCEPTED_IMAGE_TYPES (src/lib/admin/media-constants.ts)
+   * per file before encoding; this regex + length cap is the server-side
+   * re-check (a client-side check alone can always be bypassed) — roughly
+   * 2MB of base64 is ~2.8M characters.
+   */
+  evidenceImages: z
+    .array(
+      z
+        .string()
+        .trim()
+        .regex(/^data:image\/(jpeg|png|webp|gif);base64,/, "Evidence must be an image file.")
+        .max(2_850_000, "Image is too large."),
+    )
+    .max(4, "You can attach up to 4 photos.")
+    .optional(),
 });
 export type ReturnRequestInput = z.infer<typeof returnRequestSchema>;

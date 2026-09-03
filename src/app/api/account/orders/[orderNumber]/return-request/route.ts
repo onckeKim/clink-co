@@ -40,6 +40,7 @@ export async function POST(
     userId: user.id,
     reason: parsed.data.reason,
     notes: parsed.data.notes,
+    evidenceImages: parsed.data.evidenceImages,
   });
 
   void sendReturnRequestReceivedEmail(order, parsed.data.reason, parsed.data.notes);

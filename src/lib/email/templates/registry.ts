@@ -180,6 +180,8 @@ export const templateRegistry: TemplateRegistryEntry[] = [
       contactFormAdminTemplate({
         name: "Priya Naidoo",
         email: "priya@example.com",
+        phone: "+27 83 555 0199",
+        category: "Product Question",
         subject: "Question about a gift set",
         message: "Hi there — does the Nightcap Gift Set come with gift wrapping included, or is that an extra at checkout? Thanks!",
       }),

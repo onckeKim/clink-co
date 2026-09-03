@@ -11,8 +11,10 @@ import { Select } from "@/components/ui/Select";
 import { Modal } from "@/components/ui/Modal";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { Badge } from "@/components/ui/Badge";
+import { Checkbox } from "@/components/ui/Checkbox";
 import { toast } from "@/components/ui/Toast";
 import { SingleImageUploader } from "@/components/admin/SingleImageUploader";
+import { TagListInput } from "@/components/admin/products/TagListInput";
 
 interface FormState {
   title: string;
@@ -26,6 +28,9 @@ interface FormState {
   publishStatus: "draft" | "published";
   seoTitle: string;
   seoDescription: string;
+  category: string;
+  tags: string[];
+  featured: boolean;
 }
 
 const emptyForm: FormState = {
@@ -40,6 +45,9 @@ const emptyForm: FormState = {
   publishStatus: "draft",
   seoTitle: "",
   seoDescription: "",
+  category: "",
+  tags: [],
+  featured: false,
 };
 
 function fromArticle(article: JournalArticle): FormState {
@@ -55,6 +63,9 @@ function fromArticle(article: JournalArticle): FormState {
     publishStatus: article.publishStatus,
     seoTitle: article.seoTitle ?? "",
     seoDescription: article.seoDescription ?? "",
+    category: article.category,
+    tags: article.tags,
+    featured: article.featured,
   };
 }
 
@@ -96,8 +107,8 @@ export function JournalTab() {
       .split(/\n\s*\n/)
       .map((p) => p.trim())
       .filter(Boolean);
-    if (!form.title.trim() || !form.excerpt.trim() || body.length === 0 || !form.coverImage) {
-      toast.error("Title, excerpt, body and cover image are required.");
+    if (!form.title.trim() || !form.excerpt.trim() || body.length === 0 || !form.coverImage || !form.category.trim()) {
+      toast.error("Title, excerpt, body, cover image and category are required.");
       return;
     }
     setSaving(true);
@@ -114,6 +125,9 @@ export function JournalTab() {
         publishStatus: form.publishStatus,
         seoTitle: form.seoTitle || undefined,
         seoDescription: form.seoDescription || undefined,
+        category: form.category,
+        tags: form.tags,
+        featured: form.featured,
       };
       const res = await fetch(editing ? `/api/admin/content/journal/${editing.id}` : "/api/admin/content/journal", {
         method: editing ? "PATCH" : "POST",
@@ -173,6 +187,8 @@ export function JournalTab() {
             <p className="truncate font-medium text-charcoal">{article.title}</p>
             <p className="truncate text-xs text-stone">/journal/{article.slug}</p>
           </div>
+          {article.category && <Badge variant="neutral">{article.category}</Badge>}
+          {article.featured && <Badge variant="champagne">Featured</Badge>}
           {article.publishStatus === "draft" ? <Badge variant="warning">Draft</Badge> : <Badge variant="success">Published</Badge>}
           <Button type="button" variant="ghost" size="icon" onClick={() => openEdit(article)} aria-label="Edit article">
             <Pencil className="h-4 w-4" />
@@ -219,12 +235,28 @@ export function JournalTab() {
               <Input id="jr-date" type="date" value={form.publishedAt} onChange={(e) => setForm((f) => ({ ...f, publishedAt: e.target.value }))} />
             </div>
           </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <Label htmlFor="jr-status">Status</Label>
+              <Select id="jr-status" value={form.publishStatus} onChange={(e) => setForm((f) => ({ ...f, publishStatus: e.target.value as "draft" | "published" }))}>
+                <option value="draft">Draft</option>
+                <option value="published">Published</option>
+              </Select>
+            </div>
+            <div>
+              <Label htmlFor="jr-category">Category</Label>
+              <Input id="jr-category" value={form.category} onChange={(e) => setForm((f) => ({ ...f, category: e.target.value }))} placeholder="e.g. Entertaining" required />
+            </div>
+          </div>
           <div>
-            <Label htmlFor="jr-status">Status</Label>
-            <Select id="jr-status" value={form.publishStatus} onChange={(e) => setForm((f) => ({ ...f, publishStatus: e.target.value as "draft" | "published" }))}>
-              <option value="draft">Draft</option>
-              <option value="published">Published</option>
-            </Select>
+            <Label>Tags</Label>
+            <TagListInput values={form.tags} onChange={(tags) => setForm((f) => ({ ...f, tags }))} placeholder="Type a tag and press Enter" />
+          </div>
+          <div className="flex items-center gap-3">
+            <Checkbox id="jr-featured" checked={form.featured} onCheckedChange={(checked) => setForm((f) => ({ ...f, featured: checked }))} />
+            <Label htmlFor="jr-featured" className="mb-0 text-sm font-normal normal-case tracking-normal text-stone">
+              Feature this article on the Journal listing
+            </Label>
           </div>
           <div>
             <Label htmlFor="jr-seo-title">SEO title</Label>

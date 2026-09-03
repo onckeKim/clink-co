@@ -15,6 +15,10 @@ const POLICY_TABS: { id: PolicyPageKey; label: string }[] = [
   { id: "privacy", label: "Privacy Policy" },
   { id: "terms", label: "Terms of Service" },
   { id: "cookie-policy", label: "Cookie Policy" },
+  { id: "delivery-policy", label: "Delivery Policy" },
+  { id: "returns-policy", label: "Returns & Refund Policy" },
+  { id: "payment-policy", label: "Payment Policy" },
+  { id: "disclaimer", label: "Website Disclaimer" },
 ];
 
 /** Keyed by `policyKey` from the parent so switching policies remounts this (a fresh fetch + loading state) instead of resetting state inside an effect. */

@@ -6,7 +6,15 @@ import { getPolicyPage, updatePolicyPage } from "@/lib/admin/content-store";
 import { policyPagePatchSchema } from "@/lib/validations/admin-content";
 import type { PolicyPageKey } from "@/types/content";
 
-const VALID_KEYS: PolicyPageKey[] = ["privacy", "terms", "cookie-policy"];
+const VALID_KEYS: PolicyPageKey[] = [
+  "privacy",
+  "terms",
+  "cookie-policy",
+  "delivery-policy",
+  "returns-policy",
+  "payment-policy",
+  "disclaimer",
+];
 
 function parseKey(key: string): PolicyPageKey | null {
   return (VALID_KEYS as string[]).includes(key) ? (key as PolicyPageKey) : null;

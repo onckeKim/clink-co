@@ -1,8 +1,11 @@
 import type { Metadata } from "next";
 import Image from "next/image";
+import Link from "next/link";
 import { notFound } from "next/navigation";
+import { Share2, Send, MessageCircle, Mail } from "lucide-react";
 import { Breadcrumbs } from "@/components/catalogue/Breadcrumbs";
 import { getArticleBySlug, getPublishedArticles } from "@/lib/admin/content-store";
+import { siteConfig } from "@/config/site";
 
 export function generateStaticParams() {
   return getPublishedArticles().map((article) => ({ slug: article.slug }));
@@ -21,10 +24,37 @@ export async function generateMetadata({
   };
 }
 
+function formatDate(iso: string): string {
+  return new Date(iso).toLocaleDateString("en-ZA", { day: "numeric", month: "long", year: "numeric" });
+}
+
 export default async function JournalArticlePage({ params }: PageProps<"/journal/[slug]">) {
   const { slug } = await params;
   const article = getArticleBySlug(slug);
   if (!article) notFound();
+
+  const articleUrl = `${siteConfig.url}/journal/${article.slug}`;
+  const published = getPublishedArticles();
+  const relatedByCategory = published.filter((a) => a.id !== article.id && a.category === article.category);
+  const relatedByTag = published.filter(
+    (a) => a.id !== article.id && !relatedByCategory.includes(a) && a.tags.some((t) => article.tags.includes(t)),
+  );
+  const relatedArticles = [...relatedByCategory, ...relatedByTag].slice(0, 3);
+
+  const shareLinks = [
+    { label: "Share on Facebook", icon: Share2, href: `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(articleUrl)}` },
+    {
+      label: "Share on X",
+      icon: Send,
+      href: `https://twitter.com/intent/tweet?url=${encodeURIComponent(articleUrl)}&text=${encodeURIComponent(article.title)}`,
+    },
+    {
+      label: "Share on WhatsApp",
+      icon: MessageCircle,
+      href: `https://wa.me/?text=${encodeURIComponent(`${article.title} — ${articleUrl}`)}`,
+    },
+    { label: "Share via email", icon: Mail, href: `mailto:?subject=${encodeURIComponent(article.title)}&body=${encodeURIComponent(articleUrl)}` },
+  ];
 
   return (
     <div className="mx-auto max-w-3xl px-6 py-10 sm:px-8">
@@ -39,8 +69,14 @@ export default async function JournalArticlePage({ params }: PageProps<"/journal
         </div>
       )}
 
-      <p className="text-xs text-stone">
-        {new Date(article.publishedAt).toLocaleDateString("en-ZA", { day: "numeric", month: "long", year: "numeric" })}
+      <Link
+        href={`/journal?category=${encodeURIComponent(article.category)}`}
+        className="link-underline text-xs font-semibold uppercase tracking-[0.2em] text-stone"
+      >
+        {article.category}
+      </Link>
+      <p className="mt-2 text-xs text-stone">
+        {formatDate(article.publishedAt)}
         {" · "}
         {article.author}
       </p>
@@ -64,6 +100,54 @@ export default async function JournalArticlePage({ params }: PageProps<"/journal
           </p>
         ))}
       </div>
+
+      {article.tags.length > 0 && (
+        <div className="mt-8 flex flex-wrap gap-2">
+          {article.tags.map((tag) => (
+            <span key={tag} className="rounded-full bg-porcelain px-3 py-1 text-xs text-stone">
+              {tag}
+            </span>
+          ))}
+        </div>
+      )}
+
+      <div className="mt-8 flex items-center gap-3 border-y border-sand py-4">
+        <span className="text-xs font-semibold uppercase tracking-[0.2em] text-stone">Share</span>
+        {shareLinks.map(({ label, icon: Icon, href }) => (
+          <a
+            key={label}
+            href={href}
+            target="_blank"
+            rel="noreferrer"
+            aria-label={label}
+            className="focus-ring flex h-9 w-9 items-center justify-center rounded-full border border-sand text-charcoal hover:border-charcoal/40"
+          >
+            <Icon className="h-4 w-4" />
+          </a>
+        ))}
+      </div>
+
+      {relatedArticles.length > 0 && (
+        <section className="mt-16">
+          <h2 className="font-display text-display-sm text-charcoal">Related reading</h2>
+          <div className="mt-5 grid gap-8 sm:grid-cols-3">
+            {relatedArticles.map((related) => (
+              <Link key={related.id} href={`/journal/${related.slug}`} className="focus-ring group block">
+                <div className="relative aspect-[4/3] overflow-hidden rounded-2xl">
+                  <Image
+                    src={related.coverImage}
+                    alt={related.coverImageAlt}
+                    fill
+                    sizes="(min-width: 640px) 30vw, 90vw"
+                    className="object-cover transition-transform duration-500 ease-out group-hover:scale-105"
+                  />
+                </div>
+                <h3 className="font-display mt-3 text-base text-charcoal group-hover:underline">{related.title}</h3>
+              </Link>
+            ))}
+          </div>
+        </section>
+      )}
     </div>
   );
 }

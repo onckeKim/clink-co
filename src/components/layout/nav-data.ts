@@ -22,7 +22,8 @@ export const accountLinks: NavLink[] = [
 
 export const helpLinks: NavLink[] = [
   { label: "Contact Us", href: "/contact" },
-  { label: "Shipping & Returns", href: "/shipping-returns" },
+  { label: "Delivery Information", href: "/delivery" },
+  { label: "Returns", href: "/returns" },
   { label: "Care Guide", href: "/care-guide" },
   { label: "FAQ", href: "/faq" },
 ];
@@ -38,6 +39,10 @@ export const policyLinks: NavLink[] = [
   { label: "Privacy Policy", href: "/privacy" },
   { label: "Terms of Service", href: "/terms" },
   { label: "Cookie Policy", href: "/cookie-policy" },
+  { label: "Delivery Policy", href: "/delivery-policy" },
+  { label: "Returns & Refund Policy", href: "/returns-policy" },
+  { label: "Payment Policy", href: "/payment-policy" },
+  { label: "Website Disclaimer", href: "/disclaimer" },
   { label: "Accessibility", href: "/accessibility" },
 ];
 

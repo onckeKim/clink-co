@@ -15,6 +15,8 @@ export interface ReturnRequest {
   userId: string;
   reason: ReturnReason;
   notes: string | null;
+  /** Data-URI images the customer attached as evidence (typically for a "damaged" or "not-as-described" reason) — same base64-data-URI approach as the admin media library (see src/lib/admin/media-constants.ts), since this is customer-submitted evidence on the request itself rather than a shared media asset. */
+  evidenceImages: string[];
   status: "requested";
   createdAt: string;
 }
@@ -30,11 +32,17 @@ export function listReturnRequests(): ReturnRequest[] {
   return [...returnsByOrderNumber.values()].sort((a, b) => b.createdAt.localeCompare(a.createdAt));
 }
 
+/** A customer's own return requests, most recent first — backs the "return status tracking" section of the public /returns page. */
+export function listReturnRequestsForUser(userId: string): ReturnRequest[] {
+  return listReturnRequests().filter((r) => r.userId === userId);
+}
+
 export function createReturnRequest(input: {
   orderNumber: string;
   userId: string;
   reason: ReturnReason;
   notes?: string;
+  evidenceImages?: string[];
 }): ReturnRequest {
   const existing = returnsByOrderNumber.get(input.orderNumber);
   if (existing) return existing;
@@ -45,6 +53,7 @@ export function createReturnRequest(input: {
     userId: input.userId,
     reason: input.reason,
     notes: input.notes?.trim() || null,
+    evidenceImages: input.evidenceImages ?? [],
     status: "requested",
     createdAt: new Date().toISOString(),
   };
