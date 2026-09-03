@@ -1,4 +1,4 @@
-import { describe, it, expect, vi } from "vitest";
+import { describe, it, expect } from "vitest";
 import { createOrder, findOrderByIdempotencyKey, getOrderByNumber } from "@/lib/orders/store";
 import type { Order } from "@/lib/orders/types";
 

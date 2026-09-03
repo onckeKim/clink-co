@@ -6,7 +6,6 @@ import {
   pickDeliveryMethod,
   continueBilling,
   pickTestPaymentMethod,
-  placeOrder,
   runGuestCheckoutToPayment,
 } from "./utils/checkout-helpers";
 

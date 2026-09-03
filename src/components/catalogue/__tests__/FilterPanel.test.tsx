@@ -84,8 +84,7 @@ describe("FilterPanel (product filters component)", () => {
   });
 
   it("allows only one rating threshold to be selected at a time", () => {
-    let latest: CatalogueFilters = DEFAULT_FILTERS;
-    render(<StatefulFilterPanel onFiltersChange={(f) => (latest = f)} />);
+    render(<StatefulFilterPanel />);
     fireEvent.click(screen.getByRole("button", { name: "Rating" }));
     const fourAndUp = screen.getAllByRole("checkbox").find((el) => el.closest("label")?.textContent?.includes("& up"));
     expect(fourAndUp).toBeTruthy();
