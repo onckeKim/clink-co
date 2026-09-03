@@ -4,6 +4,7 @@ import { hasPermission } from "@/lib/admin/roles";
 import { recordAuditLog } from "@/lib/admin/audit-log-store";
 import { getOrderByNumber, setOrderStatus } from "@/lib/orders/store";
 import { orderStatusSchema } from "@/lib/validations/admin-orders";
+import { sendPaymentReceivedEmail, sendDeliveryConfirmationEmail } from "@/lib/email";
 
 export async function PATCH(request: Request, { params }: RouteContext<"/api/admin/orders/[orderNumber]/status">) {
   const ctx = await getAdminContext();
@@ -35,6 +36,15 @@ export async function PATCH(request: Request, { params }: RouteContext<"/api/adm
     before: { status: before.status },
     after: { status: order.status },
   });
+
+  // A manual status override is the one place these two transitions can
+  // happen outside the webhook/tracking flows already covered elsewhere
+  // (e.g. reconciling an EFT payment by hand, or closing out an order
+  // without formal courier tracking) — only fire on an actual change.
+  if (order.status !== before.status) {
+    if (order.status === "paid") void sendPaymentReceivedEmail(order);
+    if (order.status === "fulfilled") void sendDeliveryConfirmationEmail(order);
+  }
 
   return NextResponse.json({ order });
 }

@@ -2,8 +2,9 @@ import { NextResponse } from "next/server";
 import { getAdminContext } from "@/lib/supabase/dal";
 import { hasPermission } from "@/lib/admin/roles";
 import { recordAuditLog } from "@/lib/admin/audit-log-store";
-import { getAdminProductById, updateProduct, deleteProduct } from "@/lib/admin/products-store";
+import { getAdminProductById, updateProduct, deleteProduct, getLowStockThreshold } from "@/lib/admin/products-store";
 import { adminProductPatchSchema } from "@/lib/validations/admin-products";
+import { sendLowStockAdminWarning, sendOutOfStockAdminWarning } from "@/lib/email";
 
 export async function GET(_request: Request, { params }: RouteContext<"/api/admin/products/[id]">) {
   const ctx = await getAdminContext();
@@ -49,6 +50,18 @@ export async function PATCH(request: Request, { params }: RouteContext<"/api/adm
     before,
     after: product,
   });
+
+  // Only fire on the actual crossing, not every save — a product already
+  // sitting below the threshold shouldn't re-alert on an unrelated edit
+  // (e.g. changing its description).
+  const threshold = getLowStockThreshold(product);
+  const wasOutOfStock = before.stockQuantity <= 0;
+  const wasLowStock = before.stockQuantity > 0 && before.stockQuantity <= threshold;
+  if (product.stockQuantity <= 0 && !wasOutOfStock) {
+    void sendOutOfStockAdminWarning(product);
+  } else if (product.stockQuantity > 0 && product.stockQuantity <= threshold && !wasLowStock) {
+    void sendLowStockAdminWarning({ id: product.id, name: product.name, sku: product.sku, stockQuantity: product.stockQuantity, lowStockThreshold: threshold });
+  }
 
   return NextResponse.json({ product });
 }

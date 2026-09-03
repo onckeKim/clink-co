@@ -35,4 +35,8 @@ export interface StoreSettings {
   maintenanceMode: boolean;
   /** Shown on the maintenance-mode holding page when maintenanceMode is on. */
   maintenanceMessage: string;
+  /** Master switch for the abandoned-cart reminder email — see src/lib/email/abandoned-cart.ts. Off by default; an admin opts in explicitly. */
+  abandonedCartEnabled: boolean;
+  /** How long a cart must sit untouched before it's eligible for a reminder — admin-configurable per "Allow administrators to configure timing". */
+  abandonedCartDelayHours: number;
 }

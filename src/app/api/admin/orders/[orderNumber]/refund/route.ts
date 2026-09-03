@@ -4,6 +4,7 @@ import { hasPermission } from "@/lib/admin/roles";
 import { recordAuditLog } from "@/lib/admin/audit-log-store";
 import { getOrderByNumber, recordOrderRefund } from "@/lib/orders/store";
 import { refundOrderSchema } from "@/lib/validations/admin-orders";
+import { sendRefundProcessedEmail } from "@/lib/email";
 
 export async function POST(request: Request, { params }: RouteContext<"/api/admin/orders/[orderNumber]/refund">) {
   const ctx = await getAdminContext();
@@ -38,6 +39,8 @@ export async function POST(request: Request, { params }: RouteContext<"/api/admi
     before: { refundAmount: before.refundAmount },
     after: { refundAmount: order.refundAmount, refundReason: order.refundReason },
   });
+
+  void sendRefundProcessedEmail(order);
 
   return NextResponse.json({ order });
 }

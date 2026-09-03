@@ -4,6 +4,7 @@ import { hasPermission } from "@/lib/admin/roles";
 import { recordAuditLog } from "@/lib/admin/audit-log-store";
 import { getOrderByNumber, setOrderTracking } from "@/lib/orders/store";
 import { orderTrackingSchema } from "@/lib/validations/admin-orders";
+import { sendOrderShippedEmail } from "@/lib/email";
 
 export async function PATCH(request: Request, { params }: RouteContext<"/api/admin/orders/[orderNumber]/tracking">) {
   const ctx = await getAdminContext();
@@ -39,6 +40,9 @@ export async function PATCH(request: Request, { params }: RouteContext<"/api/adm
     },
     after: parsed.data,
   });
+
+  // Adding tracking is the natural "this order has shipped" moment.
+  void sendOrderShippedEmail(order);
 
   return NextResponse.json({ order });
 }

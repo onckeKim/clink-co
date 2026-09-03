@@ -159,13 +159,13 @@ export async function POST(request: Request) {
 
     // Fire-and-forget: email failures must never block order placement.
     void sendAdminOrderNotification(order);
-    // EFT has no gateway callback — the order is "placed, awaiting manual
-    // reconciliation" from the moment it's created, so the customer needs
-    // their reference/bank details by email right away rather than
-    // waiting on a webhook that will never arrive.
-    if (data.paymentMethod === "eft") {
-      void sendOrderConfirmationEmail(order);
-    }
+    // "Order confirmed" goes out the moment the order exists, regardless
+    // of payment method — a separate "Payment received" email follows
+    // once payment actually clears (immediately via webhook for gateway
+    // methods; EFT has no gateway callback at all, so its order
+    // confirmation doubles as the only email until the admin manually
+    // reconciles the bank transfer and marks it paid).
+    void sendOrderConfirmationEmail(order);
 
     return NextResponse.json({ orderNumber: order.orderNumber, redirectUrl: payment.redirectUrl });
   } catch (error) {

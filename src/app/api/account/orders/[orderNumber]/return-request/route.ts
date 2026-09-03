@@ -3,6 +3,7 @@ import { getUser } from "@/lib/supabase/dal";
 import { getOrderByNumber } from "@/lib/orders/store";
 import { createReturnRequest, getReturnRequest } from "@/lib/account/returns-store";
 import { returnRequestSchema } from "@/lib/validations/auth";
+import { sendReturnRequestReceivedEmail, sendReturnRequestAdminNotification } from "@/lib/email";
 
 export async function POST(
   request: Request,
@@ -40,6 +41,9 @@ export async function POST(
     reason: parsed.data.reason,
     notes: parsed.data.notes,
   });
+
+  void sendReturnRequestReceivedEmail(order, parsed.data.reason, parsed.data.notes);
+  void sendReturnRequestAdminNotification(order, parsed.data.reason, parsed.data.notes);
 
   return NextResponse.json({ returnRequest }, { status: 201 });
 }

@@ -7,7 +7,7 @@ import {
   markWebhookEventProcessed,
   setOrderStatus,
 } from "@/lib/orders/store";
-import { sendOrderConfirmationEmail } from "@/lib/email";
+import { sendPaymentReceivedEmail, sendPaymentFailedEmail, sendPaymentFailureAdminNotification } from "@/lib/email";
 import type { NormalizedPaymentStatus } from "@/lib/payments/types";
 import type { OrderStatus, PaymentMethodId } from "@/lib/orders/types";
 
@@ -71,9 +71,14 @@ export async function POST(request: Request, { params }: RouteContext<"/api/webh
   const nextStatus = mapStatus(event.status);
   if (nextStatus) {
     const wasAlreadyPaid = order.status === "paid";
+    const wasAlreadyFailed = order.status === "payment_failed";
     setOrderStatus(order.orderNumber, nextStatus);
     if (nextStatus === "paid" && !wasAlreadyPaid) {
-      void sendOrderConfirmationEmail(order);
+      void sendPaymentReceivedEmail(order);
+    }
+    if (nextStatus === "payment_failed" && !wasAlreadyFailed) {
+      void sendPaymentFailedEmail(order);
+      void sendPaymentFailureAdminNotification(order);
     }
   }
 

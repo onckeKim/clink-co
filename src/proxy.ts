@@ -5,7 +5,7 @@ import { isMaintenanceModeOn } from "@/lib/admin/settings-store";
 const PROTECTED_PREFIXES = ["/account", "/admin"];
 const AUTH_ONLY_PATHS = ["/login", "/signup"];
 /** Always reachable even while maintenance mode is on — store staff need /login and /admin to turn it back off, and the maintenance page itself must not redirect to itself. */
-const MAINTENANCE_MODE_EXEMPT_PREFIXES = ["/admin", "/api/admin", "/api/auth", "/login", "/maintenance"];
+const MAINTENANCE_MODE_EXEMPT_PREFIXES = ["/admin", "/api/admin", "/api/auth", "/login", "/maintenance", "/dev"];
 
 /**
  * Refreshes the Supabase auth session on every request so server components

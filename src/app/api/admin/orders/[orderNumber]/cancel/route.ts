@@ -4,6 +4,7 @@ import { hasPermission } from "@/lib/admin/roles";
 import { recordAuditLog } from "@/lib/admin/audit-log-store";
 import { cancelOrder, getOrderByNumber } from "@/lib/orders/store";
 import { cancelOrderSchema } from "@/lib/validations/admin-orders";
+import { sendOrderCancelledEmail } from "@/lib/email";
 
 export async function POST(request: Request, { params }: RouteContext<"/api/admin/orders/[orderNumber]/cancel">) {
   const ctx = await getAdminContext();
@@ -35,6 +36,8 @@ export async function POST(request: Request, { params }: RouteContext<"/api/admi
     before: { status: before.status },
     after: { status: order.status, cancelledReason: order.cancelledReason },
   });
+
+  void sendOrderCancelledEmail(order);
 
   return NextResponse.json({ order });
 }

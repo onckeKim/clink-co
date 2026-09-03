@@ -674,6 +674,27 @@ bucket setup, and the security decisions behind it.
 
 ---
 
+## Transactional emails
+
+26 branded, mobile-responsive email templates (19 customer-facing, 7
+staff-facing), a provider-neutral send service with retry and event
+logging, a configurable abandoned-cart workflow, and a dormant WhatsApp
+notification scaffold — see **[src/lib/email/README.md](src/lib/email/README.md)**
+for the full template list, the provider abstraction, and how to preview
+and test every template safely without sending anything real.
+
+Quick reference:
+- **Preview every template**: run `npm run dev` and open `/dev/emails`
+  (blocked outside development).
+- **No provider configured**: every send is logged to the console and
+  written to a local `.email-previews/*.html` file — nothing fails,
+  nothing is lost, nothing real is ever sent by accident.
+- **Switch providers**: set `EMAIL_PROVIDER` to `resend`, `sendgrid`, or
+  `postmark` (see `.env.local.example`) — nothing else in the codebase
+  changes.
+
+---
+
 ## Folder structure
 
 ```

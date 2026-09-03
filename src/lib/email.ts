@@ -1,124 +1,273 @@
+import "server-only";
 import type { Order } from "@/lib/orders/types";
-import { siteConfig } from "@/config/site";
+import type { ReturnReason } from "@/lib/account/returns-store";
+import { sendTransactionalEmail } from "@/lib/email/send";
+import {
+  orderConfirmationTemplate,
+  paymentReceivedTemplate,
+  paymentFailedTemplate,
+  orderProcessingTemplate,
+  orderPackedTemplate,
+  orderShippedTemplate,
+  deliveryConfirmationTemplate,
+  orderCancelledTemplate,
+  refundProcessedTemplate,
+} from "@/lib/email/templates/customer-orders";
+import { returnRequestReceivedTemplate, returnApprovedTemplate, returnRejectedTemplate } from "@/lib/email/templates/customer-returns";
+import {
+  newOrderAdminTemplate,
+  paymentFailureAdminTemplate,
+  lowStockAdminTemplate,
+  outOfStockAdminTemplate,
+  returnRequestAdminTemplate,
+  contactFormAdminTemplate,
+  newReviewAdminTemplate,
+  type StockAlertProduct,
+  type ContactSubmission,
+  type NewReviewNotification,
+} from "@/lib/email/templates/admin";
 import { getStoreSettings } from "@/lib/admin/settings-store";
-import { formatPrice } from "@/lib/utils";
-
-const RESEND_API_URL = "https://api.resend.com/emails";
-
-interface SendEmailInput {
-  to: string;
-  subject: string;
-  html: string;
-}
 
 /**
- * Sends transactional email via Resend's REST API directly (no SDK
- * dependency needed for one endpoint) when RESEND_API_KEY is set;
- * otherwise logs what would have been sent to the server console — the
- * same simulate-rather-than-fake-success pattern
- * src/components/layout/NewsletterForm.tsx already uses for its signup
- * call. Never throws: a failed or unconfigured email send shouldn't fail
- * the order that triggered it.
+ * Every trigger point in the app that sends a transactional email goes
+ * through one of these — thin wrappers pairing a template
+ * (src/lib/email/templates/**) with sendTransactionalEmail() (retry +
+ * logging, see src/lib/email/send.ts). None of these throw: a failed or
+ * unconfigured email must never fail the order/return/etc. action that
+ * triggered it — see each call site in src/app/api/**.
  */
-async function sendEmail({ to, subject, html }: SendEmailInput): Promise<{ sent: boolean; reason?: string }> {
-  const apiKey = process.env.RESEND_API_KEY;
-  if (!apiKey) {
-    console.log(`[email:not-configured] Would send "${subject}" to ${to}`);
-    return { sent: false, reason: "RESEND_API_KEY is not set" };
-  }
 
-  try {
-    const fromHost = (() => {
-      try {
-        return new URL(siteConfig.url).hostname;
-      } catch {
-        return "clinkandco.com";
-      }
-    })();
-    const settings = getStoreSettings();
-
-    const response = await fetch(RESEND_API_URL, {
-      method: "POST",
-      headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
-      body: JSON.stringify({
-        from: `${settings.emailSenderName} <${settings.emailSenderLocalPart}@${fromHost}>`,
-        to,
-        subject,
-        html,
-      }),
-    });
-
-    if (!response.ok) {
-      console.error(`[email:failed] ${response.status} sending "${subject}" to ${to}: ${await response.text()}`);
-      return { sent: false, reason: `Resend API error ${response.status}` };
-    }
-    return { sent: true };
-  } catch (error) {
-    console.error("[email:failed]", error);
-    return { sent: false, reason: error instanceof Error ? error.message : "Unknown error" };
-  }
+function customerRecipient(order: Pick<Order, "customerName" | "customerEmail">) {
+  return { name: order.customerName, email: order.customerEmail };
 }
 
-function orderLinesHtml(order: Order): string {
-  return order.lines
-    .map(
-      (line) => `
-      <tr>
-        <td style="padding:6px 0;">${line.name}${line.variantLabel ? ` — ${line.variantLabel}` : ""} × ${line.quantity}</td>
-        <td style="padding:6px 0; text-align:right;">${formatPrice(line.lineTotal)}</td>
-      </tr>`,
-    )
-    .join("");
+function adminRecipient() {
+  const settings = getStoreSettings();
+  return { name: `${settings.businessName} Team`, email: settings.orderNotificationEmail };
 }
 
-function orderSummaryHtml(order: Order): string {
-  return `
-    <table style="width:100%; border-collapse:collapse; font-family:sans-serif; font-size:14px; color:#1C1C1A;">
-      ${orderLinesHtml(order)}
-      <tr><td style="padding-top:10px;">Subtotal</td><td style="text-align:right; padding-top:10px;">${formatPrice(order.subtotal)}</td></tr>
-      ${
-        order.discountAmount > 0
-          ? `<tr><td>Discount${order.couponCode ? ` (${order.couponCode})` : ""}</td><td style="text-align:right;">-${formatPrice(order.discountAmount)}</td></tr>`
-          : ""
-      }
-      <tr><td>Delivery (${order.deliveryLabel})</td><td style="text-align:right;">${order.deliveryFee === 0 ? "Free" : formatPrice(order.deliveryFee)}</td></tr>
-      <tr><td style="font-weight:600; padding-top:8px;">Total</td><td style="text-align:right; font-weight:600; padding-top:8px;">${formatPrice(order.total)}</td></tr>
-    </table>`;
+// ---------------------------------------------------------------------------
+// Customer — order lifecycle
+// ---------------------------------------------------------------------------
+
+export function sendOrderConfirmationEmail(order: Order) {
+  return sendTransactionalEmail({
+    to: customerRecipient(order),
+    content: orderConfirmationTemplate(order),
+    category: "transactional",
+    templateKey: "order-confirmation",
+    relatedEntityType: "order",
+    relatedEntityId: order.orderNumber,
+  });
 }
 
-export async function sendOrderConfirmationEmail(order: Order) {
-  const firstName = order.customerName.split(" ")[0] || order.customerName;
-  const html = `
-    <div style="font-family:sans-serif; max-width:520px; margin:0 auto;">
-      <h1 style="font-size:20px;">Thank you for your order, ${firstName}</h1>
-      <p>Your order <strong>${order.orderNumber}</strong> is confirmed.</p>
-      ${orderSummaryHtml(order)}
-      <p style="margin-top:16px;">
-        Estimated delivery: ${new Date(order.estimatedDeliveryEarliest).toLocaleDateString("en-ZA")} –
-        ${new Date(order.estimatedDeliveryLatest).toLocaleDateString("en-ZA")}
-      </p>
-      ${
-        order.paymentMethod === "eft"
-          ? `<p>Please use reference <strong>${order.orderNumber}</strong> when making your bank transfer — your order ships once payment is confirmed.</p>`
-          : ""
-      }
-    </div>`;
-
-  return sendEmail({ to: order.customerEmail, subject: `Order confirmed — ${order.orderNumber}`, html });
+export function sendPaymentReceivedEmail(order: Order) {
+  return sendTransactionalEmail({
+    to: customerRecipient(order),
+    content: paymentReceivedTemplate(order),
+    category: "transactional",
+    templateKey: "payment-received",
+    relatedEntityType: "order",
+    relatedEntityId: order.orderNumber,
+  });
 }
 
-export async function sendAdminOrderNotification(order: Order) {
-  const address = order.deliveryAddress;
-  const html = `
-    <div style="font-family:sans-serif; max-width:520px; margin:0 auto;">
-      <h1 style="font-size:18px;">New order ${order.orderNumber}</h1>
-      <p>${order.customerName} &middot; ${order.customerEmail}</p>
-      ${orderSummaryHtml(order)}
-      <p>Payment method: ${order.paymentMethod}${order.paymentReference ? ` (ref: ${order.paymentReference})` : ""}</p>
-      <p>Deliver to: ${address.line1}, ${address.suburb}, ${address.city}, ${address.province} ${address.postalCode}</p>
-      ${order.giftMessage ? `<p>Gift message: "${order.giftMessage}"</p>` : ""}
-      ${order.shippingNotes ? `<p>Shipping notes: ${order.shippingNotes}</p>` : ""}
-    </div>`;
+export function sendPaymentFailedEmail(order: Order) {
+  return sendTransactionalEmail({
+    to: customerRecipient(order),
+    content: paymentFailedTemplate(order),
+    category: "transactional",
+    templateKey: "payment-failed",
+    relatedEntityType: "order",
+    relatedEntityId: order.orderNumber,
+  });
+}
 
-  return sendEmail({ to: getStoreSettings().orderNotificationEmail, subject: `New order: ${order.orderNumber}`, html });
+/** Not yet triggered anywhere — the app's OrderStatus enum has no discrete "processing" stage (see src/lib/orders/types.ts). Ready to call once a granular fulfilment sub-status exists. */
+export function sendOrderProcessingEmail(order: Order) {
+  return sendTransactionalEmail({
+    to: customerRecipient(order),
+    content: orderProcessingTemplate(order),
+    category: "transactional",
+    templateKey: "order-processing",
+    relatedEntityType: "order",
+    relatedEntityId: order.orderNumber,
+  });
+}
+
+/** Same status-model caveat as sendOrderProcessingEmail(). */
+export function sendOrderPackedEmail(order: Order) {
+  return sendTransactionalEmail({
+    to: customerRecipient(order),
+    content: orderPackedTemplate(order),
+    category: "transactional",
+    templateKey: "order-packed",
+    relatedEntityType: "order",
+    relatedEntityId: order.orderNumber,
+  });
+}
+
+export function sendOrderShippedEmail(order: Order) {
+  return sendTransactionalEmail({
+    to: customerRecipient(order),
+    content: orderShippedTemplate(order),
+    category: "transactional",
+    templateKey: "order-shipped",
+    relatedEntityType: "order",
+    relatedEntityId: order.orderNumber,
+  });
+}
+
+export function sendDeliveryConfirmationEmail(order: Order) {
+  return sendTransactionalEmail({
+    to: customerRecipient(order),
+    content: deliveryConfirmationTemplate(order),
+    category: "transactional",
+    templateKey: "delivery-confirmation",
+    relatedEntityType: "order",
+    relatedEntityId: order.orderNumber,
+  });
+}
+
+export function sendOrderCancelledEmail(order: Order) {
+  return sendTransactionalEmail({
+    to: customerRecipient(order),
+    content: orderCancelledTemplate(order),
+    category: "transactional",
+    templateKey: "order-cancelled",
+    relatedEntityType: "order",
+    relatedEntityId: order.orderNumber,
+  });
+}
+
+export function sendRefundProcessedEmail(order: Order) {
+  return sendTransactionalEmail({
+    to: customerRecipient(order),
+    content: refundProcessedTemplate(order),
+    category: "transactional",
+    templateKey: "refund-processed",
+    relatedEntityType: "order",
+    relatedEntityId: order.orderNumber,
+  });
+}
+
+// ---------------------------------------------------------------------------
+// Customer — returns
+// ---------------------------------------------------------------------------
+
+export function sendReturnRequestReceivedEmail(order: Order, reason: ReturnReason, notes?: string) {
+  return sendTransactionalEmail({
+    to: customerRecipient(order),
+    content: returnRequestReceivedTemplate(order, reason, notes),
+    category: "transactional",
+    templateKey: "return-request-received",
+    relatedEntityType: "order",
+    relatedEntityId: order.orderNumber,
+  });
+}
+
+/** Not yet triggered — approving/rejecting a return has no admin action in this build yet (src/lib/account/returns-store.ts's own doc comment names this exact gap). Ready to call from that flow once it exists. */
+export function sendReturnApprovedEmail(order: Order, instructions?: string) {
+  return sendTransactionalEmail({
+    to: customerRecipient(order),
+    content: returnApprovedTemplate(order, instructions),
+    category: "transactional",
+    templateKey: "return-approved",
+    relatedEntityType: "order",
+    relatedEntityId: order.orderNumber,
+  });
+}
+
+export function sendReturnRejectedEmail(order: Order, reason: string) {
+  return sendTransactionalEmail({
+    to: customerRecipient(order),
+    content: returnRejectedTemplate(order, reason),
+    category: "transactional",
+    templateKey: "return-rejected",
+    relatedEntityType: "order",
+    relatedEntityId: order.orderNumber,
+  });
+}
+
+// ---------------------------------------------------------------------------
+// Admin
+// ---------------------------------------------------------------------------
+
+export function sendAdminOrderNotification(order: Order) {
+  return sendTransactionalEmail({
+    to: adminRecipient(),
+    content: newOrderAdminTemplate(order),
+    category: "transactional",
+    templateKey: "admin-new-order",
+    relatedEntityType: "order",
+    relatedEntityId: order.orderNumber,
+  });
+}
+
+export function sendPaymentFailureAdminNotification(order: Order) {
+  return sendTransactionalEmail({
+    to: adminRecipient(),
+    content: paymentFailureAdminTemplate(order),
+    category: "transactional",
+    templateKey: "admin-payment-failure",
+    relatedEntityType: "order",
+    relatedEntityId: order.orderNumber,
+  });
+}
+
+export function sendLowStockAdminWarning(product: StockAlertProduct) {
+  return sendTransactionalEmail({
+    to: adminRecipient(),
+    content: lowStockAdminTemplate(product),
+    category: "transactional",
+    templateKey: "admin-low-stock",
+    relatedEntityType: "product",
+    relatedEntityId: product.id,
+  });
+}
+
+export function sendOutOfStockAdminWarning(product: Pick<StockAlertProduct, "id" | "name" | "sku">) {
+  return sendTransactionalEmail({
+    to: adminRecipient(),
+    content: outOfStockAdminTemplate(product),
+    category: "transactional",
+    templateKey: "admin-out-of-stock",
+    relatedEntityType: "product",
+    relatedEntityId: product.id,
+  });
+}
+
+export function sendReturnRequestAdminNotification(order: Order, reason: ReturnReason, notes?: string) {
+  return sendTransactionalEmail({
+    to: adminRecipient(),
+    content: returnRequestAdminTemplate(order, reason, notes),
+    category: "transactional",
+    templateKey: "admin-return-request",
+    relatedEntityType: "order",
+    relatedEntityId: order.orderNumber,
+  });
+}
+
+/** Not yet triggered — there's no contact form in this build yet to submit from. Ready to call from POST /api/contact once that page/route exists. */
+export function sendContactFormAdminNotification(submission: ContactSubmission) {
+  return sendTransactionalEmail({
+    to: adminRecipient(),
+    content: contactFormAdminTemplate(submission),
+    category: "transactional",
+    templateKey: "admin-contact-form",
+    relatedEntityType: "contact",
+    relatedEntityId: submission.email,
+  });
+}
+
+/** Not yet triggered — src/components/product/ReviewsSection.tsx's submission flow is client-only (no server persistence yet), so there's no server-side moment to call this from. Ready to call once review submission is wired to a real store/table. */
+export function sendNewReviewAdminNotification(review: NewReviewNotification) {
+  return sendTransactionalEmail({
+    to: adminRecipient(),
+    content: newReviewAdminTemplate(review),
+    category: "transactional",
+    templateKey: "admin-new-review",
+    relatedEntityType: "product",
+    relatedEntityId: review.productSlug,
+  });
 }

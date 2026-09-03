@@ -40,3 +40,8 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# local email previews (see src/lib/email/providers/console.ts) — rendered
+# HTML for every email sent while no real provider is configured; never
+# meant to be committed.
+.email-previews/

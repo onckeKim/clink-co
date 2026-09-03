@@ -237,6 +237,35 @@ export function AdminSettingsView() {
             <Textarea id="s-maintenance-message" value={settings.maintenanceMessage} onChange={(e) => setSettings({ ...settings, maintenanceMessage: e.target.value })} />
           </div>
         </Section>
+
+        <Section
+          title="Abandoned cart emails"
+          description="A reminder email sent to signed-in customers who leave items in their cart — only to customers who've opted into marketing emails, and never after they've completed an order."
+        >
+          <div className="flex items-center gap-3">
+            <Switch
+              checked={settings.abandonedCartEnabled}
+              onCheckedChange={(v) => setSettings({ ...settings, abandonedCartEnabled: v })}
+              id="s-abandoned-cart-enabled"
+            />
+            <Label htmlFor="s-abandoned-cart-enabled" className="mb-0 normal-case tracking-normal text-charcoal">
+              Abandoned cart emails are {settings.abandonedCartEnabled ? "on" : "off"}
+            </Label>
+          </div>
+          <div>
+            <Label htmlFor="s-abandoned-cart-delay">Send after (hours of inactivity)</Label>
+            <Input
+              id="s-abandoned-cart-delay"
+              type="number"
+              inputMode="numeric"
+              min={1}
+              max={168}
+              value={settings.abandonedCartDelayHours}
+              onChange={(e) => setSettings({ ...settings, abandonedCartDelayHours: Number(e.target.value) })}
+              className="max-w-[160px]"
+            />
+          </div>
+        </Section>
       </div>
     </form>
   );

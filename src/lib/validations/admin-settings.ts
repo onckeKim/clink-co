@@ -33,5 +33,7 @@ export const storeSettingsPatchSchema = z.object({
   returnWindowDays: z.number().int().positive().optional(),
   maintenanceMode: z.boolean().optional(),
   maintenanceMessage: z.string().trim().min(1).optional(),
+  abandonedCartEnabled: z.boolean().optional(),
+  abandonedCartDelayHours: z.number().int().min(1).max(168).optional(),
 });
 export type StoreSettingsPatchInput = z.infer<typeof storeSettingsPatchSchema>;

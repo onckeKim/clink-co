@@ -26,4 +26,6 @@ export const settingsSeed: StoreSettings = {
   returnWindowDays: siteConfig.returnWindowDays,
   maintenanceMode: false,
   maintenanceMessage: "We're carrying out some scheduled maintenance and will be back shortly. Thanks for your patience.",
+  abandonedCartEnabled: false,
+  abandonedCartDelayHours: 24,
 };
