@@ -88,6 +88,7 @@ export default async function AdminDashboardPage() {
           label="Unanswered questions"
           value={stats.unansweredQuestionsCount.toLocaleString("en-ZA")}
           icon={MessageCircleQuestion}
+          href="/admin/questions"
           tone={stats.unansweredQuestionsCount > 0 ? "warning" : "neutral"}
         />
       </div>
@@ -274,8 +275,11 @@ export default async function AdminDashboardPage() {
       </Card>
 
       <Card>
-        <CardHeader>
+        <CardHeader className="flex-row items-center justify-between">
           <CardTitle>Questions awaiting an answer</CardTitle>
+          <Link href="/admin/questions" className="text-xs font-medium text-charcoal underline-offset-2 hover:underline">
+            View all
+          </Link>
         </CardHeader>
         <CardContent className="pt-0">
           {stats.unansweredQuestions.length === 0 ? (
