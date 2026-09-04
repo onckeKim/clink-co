@@ -31,3 +31,26 @@ export async function createQuestion(input: QuestionInsert): Promise<QuestionRow
   const { data, error } = await db.from("product_questions").insert(input).select().single();
   return unwrap({ data, error });
 }
+
+export interface AdminQuestionRow extends QuestionWithAnswer {
+  products: { name: string; slug: string } | null;
+}
+
+/**
+ * Every question across every product, newest first, with its product's
+ * name/slug and its answer (if any) — the "needs a reply" queue. A
+ * question publishes immediately on submission (see getPublishedQuestions's
+ * comment), so unlike reviews there's no moderation status to filter on;
+ * "unansweredOnly" filters by whether product_answers has a row instead.
+ * RLS (product_questions_select_staff) restricts this to a session with
+ * content:view.
+ */
+export async function listQuestionsForAdmin(unansweredOnly?: boolean): Promise<AdminQuestionRow[]> {
+  const db = await getDb();
+  const { data, error } = await db
+    .from("product_questions")
+    .select("*, product_answers(*), products(name, slug)")
+    .order("created_at", { ascending: false });
+  const rows = unwrap({ data, error }) as unknown as AdminQuestionRow[];
+  return unansweredOnly ? rows.filter((row) => row.product_answers.length === 0) : rows;
+}

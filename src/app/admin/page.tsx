@@ -10,6 +10,7 @@ import {
   UserPlus,
   Undo2,
   Star,
+  MessageCircleQuestion,
 } from "lucide-react";
 import { requirePermission } from "@/lib/supabase/dal";
 import { getDashboardStats } from "@/lib/admin/dashboard-stats";
@@ -49,7 +50,7 @@ export default async function AdminDashboardPage() {
         />
       </div>
 
-      <div className="grid grid-cols-2 gap-4 lg:grid-cols-5">
+      <div className="grid grid-cols-2 gap-4 lg:grid-cols-6">
         <StatCard
           label="Out of stock"
           value={stats.outOfStockCount.toLocaleString("en-ZA")}
@@ -82,6 +83,12 @@ export default async function AdminDashboardPage() {
           icon={Star}
           href="/admin/reviews"
           tone={stats.pendingReviewsCount > 0 ? "warning" : "neutral"}
+        />
+        <StatCard
+          label="Unanswered questions"
+          value={stats.unansweredQuestionsCount.toLocaleString("en-ZA")}
+          icon={MessageCircleQuestion}
+          tone={stats.unansweredQuestionsCount > 0 ? "warning" : "neutral"}
         />
       </div>
 
@@ -258,6 +265,38 @@ export default async function AdminDashboardPage() {
                     <TableCell>{review.rating}/5</TableCell>
                     <TableCell className="max-w-xs truncate text-stone">{review.body}</TableCell>
                     <TableCell className="text-stone">{review.createdAt.slice(0, 10)}</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          )}
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Questions awaiting an answer</CardTitle>
+        </CardHeader>
+        <CardContent className="pt-0">
+          {stats.unansweredQuestions.length === 0 ? (
+            <p className="py-6 text-center text-sm text-stone">Nothing waiting on you.</p>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Product</TableHead>
+                  <TableHead>Asked by</TableHead>
+                  <TableHead>Question</TableHead>
+                  <TableHead>Asked</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {stats.unansweredQuestions.map((question) => (
+                  <TableRow key={question.id}>
+                    <TableCell className="max-w-[160px] truncate">{question.productName}</TableCell>
+                    <TableCell className="max-w-[140px] truncate">{question.askedBy}</TableCell>
+                    <TableCell className="max-w-md truncate text-stone">{question.question}</TableCell>
+                    <TableCell className="text-stone">{question.askedAt.slice(0, 10)}</TableCell>
                   </TableRow>
                 ))}
               </TableBody>

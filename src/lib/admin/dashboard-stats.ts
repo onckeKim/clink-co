@@ -5,6 +5,7 @@ import { listAdminProducts, getAdminProductById, getLowStockThreshold } from "@/
 import { listProfiles } from "@/lib/account/profiles-store";
 import { listReturnRequests } from "@/lib/account/returns-store";
 import { listReviews, type AdminReview } from "@/lib/admin/reviews-store";
+import { listQuestions, type AdminQuestion } from "@/lib/admin/qa-store";
 import { getOrderStatusChartColor, getOrderStatusLabel } from "@/lib/orders/status";
 
 /** Orders that represent completed, actually-paid revenue — a pending/failed/cancelled order was never fulfilled or collected. */
@@ -14,6 +15,7 @@ const RECENT_ORDERS_LIMIT = 8;
 const BESTSELLERS_LIMIT = 5;
 const LOW_STOCK_LIMIT = 8;
 const PENDING_REVIEWS_LIMIT = 8;
+const UNANSWERED_QUESTIONS_LIMIT = 8;
 
 export interface BestsellingProduct {
   product: Product;
@@ -48,6 +50,9 @@ export interface DashboardStats {
   /** Reviews awaiting moderation (status = 'pending') — see src/lib/admin/reviews-store.ts / /admin/reviews. Not visible on any product page until a staff member publishes or rejects them. */
   pendingReviewsCount: number;
   pendingReviews: AdminReview[];
+  /** Questions still waiting on a staff reply (product_answers has no row) — see src/lib/admin/qa-store.ts. A question is public the moment it's asked, so this isn't a moderation gate like pendingReviewsCount, just an unanswered-backlog signal. */
+  unansweredQuestionsCount: number;
+  unansweredQuestions: AdminQuestion[];
   salesTrend: SalesTrendPoint[];
   orderStatusDistribution: OrderStatusSlice[];
 }
@@ -103,6 +108,7 @@ export async function getDashboardStats(now: Date = new Date()): Promise<Dashboa
   const pendingReturnsCount = listReturnRequests().length;
 
   const pendingReviews = await listReviews("pending");
+  const unansweredQuestions = await listQuestions(true);
 
   const salesByDay = new Map<string, number>();
   for (const order of paidOrders) {
@@ -141,6 +147,8 @@ export async function getDashboardStats(now: Date = new Date()): Promise<Dashboa
     pendingReturnsCount,
     pendingReviewsCount: pendingReviews.length,
     pendingReviews: pendingReviews.slice(0, PENDING_REVIEWS_LIMIT),
+    unansweredQuestionsCount: unansweredQuestions.length,
+    unansweredQuestions: unansweredQuestions.slice(0, UNANSWERED_QUESTIONS_LIMIT),
     salesTrend,
     orderStatusDistribution,
   };
