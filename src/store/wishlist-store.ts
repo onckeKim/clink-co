@@ -13,6 +13,9 @@ export interface WishlistItem {
 
 interface WishlistState {
   items: WishlistItem[];
+  /** The signed-in account's id, set by <AuthCartSync> — see cart-store.ts's identical field for why this store doesn't make network calls itself. */
+  userId: string | null;
+  setUserId: (userId: string | null) => void;
   toggle: (product: Product) => void;
   /** Adds a pre-built item directly — used when moving a cart line to the wishlist, where only denormalized cart data (not a full Product) is on hand. No-ops if already present. */
   add: (item: WishlistItem) => void;
@@ -25,6 +28,8 @@ export const useWishlistStore = create<WishlistState>()(
   persist(
     (set, get) => ({
       items: [],
+      userId: null,
+      setUserId: (userId) => set({ userId }),
 
       toggle: (product) => {
         const exists = get().items.some((item) => item.productId === product.id);

@@ -43,6 +43,17 @@ export async function toggleWishlistItem(wishlistId: string, productId: string):
   return { inWishlist: true };
 }
 
+/** Replaces every item in a wishlist with exactly the given product id set — same delete-then-bulk-insert "whole-record overwrite" as replaceCartItems(), backing the account wishlist's continuous background sync from wishlist-store.ts. */
+export async function replaceWishlistItems(wishlistId: string, productIds: string[]): Promise<void> {
+  const db = await getDb();
+  const del = await db.from("wishlist_items").delete().eq("wishlist_id", wishlistId);
+  if (del.error) throw mapPostgrestError(del.error);
+  if (productIds.length === 0) return;
+  const rows = productIds.map((product_id) => ({ wishlist_id: wishlistId, product_id }));
+  const ins = await db.from("wishlist_items").insert(rows);
+  if (ins.error) throw mapPostgrestError(ins.error);
+}
+
 /**
  * Reads a shared wishlist by its token — via the get_wishlist_by_share_token
  * RPC, never a direct `.from("wishlists")` select, since there is

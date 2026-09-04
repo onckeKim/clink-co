@@ -44,6 +44,15 @@ interface CartState {
    * onRehydrateStorage re-resolving below.
    */
   coupons: Coupon[];
+  /**
+   * The signed-in account's id, set by <AuthCartSync> — not persisted
+   * (always starts null; re-established on sign-in the same way `coupons`
+   * is). cart-store.ts itself never makes network calls — this flag just
+   * tells the sync-to-account watcher in useAuthCartSync.ts whether it
+   * should push `lines` to the account's saved cart when they change.
+   */
+  userId: string | null;
+  setUserId: (userId: string | null) => void;
   addItem: (product: Product, options?: { variant?: ProductVariant; quantity?: number }) => void;
   removeLine: (lineId: string) => void;
   updateQuantity: (lineId: string, quantity: number, stockQuantity?: number) => void;
@@ -135,6 +144,8 @@ export const useCartStore = create<CartState>()(
       manualCouponCode: null,
       couponError: null,
       coupons: [],
+      userId: null,
+      setUserId: (userId) => set({ userId }),
 
       addItem: (product, options) => {
         const requestedQuantity = options?.quantity ?? 1;

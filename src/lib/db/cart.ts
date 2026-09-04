@@ -84,3 +84,31 @@ export async function removeCartItem(itemId: string): Promise<void> {
   const { error } = await db.from("cart_items").delete().eq("id", itemId);
   if (error) throw mapPostgrestError(error);
 }
+
+/**
+ * Replaces every item in a cart with exactly the given set — delete then
+ * bulk-insert, rather than diffing against what's already there. Backs the
+ * account cart's continuous background sync from cart-store.ts (see
+ * useAuthCartSync): the client is always the source of truth for "what's in
+ * the cart right now", so each sync just overwrites the DB's copy to match,
+ * the same "whole-record overwrite" approach already used for coupon
+ * collection_ids and product variants/images.
+ */
+export async function replaceCartItems(
+  cartId: string,
+  items: { productId: string; variantId?: string | null; quantity: number; unitPrice: number }[],
+): Promise<void> {
+  const db = await getDb();
+  const del = await db.from("cart_items").delete().eq("cart_id", cartId);
+  if (del.error) throw mapPostgrestError(del.error);
+  if (items.length === 0) return;
+  const rows = items.map((i) => ({
+    cart_id: cartId,
+    product_id: i.productId,
+    variant_id: i.variantId ?? null,
+    quantity: i.quantity,
+    unit_price_snapshot: i.unitPrice,
+  }));
+  const ins = await db.from("cart_items").insert(rows);
+  if (ins.error) throw mapPostgrestError(ins.error);
+}
