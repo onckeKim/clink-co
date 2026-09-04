@@ -4,6 +4,7 @@ import { hasPermission } from "@/lib/admin/roles";
 import { recordAuditLog } from "@/lib/admin/audit-log-store";
 import { getAdminCouponById, updateCoupon, deleteCoupon } from "@/lib/admin/coupons-store";
 import { adminCouponPatchSchema } from "@/lib/validations/admin-coupons";
+import { dbErrorResponse } from "@/lib/db/errors";
 
 export async function GET(_request: Request, { params }: RouteContext<"/api/admin/coupons/[id]">) {
   const ctx = await getAdminContext();
@@ -13,10 +14,13 @@ export async function GET(_request: Request, { params }: RouteContext<"/api/admi
   }
 
   const { id } = await params;
-  const coupon = getAdminCouponById(id);
-  if (!coupon) return NextResponse.json({ error: "Coupon not found." }, { status: 404 });
-
-  return NextResponse.json({ coupon });
+  try {
+    const coupon = await getAdminCouponById(id);
+    if (!coupon) return NextResponse.json({ error: "Coupon not found." }, { status: 404 });
+    return NextResponse.json({ coupon });
+  } catch (err) {
+    return dbErrorResponse(err);
+  }
 }
 
 export async function PATCH(request: Request, { params }: RouteContext<"/api/admin/coupons/[id]">) {
@@ -27,16 +31,20 @@ export async function PATCH(request: Request, { params }: RouteContext<"/api/adm
   }
 
   const { id } = await params;
-  const before = getAdminCouponById(id);
-  if (!before) return NextResponse.json({ error: "Coupon not found." }, { status: 404 });
-
   const body = await request.json().catch(() => null);
   const parsed = adminCouponPatchSchema.safeParse(body);
   if (!parsed.success) {
     return NextResponse.json({ error: parsed.error.issues[0]?.message ?? "Invalid coupon." }, { status: 400 });
   }
 
-  const result = updateCoupon(id, parsed.data);
+  let before, result;
+  try {
+    before = await getAdminCouponById(id);
+    if (!before) return NextResponse.json({ error: "Coupon not found." }, { status: 404 });
+    result = await updateCoupon(id, parsed.data);
+  } catch (err) {
+    return dbErrorResponse(err);
+  }
   if (!result.ok) return NextResponse.json({ error: result.reason }, { status: 409 });
 
   recordAuditLog({
@@ -61,20 +69,24 @@ export async function DELETE(_request: Request, { params }: RouteContext<"/api/a
   }
 
   const { id } = await params;
-  const before = getAdminCouponById(id);
-  if (!before) return NextResponse.json({ error: "Coupon not found." }, { status: 404 });
+  try {
+    const before = await getAdminCouponById(id);
+    if (!before) return NextResponse.json({ error: "Coupon not found." }, { status: 404 });
 
-  deleteCoupon(id);
+    await deleteCoupon(id);
 
-  recordAuditLog({
-    userId: ctx.user.id,
-    userEmail: ctx.user.email ?? "",
-    action: "Deleted coupon",
-    entityType: "coupon",
-    entityId: before.id,
-    entityLabel: before.code,
-    before,
-  });
+    recordAuditLog({
+      userId: ctx.user.id,
+      userEmail: ctx.user.email ?? "",
+      action: "Deleted coupon",
+      entityType: "coupon",
+      entityId: before.id,
+      entityLabel: before.code,
+      before,
+    });
 
-  return NextResponse.json({ ok: true });
+    return NextResponse.json({ ok: true });
+  } catch (err) {
+    return dbErrorResponse(err);
+  }
 }

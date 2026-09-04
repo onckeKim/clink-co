@@ -5,6 +5,7 @@ import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { CookieBannerLoader } from "@/components/layout/CookieBannerLoader";
 import { AuthCartSync } from "@/components/layout/AuthCartSync";
+import { CouponsSync } from "@/components/layout/CouponsSync";
 import { PromoBannerBar } from "@/components/layout/PromoBannerBar";
 import { SiteChrome } from "@/components/layout/SiteChrome";
 import { Analytics } from "@/components/analytics/Analytics";
@@ -13,6 +14,7 @@ import { CatalogProvider } from "@/components/providers/CatalogProvider";
 import { getStoreSettings } from "@/lib/admin/settings-store";
 import { getCategories } from "@/data/categories";
 import { getCuratedCollections } from "@/data/collections";
+import { getCoupons } from "@/data/coupons";
 
 const inter = Inter({
   variable: "--font-inter",
@@ -80,10 +82,11 @@ export const metadata: Metadata = {
 };
 
 export default async function RootLayout({ children }: LayoutProps<"/">) {
-  const [settings, categories, collections] = await Promise.all([
+  const [settings, categories, collections, coupons] = await Promise.all([
     getStoreSettings(),
     getCategories(),
     getCuratedCollections(),
+    getCoupons(),
   ]);
   return (
     <html
@@ -107,6 +110,7 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
               footer={<Footer />}
               cookieBanner={<CookieBannerLoader />}
               authCartSync={<AuthCartSync />}
+              couponsSync={<CouponsSync coupons={coupons} />}
             >
               {children}
             </SiteChrome>

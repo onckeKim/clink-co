@@ -4,6 +4,7 @@ import { hasPermission } from "@/lib/admin/roles";
 import { recordAuditLog } from "@/lib/admin/audit-log-store";
 import { createCoupon, listAdminCoupons } from "@/lib/admin/coupons-store";
 import { adminCouponSchema } from "@/lib/validations/admin-coupons";
+import { dbErrorResponse } from "@/lib/db/errors";
 
 export async function GET() {
   const ctx = await getAdminContext();
@@ -12,7 +13,11 @@ export async function GET() {
     return NextResponse.json({ error: "You don't have permission to view promotions." }, { status: 403 });
   }
 
-  return NextResponse.json({ coupons: listAdminCoupons() });
+  try {
+    return NextResponse.json({ coupons: await listAdminCoupons() });
+  } catch (err) {
+    return dbErrorResponse(err);
+  }
 }
 
 export async function POST(request: Request) {
@@ -28,7 +33,12 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: parsed.error.issues[0]?.message ?? "Invalid coupon." }, { status: 400 });
   }
 
-  const result = createCoupon(parsed.data);
+  let result;
+  try {
+    result = await createCoupon(parsed.data);
+  } catch (err) {
+    return dbErrorResponse(err);
+  }
   if (!result.ok) return NextResponse.json({ error: result.reason }, { status: 409 });
 
   recordAuditLog({

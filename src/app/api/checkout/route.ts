@@ -1,7 +1,9 @@
 import { NextResponse } from "next/server";
 import { checkoutRequestSchema } from "@/lib/validations/checkout";
 import { validateCartLines } from "@/lib/cart-validation";
-import { validateCoupon, recordCouponUsage } from "@/lib/promotions";
+import { validateCoupon } from "@/lib/promotions";
+import { getCoupons } from "@/data/coupons";
+import { redeemCoupon } from "@/lib/admin/coupons-store";
 import { computeCartTotals } from "@/lib/cart";
 import { quoteDelivery } from "@/lib/delivery";
 import { createOrder, findOrderByIdempotencyKey, updateOrder } from "@/lib/orders/store";
@@ -60,8 +62,10 @@ export async function POST(request: Request) {
   let discountAmount = 0;
   let freeDeliveryFromCoupon = false;
   if (data.couponCode) {
+    const coupons = await getCoupons();
     const couponResult = validateCoupon(
       data.couponCode,
+      coupons,
       cartValidation.lines.map((line) => ({
         slug: line.slug,
         categorySlug: line.categorySlug,
@@ -145,7 +149,26 @@ export async function POST(request: Request) {
     paymentMethod: data.paymentMethod,
   });
 
-  if (data.couponCode) recordCouponUsage(data.couponCode);
+  if (data.couponCode) {
+    // Atomically registers the redemption and increments times_used
+    // (db/discounts.ts's redeem_discount_code() RPC row-locks the code for
+    // this). The order already exists with discountAmount baked into its
+    // totals at this point — a failure here (e.g. a genuine race that
+    // exhausted a usage-limited code between the soft validateCoupon()
+    // check above and now) shouldn't unwind an order whose payment is
+    // already in flight, so it's logged rather than thrown.
+    try {
+      await redeemCoupon({
+        code: data.couponCode,
+        orderId: order.id,
+        userId: user?.id ?? null,
+        customerEmail: data.customer.email,
+        amountDiscounted: discountAmount,
+      });
+    } catch (err) {
+      console.error("[checkout] failed to redeem coupon", order.orderNumber, data.couponCode, err);
+    }
+  }
 
   const origin = new URL(request.url).origin;
 

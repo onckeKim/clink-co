@@ -1,4 +1,4 @@
-import { getCouponByCode, getAutomaticCoupons, recordCouponUsage, type Coupon } from "@/data/coupons";
+import type { Coupon } from "@/types/coupon";
 import { formatPrice } from "@/lib/utils";
 
 /** The minimal shape the promotions engine needs from a cart line — decoupled from the cart store so this stays a pure, independently testable module. */
@@ -44,16 +44,26 @@ function matchesScope(line: PromotableLine, coupon: Coupon): boolean {
  * identically for a manually-entered code and for the code of an
  * automatic discount (see `getBestAutomaticDiscount`) — both are `Coupon`
  * records, just gated by `requiresCode` on the storefront.
+ *
+ * `coupons` is the currently-usable set (src/lib/admin/coupons-store.ts's
+ * getCoupons()) — a pure-function parameter rather than an internal fetch,
+ * same reasoning as lib/catalogue.ts's categories/collections params: this
+ * runs from a Zustand store action (cart-store.ts) that can't call an async
+ * DB read or a React hook, so the caller fetches once and passes the list
+ * in. A coupon this list doesn't contain (expired, inactive, exhausted, or
+ * simply mistyped) reads as the same generic "isn't valid" error.
  */
 export function validateCoupon(
   code: string,
+  coupons: Coupon[],
   lines: PromotableLine[],
   subtotal: number,
   now: Date = new Date(),
   /** The customer's email, when known — only passed at checkout (see /api/checkout), so a `customerEmails`-restricted coupon isn't rejected merely for being applied to an anonymous cart. */
   customerEmail?: string,
 ): CouponValidationResult {
-  const coupon = getCouponByCode(code);
+  const normalized = code.trim().toLowerCase();
+  const coupon = coupons.find((c) => c.code.toLowerCase() === normalized);
   if (!coupon) return { valid: false, error: "That coupon code isn't valid." };
   if (!coupon.active) return { valid: false, error: "That coupon is no longer active." };
   if (coupon.customerEmails?.length && customerEmail) {
@@ -98,13 +108,15 @@ export function validateCoupon(
  * stacking), matching how the manual-coupon flow already works.
  */
 export function getBestAutomaticDiscount(
+  /** Only the automatic (requiresCode: false) coupons among the currently-usable set — see validateCoupon()'s doc comment on `coupons`. */
+  automaticCoupons: Coupon[],
   lines: PromotableLine[],
   subtotal: number,
   now: Date = new Date(),
 ): CouponValidationSuccess | null {
   let best: CouponValidationSuccess | null = null;
-  for (const coupon of getAutomaticCoupons()) {
-    const result = validateCoupon(coupon.code, lines, subtotal, now);
+  for (const coupon of automaticCoupons) {
+    const result = validateCoupon(coupon.code, automaticCoupons, lines, subtotal, now);
     if (!result.valid) continue;
     if (
       !best ||
@@ -116,5 +128,3 @@ export function getBestAutomaticDiscount(
   }
   return best;
 }
-
-export { recordCouponUsage };

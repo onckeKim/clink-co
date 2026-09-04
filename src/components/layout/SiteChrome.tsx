@@ -21,6 +21,7 @@ export function SiteChrome({
   footer,
   cookieBanner,
   authCartSync,
+  couponsSync,
   children,
 }: {
   skipLink: ReactNode;
@@ -30,6 +31,7 @@ export function SiteChrome({
   footer: ReactNode;
   cookieBanner: ReactNode;
   authCartSync: ReactNode;
+  couponsSync: ReactNode;
   children: ReactNode;
 }) {
   const pathname = usePathname();
@@ -62,6 +64,7 @@ export function SiteChrome({
       {footer}
       {cookieBanner}
       {authCartSync}
+      {couponsSync}
     </>
   );
 }

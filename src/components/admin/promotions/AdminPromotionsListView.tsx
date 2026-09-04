@@ -25,7 +25,6 @@ interface FormState {
   minSpend: string;
   startsAt: string;
   endsAt: string;
-  productSlugs: string[];
   collectionSlugs: string[];
   customerEmails: string[];
   usageLimit: string;
@@ -42,7 +41,6 @@ const emptyForm: FormState = {
   minSpend: "",
   startsAt: "",
   endsAt: "",
-  productSlugs: [],
   collectionSlugs: [],
   customerEmails: [],
   usageLimit: "",
@@ -60,7 +58,6 @@ function fromCoupon(coupon: Coupon): FormState {
     minSpend: coupon.minSpend !== undefined ? String(coupon.minSpend) : "",
     startsAt: coupon.startsAt ?? "",
     endsAt: coupon.endsAt ?? "",
-    productSlugs: coupon.productSlugs ?? [],
     collectionSlugs: coupon.collectionSlugs ?? [],
     customerEmails: coupon.customerEmails ?? [],
     usageLimit: coupon.usageLimit !== undefined ? String(coupon.usageLimit) : "",
@@ -79,7 +76,6 @@ function toPayload(form: FormState) {
     minSpend: form.minSpend ? Number(form.minSpend) : undefined,
     startsAt: form.startsAt || undefined,
     endsAt: form.endsAt || undefined,
-    productSlugs: form.productSlugs.length ? form.productSlugs : undefined,
     collectionSlugs: form.collectionSlugs.length ? form.collectionSlugs : undefined,
     customerEmails: form.customerEmails.length ? form.customerEmails : undefined,
     usageLimit: form.usageLimit ? Number(form.usageLimit) : undefined,
@@ -296,8 +292,10 @@ export function AdminPromotionsListView() {
           </div>
 
           <div>
-            <Label htmlFor="promo-products">Restrict to products (slugs)</Label>
-            <TagListInput values={form.productSlugs} onChange={(v) => setForm((f) => ({ ...f, productSlugs: v }))} placeholder="Type a product slug, press Enter" />
+            <Label htmlFor="promo-products">Restrict to products</Label>
+            <p className="rounded-lg border border-dashed border-sand px-3 py-2.5 text-xs text-stone">
+              Not available yet — the product catalog hasn&apos;t moved to the database. Use a collection restriction instead.
+            </p>
           </div>
           <div>
             <Label htmlFor="promo-collections">Restrict to collections (slugs)</Label>

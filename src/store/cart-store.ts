@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import type { Product, ProductVariant } from "@/types/product";
+import type { Coupon } from "@/types/coupon";
 import { validateCoupon, getBestAutomaticDiscount, type PromotableLine } from "@/lib/promotions";
 import { track } from "@/lib/analytics/track";
 
@@ -34,6 +35,15 @@ interface CartState {
   /** The code the customer explicitly entered via applyCoupon(), independent of whatever's currently applied — kept so an automatic discount picked up after removeCoupon() never gets mistaken for a manual choice, and so a cart-content change can re-validate the customer's actual intent rather than whatever happened to be applied last. */
   manualCouponCode: string | null;
   couponError: string | null;
+  /**
+   * The currently-usable discount codes (src/lib/admin/coupons-store.ts's
+   * getCoupons()), fed in by <CouponsSync> on mount — this is a Zustand
+   * store action, not a React component, so it can't call an async DB read
+   * or a useCatalog()-style hook itself. Not persisted: always starts empty
+   * and gets a fresh snapshot each time the app loads, same reasoning as
+   * onRehydrateStorage re-resolving below.
+   */
+  coupons: Coupon[];
   addItem: (product: Product, options?: { variant?: ProductVariant; quantity?: number }) => void;
   removeLine: (lineId: string) => void;
   updateQuantity: (lineId: string, quantity: number, stockQuantity?: number) => void;
@@ -43,6 +53,7 @@ interface CartState {
   toggle: () => void;
   applyCoupon: (code: string) => void;
   removeCoupon: () => void;
+  setCoupons: (coupons: Coupon[]) => void;
 }
 
 const lineKey = (productId: string, variantId?: string) =>
@@ -76,13 +87,14 @@ function subtotalOf(lines: CartLine[]): number {
 function resolveCoupon(
   lines: CartLine[],
   manualCouponCode: string | null,
+  coupons: Coupon[],
 ): { coupon: AppliedCoupon | null; couponError: string | null } {
   const promotableLines = toPromotableLines(lines);
   const subtotal = subtotalOf(lines);
 
   let couponError: string | null = null;
   if (manualCouponCode) {
-    const result = validateCoupon(manualCouponCode, promotableLines, subtotal);
+    const result = validateCoupon(manualCouponCode, coupons, promotableLines, subtotal);
     if (result.valid) {
       return {
         coupon: {
@@ -97,7 +109,8 @@ function resolveCoupon(
     couponError = `"${manualCouponCode}" no longer applies: ${result.error}`;
   }
 
-  const automatic = getBestAutomaticDiscount(promotableLines, subtotal);
+  const automaticCoupons = coupons.filter((c) => !c.requiresCode);
+  const automatic = getBestAutomaticDiscount(automaticCoupons, promotableLines, subtotal);
   if (automatic) {
     return {
       coupon: {
@@ -121,6 +134,7 @@ export const useCartStore = create<CartState>()(
       coupon: null,
       manualCouponCode: null,
       couponError: null,
+      coupons: [],
 
       addItem: (product, options) => {
         const requestedQuantity = options?.quantity ?? 1;
@@ -151,7 +165,7 @@ export const useCartStore = create<CartState>()(
             },
           ];
         }
-        set({ lines: nextLines, isOpen: true, ...resolveCoupon(nextLines, get().manualCouponCode) });
+        set({ lines: nextLines, isOpen: true, ...resolveCoupon(nextLines, get().manualCouponCode, get().coupons) });
 
         const addedQuantity = Math.min(requestedQuantity, cap);
         const unitPrice = product.price + (variant?.priceDelta ?? 0);
@@ -174,7 +188,7 @@ export const useCartStore = create<CartState>()(
       removeLine: (lineId) => {
         const removed = get().lines.find((line) => line.lineId === lineId);
         const nextLines = get().lines.filter((line) => line.lineId !== lineId);
-        set({ lines: nextLines, ...resolveCoupon(nextLines, get().manualCouponCode) });
+        set({ lines: nextLines, ...resolveCoupon(nextLines, get().manualCouponCode, get().coupons) });
 
         if (removed) {
           track({
@@ -203,7 +217,7 @@ export const useCartStore = create<CartState>()(
         const nextLines = get().lines.map((line) =>
           line.lineId === lineId ? { ...line, quantity: capped } : line,
         );
-        set({ lines: nextLines, ...resolveCoupon(nextLines, get().manualCouponCode) });
+        set({ lines: nextLines, ...resolveCoupon(nextLines, get().manualCouponCode, get().coupons) });
       },
 
       clear: () => set({ lines: [], coupon: null, manualCouponCode: null, couponError: null }),
@@ -212,7 +226,7 @@ export const useCartStore = create<CartState>()(
       toggle: () => set({ isOpen: !get().isOpen }),
 
       applyCoupon: (code) => {
-        const result = validateCoupon(code, toPromotableLines(get().lines), subtotalOf(get().lines));
+        const result = validateCoupon(code, get().coupons, toPromotableLines(get().lines), subtotalOf(get().lines));
         if (!result.valid) {
           set({ couponError: result.error });
           return;
@@ -232,7 +246,12 @@ export const useCartStore = create<CartState>()(
 
       removeCoupon: () => {
         const nextLines = get().lines;
-        set({ manualCouponCode: null, ...resolveCoupon(nextLines, null) });
+        set({ manualCouponCode: null, ...resolveCoupon(nextLines, null, get().coupons) });
+      },
+
+      /** Called by <CouponsSync> on mount (and whenever it refetches) with the server-fetched, currently-usable coupon list — re-resolves immediately so a coupon that loads in after the cart already rendered is picked up without waiting for the next cart mutation. */
+      setCoupons: (coupons) => {
+        set({ coupons, ...resolveCoupon(get().lines, get().manualCouponCode, coupons) });
       },
     }),
     {
@@ -242,9 +261,12 @@ export const useCartStore = create<CartState>()(
       // discounts existed (or before a since-changed minSpend/date window),
       // so re-resolve once the persisted lines/manualCouponCode are back —
       // same reasoning as revalidating after any other cart mutation.
+      // state.coupons is always [] here (not persisted, and this runs before
+      // <CouponsSync>'s mount effect) — setCoupons() re-resolves again the
+      // moment the real list loads.
       onRehydrateStorage: () => (state) => {
         if (!state) return;
-        Object.assign(state, resolveCoupon(state.lines, state.manualCouponCode));
+        Object.assign(state, resolveCoupon(state.lines, state.manualCouponCode, state.coupons));
       },
     },
   ),

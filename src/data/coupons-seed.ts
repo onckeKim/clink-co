@@ -1,6 +1,11 @@
 import type { Coupon } from "@/types/coupon";
 
-/** Seed data for the coupons store (src/lib/admin/coupons-store.ts). */
+/**
+ * Reference coupon fixtures — the actual coupons live in the
+ * `discount_codes` table (supabase/seed.sql), not here. Used by
+ * lib/promotions.ts's and cart-store.ts's unit tests, and as the source
+ * supabase/seed.sql's discount_codes rows are authored from.
+ */
 export const couponsSeed: Coupon[] = [
   {
     id: "coup-welcome10",

@@ -266,6 +266,27 @@ join (values
   on p.slug = s.product_slug;
 
 -- ----------------------------------------------------------------------------
+-- Promotions — discount codes. Mirrors src/data/coupons-seed.ts, minus
+-- COUPE25's product-level restriction: discount_codes.product_ids is a
+-- uuid[] with no slug fallback, and the product catalog isn't migrated to
+-- Supabase yet, so it's seeded inactive here rather than going live as an
+-- accidental sitewide 25% discount — see src/types/coupon.ts's doc comment
+-- on Coupon.productSlugs.
+-- ----------------------------------------------------------------------------
+insert into public.discount_codes (code, description, discount_type, discount_value, free_delivery, min_spend, starts_at, ends_at, collection_ids, usage_limit, times_used, requires_code, active) values
+  ('WELCOME10', '10% off your first order', 'percentage', 10, false, null, null, null, '{}', 1000, 214, true, true),
+  ('SAVE100', 'R100 off orders over R1,000', 'fixed', 100, false, 1000, null, null, '{}', null, 58, true, true),
+  ('FREESHIP', 'Free delivery on orders over R500', 'percentage', 0, true, 500, null, null, '{}', null, 132, false, true),
+  ('HOMEBAR15', '15% off The Home Bar Edit', 'percentage', 15, false, null, null, null,
+    (select coalesce(array_agg(id), '{}') from public.collections where slug = 'home-bar-edit'), null, 19, true, true),
+  ('HOSTESS15', '15% off Gifts Worth Giving', 'percentage', 15, false, null, null, null,
+    (select coalesce(array_agg(id), '{}') from public.collections where slug = 'gifts-worth-giving'), null, 7, true, true),
+  ('COUPE25', '25% off Solstice Coupe Glasses (paused — needs the product catalog migration for its product restriction)', 'percentage', 25, false, null, null, null, '{}', null, 41, true, false),
+  ('ONEUSE', 'Single-use launch promo (already redeemed)', 'percentage', 20, false, null, null, null, '{}', 1, 1, true, true),
+  ('SUMMER24', 'Summer 2024 sale (ended)', 'percentage', 20, false, null, '2024-11-01T00:00:00Z', '2025-01-15T23:59:59Z', '{}', null, 302, true, true),
+  ('WINTER26', 'Winter 2026 sale (not yet started)', 'percentage', 20, false, null, '2026-05-01T00:00:00Z', '2026-08-31T23:59:59Z', '{}', null, 0, true, true);
+
+-- ----------------------------------------------------------------------------
 -- Homepage sections — default order, all visible.
 -- ----------------------------------------------------------------------------
 insert into public.homepage_sections (section_key, sort_order, is_visible) values

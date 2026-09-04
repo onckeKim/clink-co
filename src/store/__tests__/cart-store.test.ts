@@ -1,5 +1,6 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { useCartStore } from "@/store/cart-store";
+import { couponsSeed } from "@/data/coupons-seed";
 import type { Product } from "@/types/product";
 
 function makeProduct(overrides: Partial<Product> = {}): Product {
@@ -23,7 +24,15 @@ function makeProduct(overrides: Partial<Product> = {}): Product {
 }
 
 beforeEach(() => {
-  useCartStore.setState({ lines: [], isOpen: false, coupon: null, manualCouponCode: null, couponError: null });
+  useCartStore.setState({
+    lines: [],
+    isOpen: false,
+    coupon: null,
+    manualCouponCode: null,
+    couponError: null,
+    // Normally seeded by <CouponsSync> from a server fetch — set directly here since these tests exercise the store in isolation.
+    coupons: couponsSeed,
+  });
 });
 
 describe("cart quantity validation (useCartStore)", () => {

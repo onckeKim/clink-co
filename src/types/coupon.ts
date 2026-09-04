@@ -12,7 +12,18 @@ export interface Coupon {
   /** ISO date strings — inclusive. Omit either for an open-ended start/end. */
   startsAt?: string;
   endsAt?: string;
-  /** Restricts the discount portion to matching line items (by product slug or collection). Delivery/free-delivery still applies cart-wide. Omit both for a cart-wide discount. */
+  /**
+   * Restricts the discount portion to matching line items (by product slug
+   * or collection). Delivery/free-delivery still applies cart-wide. Omit
+   * both for a cart-wide discount.
+   *
+   * productSlugs is not currently persisted — src/lib/db/discounts.ts's
+   * discount_codes.product_ids is a uuid[] with no slug fallback, and the
+   * product catalog itself isn't migrated to Supabase yet (no real UUIDs
+   * exist for products). Kept on the type for lib/promotions.ts's
+   * scope-matching logic and for forward-compatibility once products
+   * migrate; the admin UI has no way to set it in the meantime.
+   */
   productSlugs?: string[];
   collectionSlugs?: string[];
   /** Restricts this coupon to specific customers by email (case-insensitive). Checked at checkout, where the customer's email is known — not while it's merely applied to a cart, since a guest cart may not have one yet. Omit for no customer restriction. */
