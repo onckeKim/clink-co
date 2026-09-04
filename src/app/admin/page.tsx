@@ -9,6 +9,7 @@ import {
   PackageMinus,
   UserPlus,
   Undo2,
+  Star,
 } from "lucide-react";
 import { requirePermission } from "@/lib/supabase/dal";
 import { getDashboardStats } from "@/lib/admin/dashboard-stats";
@@ -48,7 +49,7 @@ export default async function AdminDashboardPage() {
         />
       </div>
 
-      <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+      <div className="grid grid-cols-2 gap-4 lg:grid-cols-5">
         <StatCard
           label="Out of stock"
           value={stats.outOfStockCount.toLocaleString("en-ZA")}
@@ -74,6 +75,13 @@ export default async function AdminDashboardPage() {
           value={stats.pendingReturnsCount.toLocaleString("en-ZA")}
           icon={Undo2}
           tone={stats.pendingReturnsCount > 0 ? "warning" : "neutral"}
+        />
+        <StatCard
+          label="Reviews to moderate"
+          value={stats.pendingReviewsCount.toLocaleString("en-ZA")}
+          icon={Star}
+          href="/admin/reviews"
+          tone={stats.pendingReviewsCount > 0 ? "warning" : "neutral"}
         />
       </div>
 
@@ -220,6 +228,43 @@ export default async function AdminDashboardPage() {
           </CardContent>
         </Card>
       </div>
+
+      <Card>
+        <CardHeader className="flex-row items-center justify-between">
+          <CardTitle>Reviews awaiting moderation</CardTitle>
+          <Link href="/admin/reviews" className="text-xs font-medium text-charcoal underline-offset-2 hover:underline">
+            View all
+          </Link>
+        </CardHeader>
+        <CardContent className="pt-0">
+          {stats.pendingReviews.length === 0 ? (
+            <p className="py-6 text-center text-sm text-stone">Nothing waiting on you.</p>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Product</TableHead>
+                  <TableHead>Customer</TableHead>
+                  <TableHead>Rating</TableHead>
+                  <TableHead>Review</TableHead>
+                  <TableHead>Submitted</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {stats.pendingReviews.map((review) => (
+                  <TableRow key={review.id}>
+                    <TableCell className="max-w-[160px] truncate">{review.productName}</TableCell>
+                    <TableCell className="max-w-[140px] truncate">{review.customerName}</TableCell>
+                    <TableCell>{review.rating}/5</TableCell>
+                    <TableCell className="max-w-xs truncate text-stone">{review.body}</TableCell>
+                    <TableCell className="text-stone">{review.createdAt.slice(0, 10)}</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          )}
+        </CardContent>
+      </Card>
     </div>
   );
 }

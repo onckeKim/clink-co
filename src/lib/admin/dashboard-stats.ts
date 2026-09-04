@@ -4,6 +4,7 @@ import { getAllOrders } from "@/lib/orders/store";
 import { listAdminProducts, getAdminProductById, getLowStockThreshold } from "@/lib/admin/products-store";
 import { listProfiles } from "@/lib/account/profiles-store";
 import { listReturnRequests } from "@/lib/account/returns-store";
+import { listReviews, type AdminReview } from "@/lib/admin/reviews-store";
 import { getOrderStatusChartColor, getOrderStatusLabel } from "@/lib/orders/status";
 
 /** Orders that represent completed, actually-paid revenue — a pending/failed/cancelled order was never fulfilled or collected. */
@@ -12,6 +13,7 @@ const TREND_DAYS = 30;
 const RECENT_ORDERS_LIMIT = 8;
 const BESTSELLERS_LIMIT = 5;
 const LOW_STOCK_LIMIT = 8;
+const PENDING_REVIEWS_LIMIT = 8;
 
 export interface BestsellingProduct {
   product: Product;
@@ -43,6 +45,9 @@ export interface DashboardStats {
   bestsellingProducts: BestsellingProduct[];
   newCustomerCount30d: number;
   pendingReturnsCount: number;
+  /** Reviews awaiting moderation (status = 'pending') — see src/lib/admin/reviews-store.ts / /admin/reviews. Not visible on any product page until a staff member publishes or rejects them. */
+  pendingReviewsCount: number;
+  pendingReviews: AdminReview[];
   salesTrend: SalesTrendPoint[];
   orderStatusDistribution: OrderStatusSlice[];
 }
@@ -97,6 +102,8 @@ export async function getDashboardStats(now: Date = new Date()): Promise<Dashboa
 
   const pendingReturnsCount = listReturnRequests().length;
 
+  const pendingReviews = await listReviews("pending");
+
   const salesByDay = new Map<string, number>();
   for (const order of paidOrders) {
     const dayKey = order.createdAt.slice(0, 10);
@@ -132,6 +139,8 @@ export async function getDashboardStats(now: Date = new Date()): Promise<Dashboa
     bestsellingProducts,
     newCustomerCount30d,
     pendingReturnsCount,
+    pendingReviewsCount: pendingReviews.length,
+    pendingReviews: pendingReviews.slice(0, PENDING_REVIEWS_LIMIT),
     salesTrend,
     orderStatusDistribution,
   };
