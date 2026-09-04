@@ -26,6 +26,7 @@ import { Modal } from "@/components/ui/Modal";
 import { Label } from "@/components/ui/Label";
 import { Textarea } from "@/components/ui/Textarea";
 import { useStoreSettings } from "@/components/providers/StoreSettingsProvider";
+import { useCatalog } from "@/components/providers/CatalogProvider";
 import { cn, formatPrice } from "@/lib/utils";
 
 const RETURN_REASONS: { value: ReturnReason; label: string }[] = [
@@ -62,6 +63,7 @@ function AddressCard({ title, address }: { title: string; address: OrderAddress 
 export function OrderDetailView({ orderNumber }: { orderNumber: string }) {
   const router = useRouter();
   const settings = useStoreSettings();
+  const { products } = useCatalog();
   const [order, setOrder] = React.useState<Order | null>(null);
   const [returnRequest, setReturnRequest] = React.useState<ReturnRequest | null>(null);
   const [loading, setLoading] = React.useState(true);
@@ -90,7 +92,7 @@ export function OrderDetailView({ orderNumber }: { orderNumber: string }) {
   const handleBuyAgain = () => {
     if (!order) return;
     setBuyingAgain(true);
-    buyAgainFromOrder(order);
+    buyAgainFromOrder(order, products);
     router.push("/cart");
   };
 

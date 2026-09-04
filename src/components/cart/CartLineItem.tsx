@@ -6,7 +6,7 @@ import { Heart, Minus, Plus } from "lucide-react";
 import type { CartLine } from "@/store/cart-store";
 import { useCartStore } from "@/store/cart-store";
 import { useWishlistStore } from "@/store/wishlist-store";
-import { getProductBySlug } from "@/data/products";
+import { useCatalog } from "@/components/providers/CatalogProvider";
 import { LOW_STOCK_THRESHOLD } from "@/components/product/StockStatus";
 import { cn, formatPrice } from "@/lib/utils";
 
@@ -14,11 +14,12 @@ export function CartLineItem({ line, compact = false }: { line: CartLine; compac
   const updateQuantity = useCartStore((state) => state.updateQuantity);
   const removeLine = useCartStore((state) => state.removeLine);
   const addWishlistItem = useWishlistStore((state) => state.add);
+  const { products } = useCatalog();
 
   // Live stock/availability lookup — the cart line itself only stores what
   // was true when the item was added, so stock changes since then (or a
   // product going out of stock) show up here without a stale cache.
-  const product = getProductBySlug(line.slug);
+  const product = products.find((p) => p.slug === line.slug);
   const outOfStock = product ? !product.inStock : false;
   const stockQuantity = product?.stockQuantity ?? Infinity;
   const lowStock = !outOfStock && Number.isFinite(stockQuantity) && stockQuantity <= LOW_STOCK_THRESHOLD;

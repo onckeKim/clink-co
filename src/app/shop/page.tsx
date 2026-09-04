@@ -13,11 +13,12 @@ export const metadata: Metadata = {
 
 export const revalidate = 3600;
 
-export default function ShopPage() {
+export default async function ShopPage() {
+  const products = await getActiveProducts();
   return (
     <Suspense fallback={<ShopSkeleton />}>
       <ShopExperience
-        products={getActiveProducts()}
+        products={products}
         title="Shop All"
         description="Every piece in the Clink & Co range, from everyday glassware to considered gifting."
         breadcrumbs={[{ label: "Home", href: "/" }, { label: "Shop" }]}

@@ -3,8 +3,8 @@ import { Reveal } from "@/components/motion/Reveal";
 import { ProductCard } from "@/components/product/ProductCard";
 import { getNewArrivals } from "@/data/products";
 
-export function NewArrivals() {
-  const newArrivals = getNewArrivals();
+export async function NewArrivals() {
+  const newArrivals = await getNewArrivals();
 
   if (newArrivals.length === 0) return null;
 

@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { Heart } from "lucide-react";
-import { getProductBySlug } from "@/data/products";
+import { useCatalog } from "@/components/providers/CatalogProvider";
 import { useWishlistStore } from "@/store/wishlist-store";
 import { ProductCard } from "@/components/product/ProductCard";
 import { Button, buttonVariants } from "@/components/ui/Button";
@@ -12,12 +12,14 @@ import { cn } from "@/lib/utils";
 /** Read-only view of someone else's shared wishlist — the URL just encodes product slugs, no account/backend involved. */
 export function SharedWishlistView() {
   const searchParams = useSearchParams();
+  const { products: allProducts } = useCatalog();
   const slugs = (searchParams.get("items") ?? "")
     .split(",")
     .map((slug) => slug.trim())
     .filter(Boolean);
+  const bySlug = new Map(allProducts.map((p) => [p.slug, p]));
   const products = slugs
-    .map((slug) => getProductBySlug(slug))
+    .map((slug) => bySlug.get(slug))
     .filter((product): product is NonNullable<typeof product> => Boolean(product));
 
   const addToMyWishlist = useWishlistStore((state) => state.add);

@@ -6,7 +6,6 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { AnimatePresence, motion } from "framer-motion";
 import { Clock, Search, TrendingUp, X } from "lucide-react";
-import { getActiveProducts } from "@/data/products";
 import { highlightMatch, searchProducts } from "@/lib/catalogue";
 import { formatPrice, cn } from "@/lib/utils";
 import { useMounted } from "@/lib/hooks/use-mounted";
@@ -84,12 +83,12 @@ export function SearchModal({ open, onClose }: { open: boolean; onClose: () => v
     };
   }, [open]);
 
-  const { categories, collections } = useCatalog();
+  const { categories, collections, products } = useCatalog();
   const q = query.trim();
   const results = React.useMemo(() => {
     if (!q) return [];
-    return searchProducts(getActiveProducts(), q, categories, collections).slice(0, 6);
-  }, [q, categories, collections]);
+    return searchProducts(products, q, categories, collections).slice(0, 6);
+  }, [q, categories, collections, products]);
 
   const commitSearch = React.useCallback(
     (term: string) => {

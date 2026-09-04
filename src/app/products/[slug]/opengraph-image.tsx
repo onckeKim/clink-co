@@ -9,7 +9,7 @@ export const contentType = "image/png";
 
 export default async function Image({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
-  const product = getProductBySlug(slug);
+  const product = await getProductBySlug(slug);
   const category = product ? await getCategoryBySlug(product.categorySlug) : undefined;
 
   return new ImageResponse(

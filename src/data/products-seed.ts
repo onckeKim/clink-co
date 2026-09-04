@@ -1,12 +1,9 @@
 import type { Product } from "@/types/product";
 
 /**
- * Initial seed data for the mutable products store (src/lib/admin/products-store.ts)
- * — read once, at server start, to populate it. Once Supabase is connected,
- * this file's only job becomes a one-time migration/import script; the
- * store's function bodies swap for `supabase.from("products")` queries
- * instead — see src/lib/supabase and the README's "How catalogue data will
- * connect to Supabase" section. Prices are in ZAR (South African Rand),
+ * Reference product fixtures — the actual catalog lives in the `products`
+ * table (supabase/seed.sql), not here. Kept as the source supabase/seed.sql's
+ * product rows are authored from. Prices are in ZAR (South African Rand),
  * rounded to whole Rand per local retail convention.
  */
 export const productsSeed: Product[] = [

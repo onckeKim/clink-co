@@ -9,6 +9,7 @@ import { getPaymentStatusLabel, getFulfilmentStatusLabel } from "@/lib/orders/st
 import { buyAgainFromOrder } from "@/lib/buy-again";
 import { Badge } from "@/components/ui/Badge";
 import { Button, buttonVariants } from "@/components/ui/Button";
+import { useCatalog } from "@/components/providers/CatalogProvider";
 import { cn, formatPrice } from "@/lib/utils";
 
 type FilterTab = "all" | "processing" | "fulfilled" | "cancelled";
@@ -39,11 +40,12 @@ export function OrdersListView() {
       .then((data: { orders?: Order[] } | null) => setOrders(data?.orders ?? []));
   }, []);
 
+  const { products } = useCatalog();
   const filtered = orders?.filter((order) => matchesTab(order.status, tab)) ?? [];
 
   const handleBuyAgain = (order: Order) => {
     setBuyingAgain(order.id);
-    buyAgainFromOrder(order);
+    buyAgainFromOrder(order, products);
     router.push("/cart");
   };
 

@@ -47,7 +47,8 @@ export async function getCollectionBySlug(slug: string): Promise<CuratedCollecti
 }
 
 export async function getCollectionProductCount(slug: string): Promise<number> {
-  return getActiveProducts().filter((product) => product.collectionSlugs.includes(slug)).length;
+  const products = await getActiveProducts();
+  return products.filter((product) => product.collectionSlugs.includes(slug)).length;
 }
 
 // ---------------------------------------------------------------------------

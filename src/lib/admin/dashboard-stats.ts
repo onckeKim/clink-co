@@ -62,7 +62,7 @@ export async function getDashboardStats(now: Date = new Date()): Promise<Dashboa
   const averageOrderValue = paidOrders.length > 0 ? totalSales / paidOrders.length : 0;
   const conversionRatePercent = orderCount > 0 ? (paidOrders.length / orderCount) * 100 : 0;
 
-  const activeProducts = listAdminProducts().filter((p) => !p.discontinued);
+  const activeProducts = (await listAdminProducts()).filter((p) => !p.discontinued);
   const outOfStockProducts = activeProducts
     .filter((p) => p.stockQuantity <= 0)
     .sort((a, b) => a.name.localeCompare(b.name));
@@ -78,8 +78,13 @@ export async function getDashboardStats(now: Date = new Date()): Promise<Dashboa
       unitsSoldByProductId.set(line.productId, (unitsSoldByProductId.get(line.productId) ?? 0) + line.quantity);
     }
   }
-  const bestsellingProducts: BestsellingProduct[] = [...unitsSoldByProductId.entries()]
-    .map(([productId, unitsSold]) => ({ product: getAdminProductById(productId), unitsSold }))
+  const bestsellingCandidates = await Promise.all(
+    [...unitsSoldByProductId.entries()].map(async ([productId, unitsSold]) => ({
+      product: await getAdminProductById(productId),
+      unitsSold,
+    })),
+  );
+  const bestsellingProducts: BestsellingProduct[] = bestsellingCandidates
     .filter((entry): entry is BestsellingProduct => Boolean(entry.product))
     .sort((a, b) => b.unitsSold - a.unitsSold)
     .slice(0, BESTSELLERS_LIMIT);

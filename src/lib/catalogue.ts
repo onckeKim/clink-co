@@ -1,7 +1,6 @@
 import type { Product } from "@/types/product";
 import type { Category } from "@/types/category";
 import type { CuratedCollection } from "@/types/collection";
-import { getActiveProducts } from "@/data/products";
 
 /**
  * Pure catalogue logic: filtering, sorting, search and URL (de)serialization.
@@ -368,7 +367,7 @@ export interface CatalogueFacets {
 }
 
 /** Computes the available option lists for the filter UI from whichever product set it's given (e.g. a single locked category). */
-export function getFacetValues(list: Product[] = getActiveProducts()): CatalogueFacets {
+export function getFacetValues(list: Product[]): CatalogueFacets {
   const productTypes = new Set<string>();
   const colors = new Set<string>();
   const materials = new Set<string>();
@@ -428,4 +427,62 @@ export function paginate<T>(list: T[], page: number, pageSize: number = PRODUCTS
     totalPages,
     totalItems: list.length,
   };
+}
+
+// ---------------------------------------------------------------------------
+// Cross-sell — pure functions over an already-fetched product list (`await
+// getActiveProducts()` on the server, `useCatalog().products` on the
+// client), same reasoning as searchProducts()/applyCatalogue() above.
+// ---------------------------------------------------------------------------
+
+/** "You may also like" — same category or product type, broader net. */
+export function getRelatedProducts(product: Product, activeProducts: Product[], limit = 4): Product[] {
+  return activeProducts
+    .filter((p) => p.id !== product.id && (p.categorySlug === product.categorySlug || p.productType === product.productType))
+    .slice(0, limit);
+}
+
+/**
+ * Resolves `Product.pairsWithSlugs` to full product records; when a product
+ * hasn't been curated with explicit pairings, falls back to active products
+ * that share a collection but sit in a different category.
+ */
+export function getPairedProducts(product: Product, activeProducts: Product[], limit = 3): Product[] {
+  if (product.pairsWithSlugs?.length) {
+    const bySlug = new Map(activeProducts.map((p) => [p.slug, p]));
+    return product.pairsWithSlugs
+      .map((slug) => bySlug.get(slug))
+      .filter((p): p is Product => p != null && !p.discontinued)
+      .slice(0, limit);
+  }
+
+  return activeProducts
+    .filter(
+      (p) =>
+        p.id !== product.id &&
+        p.categorySlug !== product.categorySlug &&
+        p.collectionSlugs.some((slug) => product.collectionSlugs.includes(slug)),
+    )
+    .slice(0, limit);
+}
+
+/** Cart-aware cross-sell: pools getPairedProducts() across every product already in the cart, excludes anything already in the cart, and dedupes. */
+export function getComplementaryProducts(cartProductSlugs: string[], activeProducts: Product[], limit = 4): Product[] {
+  const bySlug = new Map(activeProducts.map((p) => [p.slug, p]));
+  const excluded = new Set(cartProductSlugs);
+  const seen = new Set<string>();
+  const suggestions: Product[] = [];
+
+  for (const slug of cartProductSlugs) {
+    const product = bySlug.get(slug);
+    if (!product) continue;
+    for (const candidate of getPairedProducts(product, activeProducts, limit)) {
+      if (excluded.has(candidate.slug) || seen.has(candidate.slug)) continue;
+      seen.add(candidate.slug);
+      suggestions.push(candidate);
+      if (suggestions.length >= limit) return suggestions;
+    }
+  }
+
+  return suggestions;
 }

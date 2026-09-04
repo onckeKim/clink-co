@@ -36,7 +36,7 @@ export default async function ShopCategoryPage({ params }: PageProps<"/shop/[cat
   const category = await getCategoryBySlug(slug);
   if (!category) notFound();
 
-  const scopedProducts = getProductsByCategory(category.slug);
+  const scopedProducts = await getProductsByCategory(category.slug);
   const breadcrumbs = [
     { label: "Home", href: "/" },
     { label: "Shop", href: "/shop" },

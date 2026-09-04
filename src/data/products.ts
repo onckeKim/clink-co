@@ -1,13 +1,13 @@
 /**
  * Thin re-export of the storefront-facing product reads — the actual data
- * now lives in the mutable products store (src/lib/admin/products-store.ts),
- * seeded once from src/data/products-seed.ts. Every function here has the
- * exact same name and signature it always did, so no call site across the
- * storefront needed to change; they now transparently reflect whatever the
- * admin dashboard last wrote. `products`/`activeProducts` were plain arrays
- * before this file existed — they're `getProducts()`/`getActiveProducts()`
- * functions now, since a plain array binding can't stay live once the
- * underlying data can change at runtime; see the README's admin section.
+ * lives in the `products` table (src/lib/admin/products-store.ts,
+ * src/lib/db/products.ts). Server-only (products-store.ts pulls in
+ * server-only DB access) — a client component reads the same data via
+ * useCatalog().products instead (see src/components/providers/
+ * CatalogProvider.tsx), since it can't call an async DB read mid-render.
+ * getRelatedProducts()/getPairedProducts()/getComplementaryProducts() moved
+ * to lib/catalogue.ts — they're pure list transforms, not reads, so they
+ * work identically from either side.
  */
 export {
   getProducts,
@@ -18,7 +18,4 @@ export {
   getProductsByCollection,
   getBestsellers,
   getNewArrivals,
-  getRelatedProducts,
-  getPairedProducts,
-  getComplementaryProducts,
 } from "@/lib/admin/products-store";

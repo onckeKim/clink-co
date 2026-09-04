@@ -3,6 +3,7 @@ import { getAdminContext } from "@/lib/supabase/dal";
 import { hasPermission } from "@/lib/admin/roles";
 import { recordAuditLog } from "@/lib/admin/audit-log-store";
 import { duplicateProduct } from "@/lib/admin/products-store";
+import { dbErrorResponse } from "@/lib/db/errors";
 
 export async function POST(_request: Request, { params }: RouteContext<"/api/admin/products/[id]/duplicate">) {
   const ctx = await getAdminContext();
@@ -12,8 +13,13 @@ export async function POST(_request: Request, { params }: RouteContext<"/api/adm
   }
 
   const { id } = await params;
-  const product = duplicateProduct(id);
-  if (!product) return NextResponse.json({ error: "Product not found." }, { status: 404 });
+  let product;
+  try {
+    product = await duplicateProduct(id);
+    if (!product) return NextResponse.json({ error: "Product not found." }, { status: 404 });
+  } catch (err) {
+    return dbErrorResponse(err);
+  }
 
   recordAuditLog({
     userId: ctx.user.id,

@@ -1,57 +1,34 @@
-import type { Product } from "@/types/product";
-import { productsSeed } from "@/data/products-seed";
+import "server-only";
+import type { Product, ProductBadge, ProductVariant } from "@/types/product";
+import * as db from "@/lib/db/products";
+import type { ProductFull, VariantWrite, ImageWrite } from "@/lib/db/products";
+import { ConflictError } from "@/lib/db/errors";
+import type { Database } from "@/lib/supabase/types";
+import { getCategoryBySlug } from "@/lib/admin/categories-store";
+import { listAllCollections } from "@/lib/db/collections";
+
+type ProductInsert = Database["public"]["Tables"]["products"]["Insert"];
+type ProductUpdate = Database["public"]["Tables"]["products"]["Update"];
 
 /**
- * In-memory products store — a development/demo substitute for a real
- * `products` table, same rationale as every other store in this codebase.
- * This is the single source of truth for product data: src/data/products.ts
- * re-exports the storefront-facing functions below unchanged (same names,
- * same signatures), so every existing call site across the storefront
- * keeps working, and now reads whatever the admin dashboard last wrote —
- * that's the whole mechanism behind "admin edits appear on the storefront
- * without a redeploy" (see the README's admin section).
+ * Async wrapper over src/lib/db/products.ts (the real `products` table plus
+ * its variant/image/category/collection/inventory child tables).
+ * Product.setSizeOptions is not persisted — there's no set_size_options
+ * table in the schema (only the single `set_size` text column), so it's
+ * always read back as undefined and the admin form has no way to set it,
+ * same reasoning as Coupon.productSlugs in src/types/coupon.ts.
  */
 
 const LOW_STOCK_THRESHOLD_DEFAULT = 6; // mirrors src/components/product/StockStatus.tsx
 
-const productsById = new Map<string, Product>(productsSeed.map((p) => [p.id, structuredClone(p)]));
-
-function generateId(): string {
-  return `prod-admin-${crypto.randomUUID().slice(0, 8)}`;
-}
-
-function slugify(value: string): string {
-  return value
-    .trim()
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/(^-|-$)/g, "");
-}
-
-function isSlugTaken(slug: string, excludeId?: string): boolean {
-  for (const p of productsById.values()) {
-    if (p.slug === slug && p.id !== excludeId) return true;
-  }
-  return false;
-}
-
-function uniqueSlug(base: string, excludeId?: string): string {
-  let slug = base || "product";
-  let n = 2;
-  while (isSlugTaken(slug, excludeId)) {
-    slug = `${base}-${n}`;
-    n += 1;
-  }
-  return slug;
-}
-
 /**
  * Computes the effective `price`/`compareAtPrice` for "now" from a
- * product's authored regular/sale/schedule fields. A product not using
- * scheduling (no `regularPrice` set) passes through unchanged — its
- * `price`/`compareAtPrice` are authored directly, as before this feature
- * existed. Applied on every read so a sale activates/deactivates exactly
- * at its scheduled boundary without needing an admin edit to trigger it.
+ * product's authored regular/sale/schedule fields — ported unchanged from
+ * the pre-DB in-memory store. The DB keeps regular_price/sale_price/
+ * sale_starts_at/sale_ends_at as the admin authored them; it does not
+ * itself flip price/compare_at_price at the schedule boundary (unlike
+ * stock, which a trigger maintains), so this still has to run on every
+ * read for a sale to activate/deactivate exactly on time.
  */
 export function applyScheduledPricing(product: Product, now: Date = new Date()): Product {
   if (product.regularPrice === undefined) return product;
@@ -65,8 +42,94 @@ export function applyScheduledPricing(product: Product, now: Date = new Date()):
   };
 }
 
-function readAll(): Product[] {
-  return [...productsById.values()].map((p) => applyScheduledPricing(p));
+function fromRow(row: ProductFull, idToSlug: Map<string, string>): Product {
+  const primaryCategory = row.product_categories.find((pc) => pc.is_primary) ?? row.product_categories[0];
+  const categorySlug = primaryCategory?.categories?.slug ?? "";
+  const collectionSlugs = row.collection_products
+    .map((cp) => cp.collections?.slug)
+    .filter((slug): slug is string => Boolean(slug));
+
+  const productImages = row.product_images
+    .filter((img) => img.variant_id === null)
+    .sort((a, b) => a.sort_order - b.sort_order)
+    .map((img) => img.url);
+
+  const variants = row.product_variants
+    .sort((a, b) => a.sort_order - b.sort_order)
+    .map((v) => {
+      const variantImages = row.product_images
+        .filter((img) => img.variant_id === v.id)
+        .sort((a, b) => a.sort_order - b.sort_order)
+        .map((img) => img.url);
+      return {
+        id: v.id,
+        label: v.label,
+        priceDelta: v.price_delta || undefined,
+        swatch: v.swatch ?? undefined,
+        images: variantImages.length ? variantImages : undefined,
+      };
+    });
+
+  const pairsWithSlugs = row.pairs_with_product_ids
+    .map((id) => idToSlug.get(id))
+    .filter((slug): slug is string => Boolean(slug));
+
+  const hasDimensions =
+    row.dimensions_height_cm !== null && row.dimensions_width_cm !== null && row.dimensions_depth_cm !== null;
+
+  const base: Product = {
+    id: row.id,
+    slug: row.slug,
+    sku: row.sku,
+    name: row.name,
+    shortDescription: row.short_description ?? "",
+    description: row.description,
+    price: Number(row.price),
+    compareAtPrice: row.compare_at_price !== null ? Number(row.compare_at_price) : undefined,
+    currency: "ZAR",
+    images: productImages,
+    categorySlug,
+    productType: row.product_type ?? "",
+    collectionSlugs,
+    material: row.material ?? undefined,
+    colors: row.colors.length ? row.colors : undefined,
+    capacity: row.capacity ?? undefined,
+    setSize: row.set_size ?? undefined,
+    stockQuantity: row.stock_quantity,
+    inStock: row.in_stock,
+    discontinued: row.discontinued,
+    featured: row.featured,
+    badges: row.badges.length ? (row.badges as ProductBadge[]) : undefined,
+    variants: variants.length ? variants : undefined,
+    videoUrl: row.video_url ?? undefined,
+    rating: row.rating !== null ? Number(row.rating) : undefined,
+    reviewCount: row.review_count,
+    tags: row.tags,
+    careInstructions: row.care_instructions,
+    dimensions: hasDimensions
+      ? { heightCm: Number(row.dimensions_height_cm), widthCm: Number(row.dimensions_width_cm), depthCm: Number(row.dimensions_depth_cm) }
+      : undefined,
+    weightGrams: row.weight_grams ?? undefined,
+    keyBenefits: row.key_benefits.length ? row.key_benefits : undefined,
+    lifestyleImage: row.lifestyle_image ?? undefined,
+    lifestyleCaption: row.lifestyle_caption ?? undefined,
+    pairsWithSlugs: pairsWithSlugs.length ? pairsWithSlugs : undefined,
+    packagingInfo: row.packaging_info ?? undefined,
+    publishStatus: row.publish_status,
+    lowStockThreshold: row.low_stock_threshold ?? undefined,
+    regularPrice: row.regular_price !== null ? Number(row.regular_price) : undefined,
+    salePrice: row.sale_price !== null ? Number(row.sale_price) : undefined,
+    saleStartsAt: row.sale_starts_at ?? undefined,
+    saleEndsAt: row.sale_ends_at ?? undefined,
+    seoTitle: row.seo_title ?? undefined,
+    seoDescription: row.seo_description ?? undefined,
+  };
+
+  return applyScheduledPricing(base);
+}
+
+function idToSlugMap(rows: ProductFull[]): Map<string, string> {
+  return new Map(rows.map((r) => [r.id, r.slug]));
 }
 
 // ---------------------------------------------------------------------------
@@ -74,93 +137,48 @@ function readAll(): Product[] {
 // src/data/products.ts, re-exported from there unchanged.
 // ---------------------------------------------------------------------------
 
-export function getProducts(): Product[] {
-  return readAll();
+export async function getProducts(): Promise<Product[]> {
+  const rows = await db.getPublishedProducts();
+  const idMap = idToSlugMap(rows);
+  return rows.map((row) => fromRow(row, idMap));
 }
 
-/**
- * Every listable product — not discontinued, not a draft. `getProductBySlug`
- * still resolves discontinued/draft products directly (an old shared link,
- * or an admin previewing before publishing) so their PDP can show the
- * right notice instead of a 404.
- */
-export function getActiveProducts(): Product[] {
-  return readAll().filter((p) => !p.discontinued && p.publishStatus !== "draft");
+/** Every listable product — not discontinued, not a draft (published rows are already all this store's getProducts() returns, since drafts/deleted are excluded by RLS/the query itself; this just also drops discontinued ones). */
+export async function getActiveProducts(): Promise<Product[]> {
+  const products = await getProducts();
+  return products.filter((p) => !p.discontinued);
 }
 
-export function getProductBySlug(slug: string): Product | undefined {
-  const found = [...productsById.values()].find((p) => p.slug === slug);
-  return found ? applyScheduledPricing(found) : undefined;
+export async function getProductBySlug(slug: string): Promise<Product | undefined> {
+  const row = await db.getProductBySlug(slug);
+  if (!row) return undefined;
+  const idMap = row.pairs_with_product_ids.length ? await db.getProductSlugsByIds(row.pairs_with_product_ids) : new Map<string, string>();
+  return fromRow(row, idMap);
 }
 
-export function getProductBySku(sku: string): Product | undefined {
-  const found = [...productsById.values()].find((p) => p.sku.toLowerCase() === sku.toLowerCase());
-  return found ? applyScheduledPricing(found) : undefined;
+export async function getProductBySku(sku: string): Promise<Product | undefined> {
+  const products = await getProducts();
+  return products.find((p) => p.sku.toLowerCase() === sku.toLowerCase());
 }
 
-export function getProductsByCategory(categorySlug: string): Product[] {
-  return getActiveProducts().filter((p) => p.categorySlug === categorySlug);
+export async function getProductsByCategory(categorySlug: string): Promise<Product[]> {
+  const products = await getActiveProducts();
+  return products.filter((p) => p.categorySlug === categorySlug);
 }
 
-export function getProductsByCollection(collectionSlug: string): Product[] {
-  return getActiveProducts().filter((p) => p.collectionSlugs.includes(collectionSlug));
+export async function getProductsByCollection(collectionSlug: string): Promise<Product[]> {
+  const products = await getActiveProducts();
+  return products.filter((p) => p.collectionSlugs.includes(collectionSlug));
 }
 
-export function getBestsellers(): Product[] {
-  return getActiveProducts().filter((p) => p.badges?.includes("Bestseller"));
+export async function getBestsellers(): Promise<Product[]> {
+  const products = await getActiveProducts();
+  return products.filter((p) => p.badges?.includes("Bestseller"));
 }
 
-export function getNewArrivals(): Product[] {
-  return getActiveProducts().filter((p) => p.badges?.includes("New"));
-}
-
-export function getRelatedProducts(product: Product, limit = 4): Product[] {
-  return getActiveProducts()
-    .filter((p) => p.id !== product.id && (p.categorySlug === product.categorySlug || p.productType === product.productType))
-    .slice(0, limit);
-}
-
-/**
- * Resolves `Product.pairsWithSlugs` to full product records; when a product
- * hasn't been curated with explicit pairings, falls back to active products
- * that share a collection but sit in a different category.
- */
-export function getPairedProducts(product: Product, limit = 3): Product[] {
-  if (product.pairsWithSlugs?.length) {
-    return product.pairsWithSlugs
-      .map((slug) => getProductBySlug(slug))
-      .filter((p): p is Product => p != null && !p.discontinued)
-      .slice(0, limit);
-  }
-
-  return getActiveProducts()
-    .filter(
-      (p) =>
-        p.id !== product.id &&
-        p.categorySlug !== product.categorySlug &&
-        p.collectionSlugs.some((slug) => product.collectionSlugs.includes(slug)),
-    )
-    .slice(0, limit);
-}
-
-/** Cart-aware cross-sell: pools getPairedProducts() across every product already in the cart, excludes anything already in the cart, and dedupes. */
-export function getComplementaryProducts(cartProductSlugs: string[], limit = 4): Product[] {
-  const excluded = new Set(cartProductSlugs);
-  const seen = new Set<string>();
-  const suggestions: Product[] = [];
-
-  for (const slug of cartProductSlugs) {
-    const product = getProductBySlug(slug);
-    if (!product) continue;
-    for (const candidate of getPairedProducts(product, limit)) {
-      if (excluded.has(candidate.slug) || seen.has(candidate.slug)) continue;
-      seen.add(candidate.slug);
-      suggestions.push(candidate);
-      if (suggestions.length >= limit) return suggestions;
-    }
-  }
-
-  return suggestions;
+export async function getNewArrivals(): Promise<Product[]> {
+  const products = await getActiveProducts();
+  return products.filter((p) => p.badges?.includes("New"));
 }
 
 // ---------------------------------------------------------------------------
@@ -178,8 +196,10 @@ export function getLowStockThreshold(product: Product): number {
   return product.lowStockThreshold ?? LOW_STOCK_THRESHOLD_DEFAULT;
 }
 
-export function listAdminProducts(filters?: AdminProductFilters): Product[] {
-  let list = readAll();
+export async function listAdminProducts(filters?: AdminProductFilters): Promise<Product[]> {
+  const rows = await db.listAllProducts();
+  const idMap = idToSlugMap(rows);
+  let list = rows.map((row) => fromRow(row, idMap));
 
   if (filters?.search) {
     const q = filters.search.trim().toLowerCase();
@@ -201,84 +221,211 @@ export function listAdminProducts(filters?: AdminProductFilters): Product[] {
   return list.sort((a, b) => a.name.localeCompare(b.name));
 }
 
-export function getAdminProductById(id: string): Product | undefined {
-  const found = productsById.get(id);
-  return found ? applyScheduledPricing(found) : undefined;
+export async function getAdminProductById(id: string): Promise<Product | undefined> {
+  const row = await db.getProductById(id);
+  if (!row) return undefined;
+  const idMap = row.pairs_with_product_ids.length ? await db.getProductSlugsByIds(row.pairs_with_product_ids) : new Map<string, string>();
+  return fromRow(row, idMap);
+}
+
+function slugify(value: string): string {
+  return value
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/(^-|-$)/g, "");
+}
+
+async function resolveCategoryId(categorySlug: string): Promise<string> {
+  const category = await getCategoryBySlug(categorySlug);
+  if (!category) throw new ConflictError(`Unknown category: "${categorySlug}".`);
+  return category.id;
+}
+
+async function resolveCollectionIds(collectionSlugs: string[] | undefined): Promise<string[]> {
+  if (!collectionSlugs?.length) return [];
+  const collections = await listAllCollections();
+  const slugToId = new Map(collections.map((c) => [c.slug, c.id]));
+  return collectionSlugs.map((slug) => slugToId.get(slug)).filter((id): id is string => Boolean(id));
+}
+
+async function resolvePairsWithIds(pairsWithSlugs: string[] | undefined): Promise<string[]> {
+  if (!pairsWithSlugs?.length) return [];
+  const products = await getProducts();
+  const slugToId = new Map(products.map((p) => [p.slug, p.id]));
+  return pairsWithSlugs.map((slug) => slugToId.get(slug)).filter((id): id is string => Boolean(id));
+}
+
+function toVariantWrites(variants: Product["variants"]): VariantWrite[] {
+  if (!variants?.length) return [];
+  return variants.map((v, i) => ({
+    label: v.label,
+    priceDelta: v.priceDelta ?? 0,
+    swatch: v.swatch ?? null,
+    isDefault: i === 0,
+    images: v.images ?? [],
+  }));
+}
+
+function toImageWrites(images: string[]): ImageWrite[] {
+  return images.map((url, i) => ({ url, altText: null, isPrimary: i === 0 }));
 }
 
 export type CreateProductInput = Omit<Product, "id" | "slug" | "inStock"> & { slug?: string };
 
-export function createProduct(input: CreateProductInput): Product {
-  const id = generateId();
-  const slug = uniqueSlug(slugify(input.slug || input.name));
-  const product: Product = {
-    ...input,
-    id,
-    slug,
-    inStock: input.stockQuantity > 0,
-    publishStatus: input.publishStatus ?? "draft",
+export async function createProduct(input: CreateProductInput): Promise<Product> {
+  const [categoryId, collectionIds, pairsWithIds] = await Promise.all([
+    resolveCategoryId(input.categorySlug),
+    resolveCollectionIds(input.collectionSlugs),
+    resolvePairsWithIds(input.pairsWithSlugs),
+  ]);
+
+  const productInsert: ProductInsert = {
+    slug: slugify(input.slug || input.name),
+    sku: input.sku,
+    name: input.name,
+    short_description: input.shortDescription,
+    description: input.description,
+    price: input.price,
+    compare_at_price: input.compareAtPrice ?? null,
+    regular_price: input.regularPrice ?? null,
+    sale_price: input.salePrice ?? null,
+    sale_starts_at: input.saleStartsAt ?? null,
+    sale_ends_at: input.saleEndsAt ?? null,
+    product_type: input.productType,
+    material: input.material ?? null,
+    capacity: input.capacity ?? null,
+    set_size: input.setSize ?? null,
+    weight_grams: input.weightGrams ?? null,
+    dimensions_height_cm: input.dimensions?.heightCm ?? null,
+    dimensions_width_cm: input.dimensions?.widthCm ?? null,
+    dimensions_depth_cm: input.dimensions?.depthCm ?? null,
+    care_instructions: input.careInstructions,
+    key_benefits: input.keyBenefits ?? [],
+    tags: input.tags,
+    colors: input.colors ?? [],
+    badges: input.badges ?? [],
+    pairs_with_product_ids: pairsWithIds,
+    lifestyle_image: input.lifestyleImage ?? null,
+    lifestyle_caption: input.lifestyleCaption ?? null,
+    packaging_info: input.packagingInfo ?? null,
+    video_url: input.videoUrl ?? null,
+    low_stock_threshold: input.lowStockThreshold ?? null,
+    featured: input.featured,
+    discontinued: input.discontinued ?? false,
+    publish_status: input.publishStatus ?? "draft",
+    seo_title: input.seoTitle ?? null,
+    seo_description: input.seoDescription ?? null,
   };
-  productsById.set(id, product);
-  return applyScheduledPricing(product);
+
+  const row = await db.createProductFull({
+    product: productInsert,
+    categoryId,
+    collectionIds,
+    variants: toVariantWrites(input.variants),
+    images: toImageWrites(input.images),
+    stockQuantity: input.stockQuantity,
+  });
+
+  const idMap = row.pairs_with_product_ids.length ? await db.getProductSlugsByIds(row.pairs_with_product_ids) : new Map<string, string>();
+  return fromRow(row, idMap);
 }
 
 export type UpdateProductInput = Partial<Omit<Product, "id">>;
 
-export function updateProduct(id: string, patch: UpdateProductInput): Product | undefined {
-  const existing = productsById.get(id);
+export async function updateProduct(id: string, patch: UpdateProductInput): Promise<Product | undefined> {
+  const existing = await db.getProductById(id);
   if (!existing) return undefined;
 
-  const slug = patch.slug && patch.slug !== existing.slug ? uniqueSlug(slugify(patch.slug), id) : existing.slug;
-  const stockQuantity = patch.stockQuantity ?? existing.stockQuantity;
+  const productPatch: ProductUpdate = {};
+  if (patch.slug !== undefined) productPatch.slug = slugify(patch.slug);
+  if (patch.sku !== undefined) productPatch.sku = patch.sku;
+  if (patch.name !== undefined) productPatch.name = patch.name;
+  if (patch.shortDescription !== undefined) productPatch.short_description = patch.shortDescription;
+  if (patch.description !== undefined) productPatch.description = patch.description;
+  if (patch.price !== undefined) productPatch.price = patch.price;
+  if (patch.compareAtPrice !== undefined) productPatch.compare_at_price = patch.compareAtPrice ?? null;
+  if (patch.regularPrice !== undefined) productPatch.regular_price = patch.regularPrice ?? null;
+  if (patch.salePrice !== undefined) productPatch.sale_price = patch.salePrice ?? null;
+  if (patch.saleStartsAt !== undefined) productPatch.sale_starts_at = patch.saleStartsAt ?? null;
+  if (patch.saleEndsAt !== undefined) productPatch.sale_ends_at = patch.saleEndsAt ?? null;
+  if (patch.productType !== undefined) productPatch.product_type = patch.productType;
+  if (patch.material !== undefined) productPatch.material = patch.material ?? null;
+  if (patch.capacity !== undefined) productPatch.capacity = patch.capacity ?? null;
+  if (patch.setSize !== undefined) productPatch.set_size = patch.setSize ?? null;
+  if (patch.weightGrams !== undefined) productPatch.weight_grams = patch.weightGrams ?? null;
+  if (patch.dimensions !== undefined) {
+    productPatch.dimensions_height_cm = patch.dimensions?.heightCm ?? null;
+    productPatch.dimensions_width_cm = patch.dimensions?.widthCm ?? null;
+    productPatch.dimensions_depth_cm = patch.dimensions?.depthCm ?? null;
+  }
+  if (patch.careInstructions !== undefined) productPatch.care_instructions = patch.careInstructions;
+  if (patch.keyBenefits !== undefined) productPatch.key_benefits = patch.keyBenefits ?? [];
+  if (patch.tags !== undefined) productPatch.tags = patch.tags;
+  if (patch.colors !== undefined) productPatch.colors = patch.colors ?? [];
+  if (patch.badges !== undefined) productPatch.badges = patch.badges ?? [];
+  if (patch.lifestyleImage !== undefined) productPatch.lifestyle_image = patch.lifestyleImage ?? null;
+  if (patch.lifestyleCaption !== undefined) productPatch.lifestyle_caption = patch.lifestyleCaption ?? null;
+  if (patch.packagingInfo !== undefined) productPatch.packaging_info = patch.packagingInfo ?? null;
+  if (patch.videoUrl !== undefined) productPatch.video_url = patch.videoUrl ?? null;
+  if (patch.lowStockThreshold !== undefined) productPatch.low_stock_threshold = patch.lowStockThreshold ?? null;
+  if (patch.featured !== undefined) productPatch.featured = patch.featured;
+  if (patch.discontinued !== undefined) productPatch.discontinued = patch.discontinued;
+  if (patch.publishStatus !== undefined) productPatch.publish_status = patch.publishStatus;
+  if (patch.seoTitle !== undefined) productPatch.seo_title = patch.seoTitle ?? null;
+  if (patch.seoDescription !== undefined) productPatch.seo_description = patch.seoDescription ?? null;
+  if (patch.pairsWithSlugs !== undefined) productPatch.pairs_with_product_ids = await resolvePairsWithIds(patch.pairsWithSlugs);
 
-  const updated: Product = {
-    ...existing,
-    ...patch,
-    id,
-    slug,
-    inStock: stockQuantity > 0,
-  };
-  productsById.set(id, updated);
-  return applyScheduledPricing(updated);
+  const row = await db.updateProductFull(id, {
+    product: productPatch,
+    categoryId: patch.categorySlug !== undefined ? await resolveCategoryId(patch.categorySlug) : undefined,
+    collectionIds: patch.collectionSlugs !== undefined ? await resolveCollectionIds(patch.collectionSlugs) : undefined,
+    catalogMedia:
+      patch.variants !== undefined || patch.images !== undefined
+        ? {
+            variants: toVariantWrites(patch.variants !== undefined ? patch.variants : existing.product_variants.map(variantRowToProductVariant)),
+            images: toImageWrites(patch.images !== undefined ? patch.images : existing.product_images.filter((i) => i.variant_id === null).map((i) => i.url)),
+          }
+        : undefined,
+    stockQuantity: patch.stockQuantity,
+  });
+
+  const idMap = row.pairs_with_product_ids.length ? await db.getProductSlugsByIds(row.pairs_with_product_ids) : new Map<string, string>();
+  return fromRow(row, idMap);
+}
+
+function variantRowToProductVariant(v: Database["public"]["Tables"]["product_variants"]["Row"]): ProductVariant {
+  return { id: v.id, label: v.label, priceDelta: v.price_delta || undefined, swatch: v.swatch ?? undefined };
 }
 
 /** "Archive" reuses the existing `discontinued` flag — retired, hidden from listings, PDP still reachable directly. There's no separate archive status; this is the same lifecycle state the pre-admin catalog already had a field for. */
-export function archiveProduct(id: string): Product | undefined {
+export async function archiveProduct(id: string): Promise<Product | undefined> {
   return updateProduct(id, { discontinued: true });
 }
 
-export function restoreProduct(id: string): Product | undefined {
+export async function restoreProduct(id: string): Promise<Product | undefined> {
   return updateProduct(id, { discontinued: false });
 }
 
-export function duplicateProduct(id: string): Product | undefined {
-  const existing = productsById.get(id);
+export async function duplicateProduct(id: string): Promise<Product | undefined> {
+  const existing = await getAdminProductById(id);
   if (!existing) return undefined;
 
-  const newId = generateId();
-  const slug = uniqueSlug(`${existing.slug}-copy`);
-  const duplicate: Product = {
-    ...structuredClone(existing),
-    id: newId,
-    slug,
+  return createProduct({
+    ...existing,
+    slug: `${existing.slug}-copy`,
     name: `${existing.name} (Copy)`,
     sku: `${existing.sku}-COPY`,
     publishStatus: "draft",
-  };
-  productsById.set(newId, duplicate);
-  return duplicate;
+  });
 }
 
 /**
- * Removes the product record with no cross-store checks — this module's
- * read functions (getActiveProducts, getProductBySlug, ...) are used from
- * client components via src/data/products.ts, so it must never import
- * orders/store.ts itself (that module depends on the DB-backed,
- * server-only settings store, which cannot be reachable from a client
- * bundle). The "refuse to delete a product referenced by a past order"
- * safety check lives in src/lib/admin/products-delete.ts instead, which
- * calls this and is only ever imported from the admin DELETE route.
+ * Removes the product record with no cross-store checks. The "refuse to
+ * delete a product referenced by a past order" safety check lives in
+ * src/lib/admin/products-delete.ts instead, which calls this and is only
+ * ever imported from the admin DELETE route.
  */
-export function removeProductRecord(id: string): void {
-  productsById.delete(id);
+export async function removeProductRecord(id: string): Promise<void> {
+  await db.deleteProductRow(id);
 }

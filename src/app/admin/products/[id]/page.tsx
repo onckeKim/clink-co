@@ -12,7 +12,7 @@ export default async function AdminEditProductPage({ params }: PageProps<"/admin
   await requirePermission("products:write");
   const { id } = await params;
 
-  const product = getAdminProductById(id);
+  const product = await getAdminProductById(id);
   if (!product) notFound();
 
   const categories = await getCategories();

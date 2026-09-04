@@ -6,6 +6,7 @@ import { getAdminProductById, updateProduct, getLowStockThreshold } from "@/lib/
 import { deleteProduct } from "@/lib/admin/products-delete";
 import { adminProductPatchSchema } from "@/lib/validations/admin-products";
 import { sendLowStockAdminWarning, sendOutOfStockAdminWarning } from "@/lib/email";
+import { dbErrorResponse } from "@/lib/db/errors";
 
 export async function GET(_request: Request, { params }: RouteContext<"/api/admin/products/[id]">) {
   const ctx = await getAdminContext();
@@ -15,10 +16,13 @@ export async function GET(_request: Request, { params }: RouteContext<"/api/admi
   }
 
   const { id } = await params;
-  const product = getAdminProductById(id);
-  if (!product) return NextResponse.json({ error: "Product not found." }, { status: 404 });
-
-  return NextResponse.json({ product });
+  try {
+    const product = await getAdminProductById(id);
+    if (!product) return NextResponse.json({ error: "Product not found." }, { status: 404 });
+    return NextResponse.json({ product });
+  } catch (err) {
+    return dbErrorResponse(err);
+  }
 }
 
 export async function PATCH(request: Request, { params }: RouteContext<"/api/admin/products/[id]">) {
@@ -29,17 +33,21 @@ export async function PATCH(request: Request, { params }: RouteContext<"/api/adm
   }
 
   const { id } = await params;
-  const before = getAdminProductById(id);
-  if (!before) return NextResponse.json({ error: "Product not found." }, { status: 404 });
-
   const body = await request.json().catch(() => null);
   const parsed = adminProductPatchSchema.safeParse(body);
   if (!parsed.success) {
     return NextResponse.json({ error: parsed.error.issues[0]?.message ?? "Invalid product." }, { status: 400 });
   }
 
-  const product = updateProduct(id, parsed.data);
-  if (!product) return NextResponse.json({ error: "Product not found." }, { status: 404 });
+  let before, product;
+  try {
+    before = await getAdminProductById(id);
+    if (!before) return NextResponse.json({ error: "Product not found." }, { status: 404 });
+    product = await updateProduct(id, parsed.data);
+    if (!product) return NextResponse.json({ error: "Product not found." }, { status: 404 });
+  } catch (err) {
+    return dbErrorResponse(err);
+  }
 
   recordAuditLog({
     userId: ctx.user.id,
@@ -75,10 +83,14 @@ export async function DELETE(_request: Request, { params }: RouteContext<"/api/a
   }
 
   const { id } = await params;
-  const before = getAdminProductById(id);
-  if (!before) return NextResponse.json({ error: "Product not found." }, { status: 404 });
-
-  const result = await deleteProduct(id);
+  let before, result;
+  try {
+    before = await getAdminProductById(id);
+    if (!before) return NextResponse.json({ error: "Product not found." }, { status: 404 });
+    result = await deleteProduct(id);
+  } catch (err) {
+    return dbErrorResponse(err);
+  }
   if (!result.ok) return NextResponse.json({ error: result.reason }, { status: 409 });
 
   recordAuditLog({

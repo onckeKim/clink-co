@@ -2,8 +2,8 @@ import type { MetadataRoute } from "next";
 import { siteConfig } from "@/config/site";
 import { getActiveProducts } from "@/data/products";
 
-export default function sitemap(): MetadataRoute.Sitemap {
-  return getActiveProducts().map((product) => ({
+export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
+  return (await getActiveProducts()).map((product) => ({
     url: `${siteConfig.url}/products/${product.slug}`,
     lastModified: new Date(),
     changeFrequency: "weekly",

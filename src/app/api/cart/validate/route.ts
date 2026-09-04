@@ -21,6 +21,6 @@ export async function POST(request: Request) {
   }
 
   const lines = body.lines as CartLineInput[];
-  const result = validateCartLines(lines);
+  const result = await validateCartLines(lines);
   return NextResponse.json(result);
 }

@@ -6,7 +6,7 @@ import { ShoppingBag, X } from "lucide-react";
 import type { WishlistItem } from "@/store/wishlist-store";
 import { useWishlistStore } from "@/store/wishlist-store";
 import { useCartStore } from "@/store/cart-store";
-import { getProductBySlug } from "@/data/products";
+import { useCatalog } from "@/components/providers/CatalogProvider";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { formatPrice } from "@/lib/utils";
@@ -14,7 +14,8 @@ import { formatPrice } from "@/lib/utils";
 export function WishlistItemCard({ item }: { item: WishlistItem }) {
   const removeItem = useWishlistStore((state) => state.remove);
   const addToCart = useCartStore((state) => state.addItem);
-  const product = getProductBySlug(item.slug);
+  const { products } = useCatalog();
+  const product = products.find((p) => p.slug === item.slug);
 
   const moveToCart = () => {
     if (!product) return;

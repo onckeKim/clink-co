@@ -10,7 +10,8 @@ import { CartSummary } from "@/components/cart/CartSummary";
 import { Breadcrumbs } from "@/components/catalogue/Breadcrumbs";
 import { ProductGrid } from "@/components/catalogue/ProductGrid";
 import { buttonVariants } from "@/components/ui/Button";
-import { getComplementaryProducts } from "@/data/products";
+import { getComplementaryProducts } from "@/lib/catalogue";
+import { useCatalog } from "@/components/providers/CatalogProvider";
 import type { CartLineInput } from "@/lib/cart-validation";
 import { useMounted } from "@/lib/hooks/use-mounted";
 import { cn } from "@/lib/utils";
@@ -31,8 +32,9 @@ export function CartPageView() {
   const [quickViewProduct, setQuickViewProduct] = React.useState<Product | null>(null);
   const [validationIssues, setValidationIssues] = React.useState<ValidationIssue[]>([]);
 
+  const { products } = useCatalog();
   const lineSlugs = React.useMemo(() => lines.map((line) => line.slug), [lines]);
-  const complementary = React.useMemo(() => getComplementaryProducts(lineSlugs, 4), [lineSlugs]);
+  const complementary = React.useMemo(() => getComplementaryProducts(lineSlugs, products, 4), [lineSlugs, products]);
 
   // Server round-trip re-checking price/stock — a genuine call, not a
   // decoration. With today's static seed data, client and server agree by

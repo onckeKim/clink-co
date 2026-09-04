@@ -42,7 +42,7 @@ export default async function CollectionPage({ params }: PageProps<"/collections
   const collection = await getCollectionBySlug(slug);
   if (!collection) notFound();
 
-  const scopedProducts = getProductsByCollection(collection.id);
+  const scopedProducts = await getProductsByCollection(collection.id);
   const breadcrumbs = [
     { label: "Home", href: "/" },
     { label: "Collections", href: "/collections" },

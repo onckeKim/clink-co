@@ -1,5 +1,6 @@
 import "server-only";
 import type { Category } from "@/types/category";
+import type { Product } from "@/types/product";
 import { getActiveProducts, getProducts } from "@/lib/admin/products-store";
 import * as db from "@/lib/db/categories";
 import type { Database } from "@/lib/supabase/types";
@@ -8,16 +9,14 @@ type CategoryRow = Database["public"]["Tables"]["categories"]["Row"];
 
 /**
  * Async wrapper over src/lib/db/categories.ts (the real `categories`
- * table). itemCount is still derived from products-store.ts's in-memory
- * catalog rather than a live DB join, because the products catalog itself
- * hasn't been migrated to Supabase yet — see the Phase 2 write-up. Once it
- * has, this switches to the DB's own live count (already computed by
- * db/categories.ts's getCategories(), unused here for exactly that reason
- * in the meantime).
+ * table). itemCount is derived from the live, active product list (passed
+ * in rather than fetched per row, so listing N categories costs one
+ * getActiveProducts() call, not N) rather than a live DB join — see the
+ * Phase 2 write-up.
  */
 
-function fromRow(row: CategoryRow): Category {
-  const itemCount = getActiveProducts().filter((p) => p.categorySlug === row.slug).length;
+function fromRow(row: CategoryRow, activeProducts: Product[]): Category {
+  const itemCount = activeProducts.filter((p) => p.categorySlug === row.slug).length;
   return {
     id: row.id,
     slug: row.slug,
@@ -38,13 +37,16 @@ function fromRow(row: CategoryRow): Category {
 
 /** All published categories, in their admin-set display order — itemCount is derived from the live, active product list so it can never drift out of sync. */
 export async function getCategories(): Promise<Category[]> {
-  const rows = await db.listAllCategories();
-  return rows.filter((r) => r.is_published).sort((a, b) => a.sort_order - b.sort_order).map(fromRow);
+  const [rows, activeProducts] = await Promise.all([db.listAllCategories(), getActiveProducts()]);
+  return rows
+    .filter((r) => r.is_published)
+    .sort((a, b) => a.sort_order - b.sort_order)
+    .map((row) => fromRow(row, activeProducts));
 }
 
 export async function getCategoryBySlug(slug: string): Promise<Category | undefined> {
-  const row = await db.getCategoryBySlug(slug);
-  return row ? fromRow(row) : undefined;
+  const [row, activeProducts] = await Promise.all([db.getCategoryBySlug(slug), getActiveProducts()]);
+  return row ? fromRow(row, activeProducts) : undefined;
 }
 
 // ---------------------------------------------------------------------------
@@ -52,13 +54,13 @@ export async function getCategoryBySlug(slug: string): Promise<Category | undefi
 // ---------------------------------------------------------------------------
 
 export async function listAdminCategories(): Promise<Category[]> {
-  const rows = await db.listAllCategories();
-  return rows.map(fromRow);
+  const [rows, activeProducts] = await Promise.all([db.listAllCategories(), getActiveProducts()]);
+  return rows.map((row) => fromRow(row, activeProducts));
 }
 
 export async function getAdminCategoryById(id: string): Promise<Category | undefined> {
-  const row = await db.getCategoryById(id);
-  return row ? fromRow(row) : undefined;
+  const [row, activeProducts] = await Promise.all([db.getCategoryById(id), getActiveProducts()]);
+  return row ? fromRow(row, activeProducts) : undefined;
 }
 
 export interface CreateCategoryInput {
@@ -90,7 +92,7 @@ export async function createCategory(input: CreateCategoryInput): Promise<Catego
     seo_description: input.seoDescription ?? null,
     sort_order: sortOrder,
   });
-  return fromRow(row);
+  return fromRow(row, await getActiveProducts());
 }
 
 export type UpdateCategoryInput = Partial<Omit<CreateCategoryInput, "slug">> & { slug?: string };
@@ -104,7 +106,7 @@ export async function updateCategory(id: string, patch: UpdateCategoryInput): Pr
     seo_title: patch.seoTitle,
     seo_description: patch.seoDescription,
   });
-  return fromRow(row);
+  return fromRow(row, await getActiveProducts());
 }
 
 export type DeleteCategoryResult = { ok: true } | { ok: false; reason: string };
@@ -114,7 +116,7 @@ export async function deleteCategory(id: string): Promise<DeleteCategoryResult> 
   const existing = await db.getCategoryById(id);
   if (!existing) return { ok: false, reason: "Category not found." };
 
-  const referenced = getProducts().some((p) => p.categorySlug === existing.slug);
+  const referenced = (await getProducts()).some((p) => p.categorySlug === existing.slug);
   if (referenced) {
     return { ok: false, reason: "This category has products assigned to it and can't be deleted — reassign them first." };
   }
@@ -124,6 +126,6 @@ export async function deleteCategory(id: string): Promise<DeleteCategoryResult> 
 
 /** Reassigns sortOrder sequentially from an admin-supplied display order (drag-and-drop reorder). */
 export async function reorderCategories(orderedIds: string[]): Promise<Category[]> {
-  const rows = await db.reorderCategories(orderedIds);
-  return rows.map(fromRow);
+  const [rows, activeProducts] = await Promise.all([db.reorderCategories(orderedIds), getActiveProducts()]);
+  return rows.map((row) => fromRow(row, activeProducts));
 }

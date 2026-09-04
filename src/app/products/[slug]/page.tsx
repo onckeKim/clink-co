@@ -1,15 +1,16 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { getCategoryBySlug } from "@/data/categories";
-import { getPairedProducts, getProductBySlug, getProducts, getRelatedProducts } from "@/data/products";
+import { getActiveProducts, getProductBySlug, getProducts } from "@/data/products";
+import { getPairedProducts, getRelatedProducts } from "@/lib/catalogue";
 import { getReviewsForProduct } from "@/data/reviews";
 import { getQAForProduct } from "@/data/qa";
 import { ProductDetailView } from "@/components/product/ProductDetailView";
 import { siteConfig } from "@/config/site";
 import { breadcrumbJsonLd, JsonLd } from "@/lib/seo/json-ld";
 
-export function generateStaticParams() {
-  return getProducts().map((product) => ({ slug: product.slug }));
+export async function generateStaticParams() {
+  return (await getProducts()).map((product) => ({ slug: product.slug }));
 }
 
 // Products are admin-editable via the in-memory store — a background
@@ -20,7 +21,7 @@ export async function generateMetadata({
   params,
 }: PageProps<"/products/[slug]">): Promise<Metadata> {
   const { slug } = await params;
-  const product = getProductBySlug(slug);
+  const product = await getProductBySlug(slug);
   if (!product) return {};
   const title = product.seoTitle || (product.discontinued ? `${product.name} (Discontinued)` : product.name);
   const description = product.seoDescription || product.shortDescription;
@@ -45,12 +46,12 @@ export async function generateMetadata({
 
 export default async function ProductPage({ params }: PageProps<"/products/[slug]">) {
   const { slug } = await params;
-  const product = getProductBySlug(slug);
+  const product = await getProductBySlug(slug);
   if (!product) notFound();
 
-  const category = await getCategoryBySlug(product.categorySlug);
-  const relatedProducts = getRelatedProducts(product);
-  const pairedProducts = getPairedProducts(product);
+  const [category, activeProducts] = await Promise.all([getCategoryBySlug(product.categorySlug), getActiveProducts()]);
+  const relatedProducts = getRelatedProducts(product, activeProducts);
+  const pairedProducts = getPairedProducts(product, activeProducts);
   const seedReviews = getReviewsForProduct(product.slug);
   const qaEntries = getQAForProduct(product.slug);
 

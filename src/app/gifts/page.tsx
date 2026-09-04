@@ -63,8 +63,8 @@ function GiftSection({
   );
 }
 
-export default function GiftsPage() {
-  const products = getActiveProducts();
+export default async function GiftsPage() {
+  const products = await getActiveProducts();
 
   const weddingGifts = products.filter((p) => hasAnyTag(p, WEDDING_TAGS));
   const housewarmingGifts = products.filter((p) => hasAnyTag(p, HOUSEWARMING_TAGS));

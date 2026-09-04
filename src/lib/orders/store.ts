@@ -23,17 +23,14 @@ function toAddress(json: unknown): OrderAddress {
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 /**
- * order_items.product_id is a nullable uuid FK to public.products — but the
- * storefront's actual catalog is still src/data/products-seed.ts (Phase 2,
- * catalog migration, not done yet), whose ids are strings like
- * "prod-solstice-coupe", not UUIDs. Postgres would reject those outright
- * (invalid input syntax for type uuid) rather than silently accepting
- * them, so every line's productId is validated here and stored as null
- * when it isn't a real UUID — order_items still keeps the full
- * denormalized snapshot (sku/name/image/price) regardless, exactly the
- * "product record doesn't have to survive" design the column comment
- * already describes. Once the catalog is migrated, real product UUIDs
- * flow through here unchanged.
+ * order_items.product_id is a nullable uuid FK to public.products. Products
+ * now carry real DB uuids (the catalog migration), so this validates
+ * cleanly through in the normal case — kept as a defensive fallback rather
+ * than removed, since order_items' full denormalized snapshot
+ * (sku/name/image/price) means a line survives just fine even if
+ * productId ever turned out not to be a real uuid (a stale client, a
+ * product hard-deleted between checkout and this write), storing null
+ * instead of letting Postgres reject the whole insert.
  */
 function toProductId(productId: string): string | null {
   return UUID_RE.test(productId) ? productId : null;

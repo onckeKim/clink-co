@@ -110,8 +110,8 @@ export function replaceMedia(id: string, input: ReplaceMediaInput): MediaAsset |
 }
 
 async function isUrlReferenced(url: string): Promise<boolean> {
-  if (getProducts().some((p) => p.images.includes(url) || p.lifestyleImage === url)) return true;
-  const [categories, collections] = await Promise.all([listAdminCategories(), listAdminCollections()]);
+  const [products, categories, collections] = await Promise.all([getProducts(), listAdminCategories(), listAdminCollections()]);
+  if (products.some((p) => p.images.includes(url) || p.lifestyleImage === url)) return true;
   if (categories.some((c) => c.image === url)) return true;
   if (collections.some((c) => c.image === url)) return true;
   return false;

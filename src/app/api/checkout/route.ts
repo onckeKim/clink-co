@@ -49,7 +49,7 @@ export async function POST(request: Request) {
     });
   }
 
-  const cartValidation = validateCartLines(data.lines);
+  const cartValidation = await validateCartLines(data.lines);
   if (!cartValidation.ok) {
     return NextResponse.json(
       { error: "Some items in your cart have changed. Please review your cart.", issues: cartValidation.issues },

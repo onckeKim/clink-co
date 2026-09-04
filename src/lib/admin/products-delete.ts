@@ -22,6 +22,6 @@ export async function deleteProduct(id: string): Promise<DeleteProductResult> {
   if (referenced) {
     return { ok: false, reason: "This product appears in past orders and can't be deleted — archive it instead." };
   }
-  removeProductRecord(id);
+  await removeProductRecord(id);
   return { ok: true };
 }

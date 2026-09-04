@@ -15,6 +15,7 @@ import { getStoreSettings } from "@/lib/admin/settings-store";
 import { getCategories } from "@/data/categories";
 import { getCuratedCollections } from "@/data/collections";
 import { getCoupons } from "@/data/coupons";
+import { getActiveProducts } from "@/data/products";
 
 const inter = Inter({
   variable: "--font-inter",
@@ -82,11 +83,12 @@ export const metadata: Metadata = {
 };
 
 export default async function RootLayout({ children }: LayoutProps<"/">) {
-  const [settings, categories, collections, coupons] = await Promise.all([
+  const [settings, categories, collections, coupons, products] = await Promise.all([
     getStoreSettings(),
     getCategories(),
     getCuratedCollections(),
     getCoupons(),
+    getActiveProducts(),
   ]);
   return (
     <html
@@ -95,7 +97,7 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
     >
       <body className="flex min-h-full flex-col bg-porcelain text-charcoal">
         <StoreSettingsProvider settings={settings}>
-          <CatalogProvider categories={categories} collections={collections}>
+          <CatalogProvider categories={categories} collections={collections} products={products}>
             <SiteChrome
               skipLink={
                 <a

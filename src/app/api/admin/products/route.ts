@@ -4,6 +4,7 @@ import { hasPermission } from "@/lib/admin/roles";
 import { recordAuditLog } from "@/lib/admin/audit-log-store";
 import { createProduct, listAdminProducts, type AdminProductFilters } from "@/lib/admin/products-store";
 import { adminProductSchema } from "@/lib/validations/admin-products";
+import { dbErrorResponse } from "@/lib/db/errors";
 
 export async function GET(request: Request) {
   const ctx = await getAdminContext();
@@ -20,7 +21,11 @@ export async function GET(request: Request) {
     stockLevel: (url.searchParams.get("stockLevel") as AdminProductFilters["stockLevel"]) ?? undefined,
   };
 
-  return NextResponse.json({ products: listAdminProducts(filters) });
+  try {
+    return NextResponse.json({ products: await listAdminProducts(filters) });
+  } catch (err) {
+    return dbErrorResponse(err);
+  }
 }
 
 export async function POST(request: Request) {
@@ -36,7 +41,12 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: parsed.error.issues[0]?.message ?? "Invalid product." }, { status: 400 });
   }
 
-  const product = createProduct(parsed.data);
+  let product;
+  try {
+    product = await createProduct(parsed.data);
+  } catch (err) {
+    return dbErrorResponse(err);
+  }
 
   recordAuditLog({
     userId: ctx.user.id,

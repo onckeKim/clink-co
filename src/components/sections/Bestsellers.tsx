@@ -5,11 +5,12 @@ import { SectionHeading } from "@/components/sections/SectionHeading";
 import { Reveal } from "@/components/motion/Reveal";
 import { ProductCard } from "@/components/product/ProductCard";
 import { useHorizontalScroll } from "@/lib/hooks/use-horizontal-scroll";
-import { getBestsellers } from "@/data/products";
+import { useCatalog } from "@/components/providers/CatalogProvider";
 import { cn } from "@/lib/utils";
 
 export function Bestsellers() {
-  const bestsellers = getBestsellers();
+  const { products } = useCatalog();
+  const bestsellers = products.filter((p) => p.badges?.includes("Bestseller"));
   const { trackRef, canScrollPrev, canScrollNext, scrollPrev, scrollNext } =
     useHorizontalScroll<HTMLDivElement>();
 

@@ -1,4 +1,4 @@
-import { getProductBySlug } from "@/data/products";
+import { getProducts } from "@/data/products";
 
 /**
  * Server-side cart validation — re-checks price and stock against the
@@ -50,12 +50,14 @@ export interface CartValidationResult {
   lines: ValidatedCartLine[];
 }
 
-export function validateCartLines(input: CartLineInput[]): CartValidationResult {
+export async function validateCartLines(input: CartLineInput[]): Promise<CartValidationResult> {
   const issues: CartLineIssue[] = [];
   const lines: ValidatedCartLine[] = [];
 
+  const productBySlug = new Map((await getProducts()).map((p) => [p.slug, p]));
+
   for (const item of input) {
-    const product = getProductBySlug(item.slug);
+    const product = productBySlug.get(item.slug);
     if (!product) {
       issues.push({
         slug: item.slug,
