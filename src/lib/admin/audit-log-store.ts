@@ -16,7 +16,8 @@ export type AuditEntityType =
   | "content"
   | "media"
   | "settings"
-  | "team_member";
+  | "team_member"
+  | "review";
 
 export interface AuditLogEntry {
   id: string;

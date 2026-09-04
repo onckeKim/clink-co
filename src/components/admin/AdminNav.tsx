@@ -15,6 +15,7 @@ import {
   Settings,
   UserCog,
   ScrollText,
+  Star,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { Permission } from "@/lib/admin/roles";
@@ -29,6 +30,7 @@ const NAV_ITEMS: { href: string; label: string; icon: typeof LayoutDashboard; pe
   { href: "/admin/customers", label: "Customers", icon: Users, permission: "customers:view" },
   { href: "/admin/promotions", label: "Promotions", icon: Percent, permission: "promotions:view" },
   { href: "/admin/content", label: "Content", icon: FileText, permission: "content:view" },
+  { href: "/admin/reviews", label: "Reviews", icon: Star, permission: "content:view" },
   { href: "/admin/media", label: "Media Library", icon: ImageIcon, permission: "media:view" },
   { href: "/admin/settings", label: "Store Settings", icon: Settings, permission: "settings:view" },
   { href: "/admin/team", label: "Admin Team", icon: UserCog, permission: "team:view" },
