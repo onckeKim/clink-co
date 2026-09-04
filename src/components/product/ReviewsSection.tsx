@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { BadgeCheck, ThumbsUp } from "lucide-react";
+import { BadgeCheck, Clock, ThumbsUp } from "lucide-react";
 import type { Product } from "@/types/product";
 import type { Review } from "@/data/reviews";
 import { Rating } from "@/components/ui/Rating";
@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/Button";
 import { Modal } from "@/components/ui/Modal";
 import { WriteReviewForm } from "@/components/product/WriteReviewForm";
 import { useSubmittedReviewsStore } from "@/store/submitted-reviews-store";
+import { useAuthUser } from "@/lib/hooks/use-auth-user";
 import { cn } from "@/lib/utils";
 
 type SortKey = "recent" | "highest" | "lowest" | "helpful";
@@ -35,7 +36,18 @@ function sortReviews(list: Review[], sort: SortKey): Review[] {
   }
 }
 
-export function ReviewsSection({ product, seedReviews }: { product: Product; seedReviews: Review[] }) {
+export function ReviewsSection({
+  product,
+  reviews,
+  pendingReviewIds,
+}: {
+  product: Product;
+  reviews: Review[];
+  /** Ids within `reviews` that are the signed-in viewer's own not-yet-published submissions — see lib/reviews-store.ts. */
+  pendingReviewIds: string[];
+}) {
+  const { user } = useAuthUser();
+
   // Select the raw, stable array from the store and filter it in a memo —
   // filtering inline in the selector would return a new array reference on
   // every read, which breaks useSyncExternalStore's snapshot caching and
@@ -48,21 +60,34 @@ export function ReviewsSection({ product, seedReviews }: { product: Product; see
     [allSubmittedReviews, product.slug],
   );
 
+  // Reviews just submitted this session by a signed-in customer — the real
+  // write always lands 'pending' (see reviews-store.ts), so this is shown
+  // immediately with a "pending" badge rather than waiting for a full page
+  // reload to pick it up via getOwnReviews().
+  const [justSubmitted, setJustSubmitted] = React.useState<Review[]>([]);
+  const [submitError, setSubmitError] = React.useState<string | null>(null);
+
+  const pendingIds = React.useMemo(
+    () => new Set([...pendingReviewIds, ...justSubmitted.map((review) => review.id)]),
+    [pendingReviewIds, justSubmitted],
+  );
+
   const allReviews = React.useMemo(
-    () => [...submittedReviews, ...seedReviews],
-    [submittedReviews, seedReviews],
+    () => (user ? [...justSubmitted, ...reviews] : [...submittedReviews, ...reviews]),
+    [user, justSubmitted, submittedReviews, reviews],
   );
 
   const stats = React.useMemo(() => {
+    const countedReviews = allReviews.filter((review) => !pendingIds.has(review.id));
     const histogram: Record<1 | 2 | 3 | 4 | 5, number> = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
-    for (const review of allReviews) {
+    for (const review of countedReviews) {
       const bucket = Math.min(5, Math.max(1, Math.round(review.rating))) as 1 | 2 | 3 | 4 | 5;
       histogram[bucket] += 1;
     }
-    const count = allReviews.length;
-    const average = count ? allReviews.reduce((sum, review) => sum + review.rating, 0) / count : 0;
+    const count = countedReviews.length;
+    const average = count ? countedReviews.reduce((sum, review) => sum + review.rating, 0) / count : 0;
     return { average, count, histogram };
-  }, [allReviews]);
+  }, [allReviews, pendingIds]);
 
   const [ratingFilter, setRatingFilter] = React.useState<1 | 2 | 3 | 4 | 5 | null>(null);
   const [sortKey, setSortKey] = React.useState<SortKey>("recent");
@@ -74,6 +99,41 @@ export function ReviewsSection({ product, seedReviews }: { product: Product; see
     ? allReviews.filter((review) => Math.round(review.rating) === ratingFilter)
     : allReviews;
   const visibleReviews = sortReviews(filtered, sortKey);
+
+  const handleSubmit = async (draft: Review) => {
+    if (!user) {
+      addSubmittedReview(draft);
+      setWriteOpen(false);
+      return;
+    }
+
+    setSubmitError(null);
+    try {
+      const res = await fetch("/api/account/reviews", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          productId: product.id,
+          rating: draft.rating,
+          title: draft.title,
+          body: draft.review,
+          customerName: draft.customerName,
+          location: draft.location,
+          images: draft.images,
+        }),
+      });
+      if (!res.ok) {
+        const data = (await res.json().catch(() => null)) as { error?: string } | null;
+        setSubmitError(data?.error ?? "Couldn't submit your review — please try again.");
+        return;
+      }
+      const data = (await res.json()) as { review: Review };
+      setJustSubmitted((prev) => [data.review, ...prev]);
+      setWriteOpen(false);
+    } catch {
+      setSubmitError("Couldn't submit your review — please try again.");
+    }
+  };
 
   const markHelpful = (id: string) => {
     setVotedIds((prev) => {
@@ -150,12 +210,11 @@ export function ReviewsSection({ product, seedReviews }: { product: Product; see
           <WriteReviewForm
             productSlug={product.slug}
             productName={product.name}
+            authed={Boolean(user)}
             onCancel={() => setWriteOpen(false)}
-            onSubmit={(review) => {
-              addSubmittedReview(review);
-              setWriteOpen(false);
-            }}
+            onSubmit={handleSubmit}
           />
+          {submitError && <p className="mt-2 text-xs text-error">{submitError}</p>}
         </div>
       )}
 
@@ -198,6 +257,12 @@ export function ReviewsSection({ product, seedReviews }: { product: Product; see
                     <span className="flex items-center gap-1 text-xs font-medium text-success">
                       <BadgeCheck className="h-3.5 w-3.5" />
                       Verified Purchase
+                    </span>
+                  )}
+                  {pendingIds.has(review.id) && (
+                    <span className="flex items-center gap-1 text-xs font-medium text-stone">
+                      <Clock className="h-3.5 w-3.5" />
+                      Pending review — only visible to you until it&rsquo;s approved
                     </span>
                   )}
                 </div>

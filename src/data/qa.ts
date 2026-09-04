@@ -11,9 +11,10 @@ export interface QAEntry {
 }
 
 /**
- * Seed Q&A data. In production this would be a `product_questions` table —
- * customer-asked, staff- or community-answered, with `answer` left unset
- * for a question still awaiting a reply.
+ * Reference fixtures — the actual product-page Q&A lives in the
+ * `product_questions`/`product_answers` tables (see src/lib/qa-store.ts,
+ * wired into /products/[slug]). This array still backs the local-only
+ * guest submission flow in submitted-questions-store.ts.
  */
 export const qaEntries: QAEntry[] = [
   {

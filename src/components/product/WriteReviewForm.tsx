@@ -48,11 +48,14 @@ function StarPicker({ value, onChange }: { value: number; onChange: (value: numb
 export function WriteReviewForm({
   productSlug,
   productName,
+  authed,
   onSubmit,
   onCancel,
 }: {
   productSlug: string;
   productName: string;
+  /** Signed-in submissions are written to the real reviews table (see ReviewsSection's handleSubmit) — "verified purchase" is computed there from real orders, so the self-attest checkbox below only applies to a guest's local-only review. */
+  authed: boolean;
   onSubmit: (review: Review) => void;
   onCancel: () => void;
 }) {
@@ -202,23 +205,25 @@ export function WriteReviewForm({
         </div>
       </div>
 
-      <label className="flex cursor-pointer items-start gap-2.5 text-sm text-charcoal">
-        <Checkbox checked={verifiedSelfAttested} onCheckedChange={setVerifiedSelfAttested} />
-        <span>
-          I purchased this product
-          <span className="block text-xs text-stone">
-            Marks your review as a verified purchase. (Demo only — without an orders table, this is
-            self-reported rather than order-verified.)
+      {!authed && (
+        <label className="flex cursor-pointer items-start gap-2.5 text-sm text-charcoal">
+          <Checkbox checked={verifiedSelfAttested} onCheckedChange={setVerifiedSelfAttested} />
+          <span>
+            I purchased this product
+            <span className="block text-xs text-stone">
+              Marks your review as a verified purchase. (Demo only — without signing in, this is
+              self-reported rather than order-verified.)
+            </span>
           </span>
-        </span>
-      </label>
+        </label>
+      )}
 
       {error && <p className="text-xs text-error">{error}</p>}
 
       <p className="text-xs text-stone">
-        Your review is saved to this browser (it&rsquo;ll still be here next visit) and shown below
-        immediately — it isn&rsquo;t yet submitted to a shared server, so other visitors won&rsquo;t
-        see it.
+        {authed
+          ? "Your review is submitted for moderation — you'll see it marked “Pending” below right away, and it becomes visible to other shoppers once approved. A verified-purchase badge is applied automatically if we find a matching order."
+          : "Your review is saved to this browser (it’ll still be here next visit) and shown below immediately — it isn’t yet submitted to a shared server, so other visitors won’t see it. Sign in before submitting to have your review actually count toward this product's rating."}
       </p>
 
       <div className="flex items-center gap-3">

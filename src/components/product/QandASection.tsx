@@ -9,8 +9,11 @@ import { Input } from "@/components/ui/Input";
 import { Textarea } from "@/components/ui/Textarea";
 import { Label } from "@/components/ui/Label";
 import { useSubmittedQuestionsStore } from "@/store/submitted-questions-store";
+import { useAuthUser } from "@/lib/hooks/use-auth-user";
 
-export function QandASection({ product, seedEntries }: { product: Product; seedEntries: QAEntry[] }) {
+export function QandASection({ product, entries: fetchedEntries }: { product: Product; entries: QAEntry[] }) {
+  const { user } = useAuthUser();
+
   // Select the raw, stable array and filter in a memo — filtering inline in
   // the selector would return a new array reference on every read, which
   // breaks useSyncExternalStore's snapshot caching and causes an infinite
@@ -21,30 +24,66 @@ export function QandASection({ product, seedEntries }: { product: Product; seedE
   const [askedBy, setAskedBy] = React.useState("");
   const [question, setQuestion] = React.useState("");
   const [error, setError] = React.useState<string | null>(null);
+  const [submitting, setSubmitting] = React.useState(false);
+  // Questions this signed-in customer has just asked — the real write
+  // publishes immediately, but showing it without waiting for a page
+  // reload matches the instant feedback guest submission always had.
+  const [justSubmitted, setJustSubmitted] = React.useState<QAEntry[]>([]);
 
   const submitted = React.useMemo(
     () => allSubmittedEntries.filter((entry) => entry.productSlug === product.slug),
     [allSubmittedEntries, product.slug],
   );
-  const entries = React.useMemo(() => [...submitted, ...seedEntries], [submitted, seedEntries]);
+  const entries = React.useMemo(
+    () => (user ? [...justSubmitted, ...fetchedEntries] : [...submitted, ...fetchedEntries]),
+    [user, justSubmitted, submitted, fetchedEntries],
+  );
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (question.trim().length < 5) {
       setError("Enter a question of at least 5 characters.");
       return;
     }
-    addQuestion({
-      id: `local-q-${Date.now()}`,
-      productSlug: product.slug,
-      question: question.trim(),
-      askedBy: askedBy.trim() || "Anonymous",
-      askedAt: new Date().toISOString().slice(0, 10),
-    });
-    setQuestion("");
-    setAskedBy("");
+
+    if (!user) {
+      addQuestion({
+        id: `local-q-${Date.now()}`,
+        productSlug: product.slug,
+        question: question.trim(),
+        askedBy: askedBy.trim() || "Anonymous",
+        askedAt: new Date().toISOString().slice(0, 10),
+      });
+      setQuestion("");
+      setAskedBy("");
+      setError(null);
+      setFormOpen(false);
+      return;
+    }
+
+    setSubmitting(true);
     setError(null);
-    setFormOpen(false);
+    try {
+      const res = await fetch("/api/account/questions", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ productId: product.id, question: question.trim(), askedByName: askedBy.trim() || undefined }),
+      });
+      if (!res.ok) {
+        const data = (await res.json().catch(() => null)) as { error?: string } | null;
+        setError(data?.error ?? "Couldn't submit your question — please try again.");
+        return;
+      }
+      const data = (await res.json()) as { entry: QAEntry };
+      setJustSubmitted((prev) => [data.entry, ...prev]);
+      setQuestion("");
+      setAskedBy("");
+      setFormOpen(false);
+    } catch {
+      setError("Couldn't submit your question — please try again.");
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -83,11 +122,14 @@ export function QandASection({ product, seedEntries }: { product: Product; seedE
           </div>
           {error && <p className="text-xs text-error">{error}</p>}
           <p className="text-xs text-stone">
-            Saved to this browser and shown below — this demo has no live team to answer it yet, so it
-            stays marked as awaiting an answer.
+            {user
+              ? "Submitted for real and shown below right away — our team hasn't wired up live answers in this demo yet, so it stays marked as awaiting an answer."
+              : "Saved to this browser and shown below — this demo has no live team to answer it yet, so it stays marked as awaiting an answer. Sign in to have your question actually reach us."}
           </p>
           <div className="flex items-center gap-3">
-            <Button type="submit">Submit question</Button>
+            <Button type="submit" disabled={submitting}>
+              {submitting ? "Submitting…" : "Submit question"}
+            </Button>
             <Button type="button" variant="ghost" onClick={() => setFormOpen(false)}>
               Cancel
             </Button>

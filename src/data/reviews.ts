@@ -1,3 +1,11 @@
+/**
+ * Reference fixtures — the actual product-page reviews live in the
+ * `reviews` table (see src/lib/reviews-store.ts, wired into
+ * /products/[slug]). This array still backs the homepage's
+ * ReviewsCarousel (marketing content, not tied to any one product's real
+ * reviews) and the local-only guest submission flow in
+ * submitted-reviews-store.ts.
+ */
 export interface Review {
   id: string;
   customerName: string;

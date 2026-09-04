@@ -43,7 +43,8 @@ export function ProductDetailView({
   product,
   relatedProducts,
   pairedProducts,
-  seedReviews,
+  reviews,
+  pendingReviewIds,
   qaEntries,
   breadcrumbs,
 }: {
@@ -52,7 +53,9 @@ export function ProductDetailView({
   relatedProducts: Product[];
   /** "Pairs well with" — curated or same-collection cross-sell. */
   pairedProducts: Product[];
-  seedReviews: Review[];
+  reviews: Review[];
+  /** Ids within `reviews` that are the signed-in viewer's own not-yet-published submissions — see lib/reviews-store.ts. */
+  pendingReviewIds: string[];
   qaEntries: QAEntry[];
   breadcrumbs: BreadcrumbItem[];
 }) {
@@ -245,11 +248,11 @@ export function ProductDetailView({
       </div>
 
       <div className="mt-20 max-w-3xl border-t border-sand pt-16">
-        <ReviewsSection product={product} seedReviews={seedReviews} />
+        <ReviewsSection product={product} reviews={reviews} pendingReviewIds={pendingReviewIds} />
       </div>
 
       <div className="mt-16 max-w-3xl border-t border-sand pt-16">
-        <QandASection product={product} seedEntries={qaEntries} />
+        <QandASection product={product} entries={qaEntries} />
       </div>
 
       <QuickView product={quickViewProduct} onClose={() => setQuickViewProduct(null)} />

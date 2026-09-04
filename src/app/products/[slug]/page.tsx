@@ -3,8 +3,9 @@ import { notFound } from "next/navigation";
 import { getCategoryBySlug } from "@/data/categories";
 import { getActiveProducts, getProductBySlug, getProducts } from "@/data/products";
 import { getPairedProducts, getRelatedProducts } from "@/lib/catalogue";
-import { getReviewsForProduct } from "@/data/reviews";
-import { getQAForProduct } from "@/data/qa";
+import { getReviewsForProduct } from "@/lib/reviews-store";
+import { getQAForProduct } from "@/lib/qa-store";
+import { getUser } from "@/lib/supabase/dal";
 import { ProductDetailView } from "@/components/product/ProductDetailView";
 import { siteConfig } from "@/config/site";
 import { breadcrumbJsonLd, JsonLd } from "@/lib/seo/json-ld";
@@ -49,11 +50,18 @@ export default async function ProductPage({ params }: PageProps<"/products/[slug
   const product = await getProductBySlug(slug);
   if (!product) notFound();
 
-  const [category, activeProducts] = await Promise.all([getCategoryBySlug(product.categorySlug), getActiveProducts()]);
+  const [category, activeProducts, user] = await Promise.all([
+    getCategoryBySlug(product.categorySlug),
+    getActiveProducts(),
+    getUser(),
+  ]);
   const relatedProducts = getRelatedProducts(product, activeProducts);
   const pairedProducts = getPairedProducts(product, activeProducts);
-  const seedReviews = getReviewsForProduct(product.slug);
-  const qaEntries = getQAForProduct(product.slug);
+  const [{ reviews, pendingIds }, qaEntries] = await Promise.all([
+    getReviewsForProduct({ id: product.id, slug: product.slug, name: product.name }, user?.id ?? null),
+    getQAForProduct(product.id, product.slug),
+  ]);
+  const pendingReviewIds = [...pendingIds];
 
   const availability = product.discontinued
     ? "https://schema.org/Discontinued"
@@ -87,9 +95,9 @@ export default async function ProductPage({ params }: PageProps<"/products/[slug
           },
         }
       : {}),
-    ...(seedReviews.length > 0
+    ...(reviews.length > 0
       ? {
-          review: seedReviews.slice(0, 10).map((review) => ({
+          review: reviews.slice(0, 10).map((review) => ({
             "@type": "Review",
             author: { "@type": "Person", name: review.customerName },
             reviewRating: { "@type": "Rating", ratingValue: review.rating, bestRating: 5, worstRating: 1 },
@@ -114,7 +122,8 @@ export default async function ProductPage({ params }: PageProps<"/products/[slug
         product={product}
         relatedProducts={relatedProducts}
         pairedProducts={pairedProducts}
-        seedReviews={seedReviews}
+        reviews={reviews}
+        pendingReviewIds={pendingReviewIds}
         qaEntries={qaEntries}
         breadcrumbs={breadcrumbs}
       />
