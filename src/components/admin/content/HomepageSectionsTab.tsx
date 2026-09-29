@@ -10,7 +10,7 @@ import { cn } from "@/lib/utils";
 const SECTION_LABELS: Record<string, string> = {
   hero: "Hero carousel",
   "feature-strip": "Feature strip",
-  "category-showcase": "Category showcase",
+  "category-showcase": "Glass type showcase",
   editorial: "Editorial section",
   bestsellers: "Bestsellers",
   "new-arrivals": "New arrivals",
