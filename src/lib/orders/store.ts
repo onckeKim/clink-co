@@ -48,6 +48,8 @@ function fromRow(row: OrderWithItems): Order {
     unitPrice: item.unit_price,
     quantity: item.quantity,
     lineTotal: item.line_total,
+    personalizationText: item.personalization_text ?? undefined,
+    personalizationImageUrl: item.personalization_image_url ?? undefined,
   }));
 
   return {
@@ -161,6 +163,8 @@ export async function createOrder(
       unit_price: line.unitPrice,
       quantity: line.quantity,
       line_total: line.lineTotal,
+      personalization_text: line.personalizationText ?? null,
+      personalization_image_url: line.personalizationImageUrl ?? null,
     })),
   );
 

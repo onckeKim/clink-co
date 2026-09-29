@@ -278,6 +278,24 @@ export function AdminOrderDetailView({ orderNumber }: { orderNumber: string }) {
                     <p className="text-xs text-stone">
                       SKU {line.sku} · Qty {line.quantity}
                     </p>
+                    {(line.personalizationText || line.personalizationImageUrl) && (
+                      <div className="mt-2 flex items-start gap-2 rounded-lg bg-champagne/20 p-2">
+                        <div className="min-w-0">
+                          <p className="text-xs font-semibold uppercase tracking-wide text-charcoal">Personalization</p>
+                          {line.personalizationText && (
+                            <p className="text-xs text-charcoal">&ldquo;{line.personalizationText}&rdquo;</p>
+                          )}
+                        </div>
+                        {line.personalizationImageUrl && (
+                          // eslint-disable-next-line @next/next/no-img-element -- a customer-submitted data URL, not an optimizable remote asset
+                          <img
+                            src={line.personalizationImageUrl}
+                            alt="Customer's reference photo"
+                            className="h-12 w-12 shrink-0 rounded-md border border-sand object-cover"
+                          />
+                        )}
+                      </div>
+                    )}
                   </div>
                   <p className="shrink-0 text-sm font-medium text-charcoal">{formatPrice(line.lineTotal)}</p>
                 </div>

@@ -36,7 +36,13 @@ function pushCartToAccount(lines: CartLine[]) {
     method: "PUT",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
-      lines: lines.map((line) => ({ productId: line.productId, variantId: line.variant?.id, quantity: line.quantity })),
+      lines: lines.map((line) => ({
+        productId: line.productId,
+        variantId: line.variant?.id,
+        quantity: line.quantity,
+        personalizationText: line.personalization?.text,
+        personalizationImageUrl: line.personalization?.imageDataUrl,
+      })),
     }),
   }).catch(() => {});
 }

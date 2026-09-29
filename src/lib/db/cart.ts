@@ -96,7 +96,14 @@ export async function removeCartItem(itemId: string): Promise<void> {
  */
 export async function replaceCartItems(
   cartId: string,
-  items: { productId: string; variantId?: string | null; quantity: number; unitPrice: number }[],
+  items: {
+    productId: string;
+    variantId?: string | null;
+    quantity: number;
+    unitPrice: number;
+    personalizationText?: string | null;
+    personalizationImageUrl?: string | null;
+  }[],
 ): Promise<void> {
   const db = await getDb();
   const del = await db.from("cart_items").delete().eq("cart_id", cartId);
@@ -108,6 +115,8 @@ export async function replaceCartItems(
     variant_id: i.variantId ?? null,
     quantity: i.quantity,
     unit_price_snapshot: i.unitPrice,
+    personalization_text: i.personalizationText ?? null,
+    personalization_image_url: i.personalizationImageUrl ?? null,
   }));
   const ins = await db.from("cart_items").insert(rows);
   if (ins.error) throw mapPostgrestError(ins.error);

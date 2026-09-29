@@ -135,6 +135,9 @@ export function ConfirmationView({ orderNumber }: { orderNumber: string }) {
                   {line.variantLabel ? ` — ${line.variantLabel}` : ""}
                 </p>
                 <p className="text-xs text-stone">Qty {line.quantity}</p>
+                {line.personalizationText && (
+                  <p className="text-xs text-stone">Personalized: &ldquo;{line.personalizationText}&rdquo;</p>
+                )}
               </div>
               <p className="text-sm font-medium text-charcoal">{formatPrice(line.lineTotal)}</p>
             </li>

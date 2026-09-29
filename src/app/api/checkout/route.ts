@@ -114,6 +114,8 @@ export async function POST(request: Request) {
     unitPrice: line.unitPrice,
     quantity: line.quantity,
     lineTotal: line.lineTotal,
+    personalizationText: line.personalizationText,
+    personalizationImageUrl: line.personalizationImageUrl,
   }));
 
   const customerFullName = `${data.customer.firstName} ${data.customer.lastName}`.trim();

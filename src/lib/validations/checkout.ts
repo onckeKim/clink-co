@@ -71,6 +71,8 @@ export const checkoutRequestSchema = z.object({
         slug: z.string().trim().min(1),
         variantId: z.string().trim().optional(),
         quantity: z.number().int().min(1).max(99),
+        personalizationText: z.string().trim().max(200).optional(),
+        personalizationImageUrl: z.string().max(3_000_000).optional(),
       }),
     )
     .min(1, "Your cart is empty."),

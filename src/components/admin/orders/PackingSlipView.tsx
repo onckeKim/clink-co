@@ -56,6 +56,7 @@ export function PackingSlipView({ order, businessName }: { order: Order; busines
             <tr className="border-b border-sand text-left text-xs uppercase tracking-[0.1em] text-stone">
               <th className="pb-2 font-medium">SKU</th>
               <th className="pb-2 font-medium">Item</th>
+              <th className="pb-2 font-medium">Personalization</th>
               <th className="pb-2 text-right font-medium">Qty</th>
             </tr>
           </thead>
@@ -66,6 +67,20 @@ export function PackingSlipView({ order, businessName }: { order: Order; busines
                 <td className="py-2 text-charcoal">
                   {line.name}
                   {line.variantLabel ? ` — ${line.variantLabel}` : ""}
+                </td>
+                <td className="py-2 text-charcoal">
+                  {line.personalizationText && <span>&ldquo;{line.personalizationText}&rdquo;</span>}
+                  {line.personalizationImageUrl && (
+                    <span className="ml-1 text-stone">{line.personalizationText ? "+ photo" : "See photo"}</span>
+                  )}
+                  {line.personalizationImageUrl && (
+                    // eslint-disable-next-line @next/next/no-img-element -- a customer-submitted data URL, not an optimizable remote asset
+                    <img
+                      src={line.personalizationImageUrl}
+                      alt="Customer's reference photo"
+                      className="mt-1 h-10 w-10 rounded-md border border-sand object-cover"
+                    />
+                  )}
                 </td>
                 <td className="py-2 text-right text-charcoal">{line.quantity}</td>
               </tr>

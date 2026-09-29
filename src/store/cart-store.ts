@@ -5,6 +5,13 @@ import type { Coupon } from "@/types/coupon";
 import { validateCoupon, getBestAutomaticDiscount, type PromotableLine } from "@/lib/promotions";
 import { track } from "@/lib/analytics/track";
 
+export interface CartLinePersonalization {
+  /** Custom wording the customer wants on the glass — short by design (it has to fit on glassware), capped at 60 chars in the UI. */
+  text?: string;
+  /** A reference photo, read client-side as a data URL — same pattern as WriteReviewForm's photo upload. Reference-only for fulfillment staff, never processed automatically. */
+  imageDataUrl?: string;
+}
+
 export interface CartLine {
   lineId: string;
   productId: string;
@@ -18,6 +25,8 @@ export interface CartLine {
   /** Denormalized for the promotions engine (product-/collection-specific coupons) — see src/lib/promotions.ts. */
   categorySlug: string;
   collectionSlugs: string[];
+  /** Set once, at the moment this line is first added — see addItem's existing-line branch, which merges quantity but never touches this. */
+  personalization?: CartLinePersonalization;
 }
 
 interface AppliedCoupon {
@@ -53,7 +62,10 @@ interface CartState {
    */
   userId: string | null;
   setUserId: (userId: string | null) => void;
-  addItem: (product: Product, options?: { variant?: ProductVariant; quantity?: number }) => void;
+  addItem: (
+    product: Product,
+    options?: { variant?: ProductVariant; quantity?: number; personalization?: CartLinePersonalization },
+  ) => void;
   removeLine: (lineId: string) => void;
   updateQuantity: (lineId: string, quantity: number, stockQuantity?: number) => void;
   clear: () => void;
@@ -173,6 +185,7 @@ export const useCartStore = create<CartState>()(
               quantity: Math.min(requestedQuantity, cap),
               categorySlug: product.categorySlug,
               collectionSlugs: product.collectionSlugs,
+              personalization: options?.personalization,
             },
           ];
         }

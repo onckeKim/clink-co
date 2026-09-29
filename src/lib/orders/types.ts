@@ -15,6 +15,9 @@ export interface OrderLineItem {
   unitPrice: number;
   quantity: number;
   lineTotal: number;
+  /** Reference-only, for fulfillment staff — see supabase/migrations/20250101001400_glass_personalization.sql. */
+  personalizationText?: string;
+  personalizationImageUrl?: string;
 }
 
 export interface OrderAddress {

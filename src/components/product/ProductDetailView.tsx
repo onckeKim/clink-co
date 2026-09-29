@@ -15,6 +15,7 @@ import { StockStatus } from "@/components/product/StockStatus";
 import { ColorSelector, SetSizeSelector } from "@/components/product/VariantSelectors";
 import { QuantitySelector } from "@/components/product/QuantitySelector";
 import { PurchaseActions } from "@/components/product/PurchaseActions";
+import { PersonalizeGlass } from "@/components/product/PersonalizeGlass";
 import { NotifyWhenAvailable } from "@/components/product/NotifyWhenAvailable";
 import { DiscontinuedNotice } from "@/components/product/DiscontinuedNotice";
 import { DraftNotice } from "@/components/product/DraftNotice";
@@ -32,6 +33,7 @@ import { useRecentlyViewedStore } from "@/store/recently-viewed-store";
 import { getDiscountPercent } from "@/lib/catalogue";
 import { useStoreSettings } from "@/components/providers/StoreSettingsProvider";
 import { useCatalog } from "@/components/providers/CatalogProvider";
+import type { CartLinePersonalization } from "@/store/cart-store";
 import { formatPrice } from "@/lib/utils";
 import { track } from "@/lib/analytics/track";
 
@@ -66,6 +68,7 @@ export function ProductDetailView({
   const [activeVariantId, setActiveVariantId] = React.useState(product.variants?.[0]?.id);
   const [activeSetSizeId, setActiveSetSizeId] = React.useState(product.setSizeOptions?.[0]?.id);
   const [quantity, setQuantity] = React.useState(1);
+  const [personalization, setPersonalization] = React.useState<CartLinePersonalization>({});
   const [quickViewProduct, setQuickViewProduct] = React.useState<Product | null>(null);
   const purchaseAnchorRef = React.useRef<HTMLDivElement>(null);
 
@@ -80,6 +83,7 @@ export function ProductDetailView({
     setActiveVariantId(product.variants?.[0]?.id);
     setActiveSetSizeId(product.setSizeOptions?.[0]?.id);
     setQuantity(1);
+    setPersonalization({});
   }
 
   React.useEffect(() => {
@@ -202,8 +206,17 @@ export function ProductDetailView({
             />
           )}
 
+          {purchasable && product.categorySlug === "glassware" && (
+            <PersonalizeGlass value={personalization} onChange={setPersonalization} />
+          )}
+
           <div ref={purchaseAnchorRef}>
-            <PurchaseActions product={product} variant={activeVariant} quantity={quantity} />
+            <PurchaseActions
+              product={product}
+              variant={activeVariant}
+              quantity={quantity}
+              personalization={product.categorySlug === "glassware" ? personalization : undefined}
+            />
           </div>
 
           {!product.inStock && !product.discontinued && <NotifyWhenAvailable productName={product.name} />}
@@ -264,6 +277,7 @@ export function ProductDetailView({
           variant={activeVariant}
           quantity={quantity}
           price={displayPrice}
+          personalization={product.categorySlug === "glassware" ? personalization : undefined}
         />
       )}
     </div>

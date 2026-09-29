@@ -59,6 +59,17 @@ export function CartLineItem({ line, compact = false }: { line: CartLine; compac
             </Link>
             {line.variant && <p className="mt-0.5 text-xs text-stone">{line.variant.label}</p>}
             <p className="mt-0.5 text-xs text-stone">{formatPrice(line.price)} each</p>
+            {line.personalization?.text && (
+              <p className="mt-0.5 text-xs text-stone">Personalized: &ldquo;{line.personalization.text}&rdquo;</p>
+            )}
+            {line.personalization?.imageDataUrl && (
+              // eslint-disable-next-line @next/next/no-img-element -- a locally-read data URL, not an optimizable remote asset
+              <img
+                src={line.personalization.imageDataUrl}
+                alt="Reference photo for personalization"
+                className="mt-1 h-10 w-10 rounded-md border border-sand object-cover"
+              />
+            )}
           </div>
           <p className="shrink-0 text-sm font-medium text-charcoal">{formatPrice(line.price * line.quantity)}</p>
         </div>

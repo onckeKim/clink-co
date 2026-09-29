@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { Check, Heart, Share2, ShoppingBag, Zap } from "lucide-react";
 import type { Product, ProductVariant } from "@/types/product";
 import { Button } from "@/components/ui/Button";
-import { useCartStore } from "@/store/cart-store";
+import { useCartStore, type CartLinePersonalization } from "@/store/cart-store";
 import { useWishlistStore } from "@/store/wishlist-store";
 import { useMounted } from "@/lib/hooks/use-mounted";
 import { cn } from "@/lib/utils";
@@ -14,10 +14,12 @@ export function PurchaseActions({
   product,
   variant,
   quantity,
+  personalization,
 }: {
   product: Product;
   variant?: ProductVariant;
   quantity: number;
+  personalization?: CartLinePersonalization;
 }) {
   const router = useRouter();
   const addItem = useCartStore((state) => state.addItem);
@@ -33,10 +35,10 @@ export function PurchaseActions({
   const isDraft = product.publishStatus === "draft";
   const disabled = !product.inStock || Boolean(product.discontinued) || isDraft;
 
-  const handleAddToCart = () => addItem(product, { variant, quantity });
+  const handleAddToCart = () => addItem(product, { variant, quantity, personalization });
 
   const handleBuyNow = () => {
-    addItem(product, { variant, quantity });
+    addItem(product, { variant, quantity, personalization });
     router.push("/checkout");
   };
 

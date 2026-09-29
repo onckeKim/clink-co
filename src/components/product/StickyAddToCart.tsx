@@ -6,7 +6,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { ShoppingBag } from "lucide-react";
 import type { Product, ProductVariant } from "@/types/product";
 import { Button } from "@/components/ui/Button";
-import { useCartStore } from "@/store/cart-store";
+import { useCartStore, type CartLinePersonalization } from "@/store/cart-store";
 import { formatPrice } from "@/lib/utils";
 
 /**
@@ -20,12 +20,14 @@ export function StickyAddToCart({
   variant,
   quantity,
   price,
+  personalization,
 }: {
   anchorRef: React.RefObject<HTMLElement | null>;
   product: Product;
   variant?: ProductVariant;
   quantity: number;
   price: number;
+  personalization?: CartLinePersonalization;
 }) {
   const [visible, setVisible] = React.useState(false);
   const addItem = useCartStore((state) => state.addItem);
@@ -70,7 +72,7 @@ export function StickyAddToCart({
           <Button
             type="button"
             disabled={!product.inStock}
-            onClick={() => addItem(product, { variant, quantity })}
+            onClick={() => addItem(product, { variant, quantity, personalization })}
             className="shrink-0"
           >
             <ShoppingBag className="h-4 w-4" />
