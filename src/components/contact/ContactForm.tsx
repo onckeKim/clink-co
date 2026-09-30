@@ -145,7 +145,7 @@ export function ContactForm({ defaultCategory }: { defaultCategory?: (typeof ENQ
           )}
         />
         <Label htmlFor="contact-consent" className="mb-0 text-sm font-normal normal-case tracking-normal text-stone">
-          I agree that Clink & Co may use these details to respond to my enquiry.
+          I agree that Keeps may use these details to respond to my enquiry.
         </Label>
       </div>
       {errors.consent && (

@@ -5,8 +5,8 @@ import { Reveal } from "@/components/motion/Reveal";
 import { getStoreSettings } from "@/lib/admin/settings-store";
 
 const galleryImages = [
-  { id: "social-1", image: "/images/social-1.svg", alt: "A styled table with Clink & Co coupe glasses" },
-  { id: "social-2", image: "/images/social-2.svg", alt: "Clink & Co rocks glasses on a home bar cart" },
+  { id: "social-1", image: "/images/social-1.svg", alt: "A styled table with Keeps coupe glasses" },
+  { id: "social-2", image: "/images/social-2.svg", alt: "Keeps rocks glasses on a home bar cart" },
   { id: "social-3", image: "/images/social-3.svg", alt: "A gift set boxed and ribboned on a linen tablecloth" },
   { id: "social-4", image: "/images/social-4.svg", alt: "Dinner plates and napkins set for a dinner party" },
   { id: "social-5", image: "/images/social-5.svg", alt: "A cocktail shaker and jigger on a marble counter" },
@@ -21,7 +21,7 @@ export async function SocialGallery() {
       <Reveal>
         <SectionHeading
           eyebrow="Tag us"
-          title="@clinkandco"
+          title="@keepsbyheimsight"
           description="Share the moments you raise a glass to — we feature our favourites."
           cta={{ label: "Follow on Instagram", href: instagramHref }}
         />

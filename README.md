@@ -1,4 +1,4 @@
-# Clink & Co by HEIMSIGHT
+# Keeps by HEIMSIGHT
 
 Premium drinkware, glassware, barware, tableware and gifting — a Next.js
 e-commerce site for a refined, editorial retail brand, priced in South
@@ -1061,7 +1061,7 @@ field-for-field, so the migration is a data-source swap, not a rewrite:
 
 `src/data/categories.ts` (Glassware, Barware, Tableware, Serveware, Gift
 Sets, Accessories) and `collections.ts` (4 curated collections) contain
-realistic, Clink & Co–specific copy typed against `src/types/product.ts` /
+realistic, Keeps–specific copy typed against `src/types/product.ts` /
 `category.ts`. `src/data/hero-slides.ts` and `reviews.ts` back the Hero
 and Reviews sections respectively.
 
@@ -1301,7 +1301,7 @@ Verified at phone (390px), tablet (834px) and desktop (1440px) widths:
   brand's actual accounts (this single file feeds the header, footer and
   social gallery, so it only needs updating in one place).
 - **Contact email domain** — `siteConfig.contactEmail`
-  (`hello@clinkandco.com`) is a placeholder pending the real domain.
+  (`hello@keepsbyheimsight.com`) is a placeholder pending the real domain.
 - **Review authenticity** — `src/data/reviews.ts` is realistic sample copy,
   not real customer reviews; replace before launch or wire up a reviews
   table.

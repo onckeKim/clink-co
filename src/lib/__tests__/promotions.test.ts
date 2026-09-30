@@ -98,9 +98,9 @@ describe("validateCoupon (discount calculations)", () => {
   });
 
   it("scopes a product-restricted coupon to the matching product only", () => {
-    const matching = line({ slug: "solstice-coupe-glasses", lineTotal: 1450 });
-    const other = line({ slug: "harbor-rocks-glasses", lineTotal: 1250 });
-    const result = validateCoupon("COUPE25", couponsSeed, [matching, other], 2700);
+    const matching = line({ slug: "the-stemmed-suite", lineTotal: 1450 });
+    const other = line({ slug: "the-reserve", lineTotal: 1250 });
+    const result = validateCoupon("SUITE25", couponsSeed, [matching, other], 2700);
     expect(result.valid).toBe(true);
     if (result.valid) expect(result.discountAmount).toBe(363); // 25% of 1450 = 362.5 -> 363
   });

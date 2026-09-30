@@ -44,7 +44,7 @@ src/app/api/cron/abandoned-cart-emails/   The abandoned-cart cron trigger.
 
 | Template key | Subject | Trigger |
 | --- | --- | --- |
-| `welcome` | Welcome to Clink & Co | Ready to call — no dedicated "welcome" moment wired yet; call from wherever post-signup onboarding lands |
+| `welcome` | Welcome to Keeps | Ready to call — no dedicated "welcome" moment wired yet; call from wherever post-signup onboarding lands |
 | `email-verification` | Confirm your email address | Ready — see the note on Supabase Auth integration below |
 | `password-reset` | Reset your password | Ready — see the note on Supabase Auth integration below |
 | `order-confirmation` | Order confirmed — `{orderNumber}` | Order placed — `POST /api/checkout` |

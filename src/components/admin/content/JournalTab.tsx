@@ -40,7 +40,7 @@ const emptyForm: FormState = {
   bodyText: "",
   coverImage: "",
   coverImageAlt: "",
-  author: "Clink & Co Editorial",
+  author: "Keeps Editorial",
   publishedAt: new Date().toISOString().slice(0, 10),
   publishStatus: "draft",
   seoTitle: "",

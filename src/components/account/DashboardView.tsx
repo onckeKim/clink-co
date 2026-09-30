@@ -55,7 +55,7 @@ export function DashboardView() {
       {justVerified && (
         <div className="flex items-center gap-2.5 rounded-2xl bg-success/10 px-5 py-4 text-sm text-success">
           <PartyPopper className="h-4 w-4 shrink-0" aria-hidden />
-          Your email is verified — welcome to Clink &amp; Co.
+          Your email is verified — welcome to Keeps.
         </div>
       )}
       {linkedOrders > 0 && (

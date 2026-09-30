@@ -8,7 +8,7 @@ import { breadcrumbJsonLd, JsonLd } from "@/lib/seo/json-ld";
 
 export const metadata: Metadata = {
   title: "Collections",
-  description: "Curated edits of the Clink & Co range, grouped by how you actually shop.",
+  description: "Curated edits of the Keeps range, grouped by how you actually shop.",
   alternates: { canonical: "/collections" },
 };
 

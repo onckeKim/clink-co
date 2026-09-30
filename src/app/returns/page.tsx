@@ -8,7 +8,7 @@ import { breadcrumbJsonLd, JsonLd } from "@/lib/seo/json-ld";
 
 export const metadata: Metadata = {
   title: "Returns",
-  description: "Our returns policy, eligibility conditions and how to request a return for your Clink & Co by HEIMSIGHT order.",
+  description: "Our returns policy, eligibility conditions and how to request a return for your Keeps by HEIMSIGHT order.",
   alternates: { canonical: "/returns" },
 };
 

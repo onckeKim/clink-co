@@ -7,7 +7,7 @@ import { ShopSkeleton } from "@/components/catalogue/ShopSkeleton";
 export const metadata: Metadata = {
   title: "Shop All",
   description:
-    "Browse the full Clink & Co range — glassware, barware, tableware, serveware, gift sets and accessories.",
+    "Browse the full Keeps range — glassware, barware, tableware, serveware, gift sets and accessories.",
   alternates: { canonical: "/shop" },
 };
 
@@ -20,7 +20,7 @@ export default async function ShopPage() {
       <ShopExperience
         products={products}
         title="Shop All"
-        description="Every piece in the Clink & Co range, from everyday glassware to considered gifting."
+        description="Every piece in the Keeps range, from everyday glassware to considered gifting."
         breadcrumbs={[{ label: "Home", href: "/" }, { label: "Shop" }]}
       />
     </Suspense>

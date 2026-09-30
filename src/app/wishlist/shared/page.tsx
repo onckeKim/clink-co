@@ -4,7 +4,7 @@ import { SharedWishlistView } from "@/components/wishlist/SharedWishlistView";
 
 export const metadata: Metadata = {
   title: "Shared Wishlist",
-  description: "A wishlist shared by a Clink & Co customer.",
+  description: "A wishlist shared by a Keeps customer.",
 };
 
 export default function SharedWishlistPage() {

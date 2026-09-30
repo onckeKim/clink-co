@@ -15,7 +15,7 @@ export default async function Image({ params }: { params: Promise<{ slug: string
   return new ImageResponse(
     <SocialCard
       eyebrow={category?.name ?? "Shop"}
-      title={product?.name ?? "Clink & Co by HEIMSIGHT"}
+      title={product?.name ?? "Keeps by HEIMSIGHT"}
       footer={product ? formatPrice(product.price) : undefined}
     />,
     size,

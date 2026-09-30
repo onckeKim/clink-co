@@ -18,9 +18,9 @@ export const heroSlidesSeed: HeroSlide[] = [
     id: "autumn-edit",
     eyebrow: "The Autumn Edit",
     heading: "Made for moments worth raising a glass to.",
-    copy: "Considered glassware, barware and tableware from Clink & Co by HEIMSIGHT — designed for the dinners that run late and the Tuesdays that deserve a little ceremony too.",
+    copy: "Considered glassware, barware and tableware from Keeps by HEIMSIGHT — designed for the dinners that run late and the Tuesdays that deserve a little ceremony too.",
     image: "/images/hero-table.svg",
-    imageAlt: "A table set with Clink & Co glassware, catching warm evening light",
+    imageAlt: "A table set with Keeps glassware, catching warm evening light",
     primaryCta: { label: "Shop the Collection", href: "/shop" },
     secondaryCta: { label: "Explore New Arrivals", href: "/#new-arrivals" },
     sortOrder: 0,
@@ -31,7 +31,7 @@ export const heroSlidesSeed: HeroSlide[] = [
     heading: "Built for the ritual, not just the pour.",
     copy: "Hand-blown rocks glasses, a monogrammed shaker, a jigger that's actually accurate — everything a home bar needs to feel considered, not cluttered.",
     image: "/images/hero-bar-cart.svg",
-    imageAlt: "A styled home bar cart with Clink & Co barware",
+    imageAlt: "A styled home bar cart with Keeps barware",
     primaryCta: { label: "Shop the Collection", href: "/shop/barware" },
     secondaryCta: { label: "Explore New Arrivals", href: "/#new-arrivals" },
     sortOrder: 1,
@@ -42,7 +42,7 @@ export const heroSlidesSeed: HeroSlide[] = [
     heading: "A gift that says more than the card does.",
     copy: "Boxed, ribboned and ready to give — our gift sets pair the pieces people actually use, with a handwritten note added at checkout.",
     image: "/images/hero-gifting.svg",
-    imageAlt: "A Clink & Co gift set boxed and ribboned",
+    imageAlt: "A Keeps gift set boxed and ribboned",
     primaryCta: { label: "Shop the Collection", href: "/shop/gift-sets" },
     secondaryCta: { label: "Explore New Arrivals", href: "/#new-arrivals" },
     sortOrder: 2,
@@ -66,20 +66,20 @@ export const editorialSeed: EditorialSection = {
   ctaLabel: "Shop Entertaining",
   ctaHref: "/shop",
   image: "/images/editorial-hosting.svg",
-  imageAlt: "A table set for entertaining with Clink & Co glassware and tableware",
+  imageAlt: "A table set for entertaining with Keeps glassware and tableware",
 };
 
 export const aboutPageSeed: AboutPageContent = {
   heroEyebrow: "Our Story",
   heroTitle: "Made for moments worth raising a glass to.",
   heroDescription:
-    "Clink & Co by HEIMSIGHT started with a simple question: why does the glassware people actually reach for every day get so little thought? We set out to make pieces considered enough for the occasion and sturdy enough for a Tuesday.",
+    "Keeps by HEIMSIGHT started with a simple question: why does the glassware people actually reach for every day get so little thought? We set out to make pieces considered enough for the occasion and sturdy enough for a Tuesday.",
   heroImage: "/images/hero-table.svg",
-  heroImageAlt: "A table set with Clink & Co glassware",
+  heroImageAlt: "A table set with Keeps glassware",
   sections: [
     {
       heading: "Where it began",
-      body: "HEIMSIGHT was founded on the belief that the objects we use every day deserve the same care as the ones we save for best. Clink & Co is our answer for the table — glassware, barware and tableware designed to be used, not just admired.",
+      body: "HEIMSIGHT was founded on the belief that the objects we use every day deserve the same care as the ones we save for best. Keeps is our answer for the table — glassware, barware and tableware designed to be used, not just admired.",
     },
     {
       heading: "How we make it",
@@ -341,8 +341,8 @@ export const journalArticlesSeed: JournalArticle[] = [
       "Start with glassware that does double duty — a coupe that works for a cocktail and a dessert wine, a tumbler that's equally at home with water or whisky. Fewer, better pieces beat a cupboard full of single-use glassware.",
     ],
     coverImage: "/images/editorial-hosting.svg",
-    coverImageAlt: "A table set for entertaining with Clink & Co glassware and tableware",
-    author: "Clink & Co Editorial",
+    coverImageAlt: "A table set for entertaining with Keeps glassware and tableware",
+    author: "Keeps Editorial",
     publishedAt: "2025-03-04",
     publishStatus: "published",
     category: "Entertaining",
@@ -361,7 +361,7 @@ export const journalArticlesSeed: JournalArticle[] = [
     ],
     coverImage: "/images/lifestyle-glass.svg",
     coverImageAlt: "Close-up of hand-blown glassware catching the light",
-    author: "Clink & Co Editorial",
+    author: "Keeps Editorial",
     publishedAt: "2025-05-12",
     publishStatus: "published",
     category: "Product Care",
@@ -379,8 +379,8 @@ export const journalArticlesSeed: JournalArticle[] = [
       "Every gift set ships boxed and ribboned, with a handwritten note available at checkout — so the presentation does some of the work for you.",
     ],
     coverImage: "/images/lifestyle-gift.svg",
-    coverImageAlt: "A Clink & Co gift set boxed and ribboned",
-    author: "Clink & Co Editorial",
+    coverImageAlt: "A Keeps gift set boxed and ribboned",
+    author: "Keeps Editorial",
     publishedAt: "2025-08-20",
     publishStatus: "published",
     category: "Gifting",
@@ -399,8 +399,8 @@ export const journalArticlesSeed: JournalArticle[] = [
       "Finally, give it a home — a tray, a cart, or even a single shelf — so the ritual of making a drink feels considered rather than improvised.",
     ],
     coverImage: "/images/hero-bar-cart.svg",
-    coverImageAlt: "A styled home bar cart with Clink & Co barware",
-    author: "Clink & Co Editorial",
+    coverImageAlt: "A styled home bar cart with Keeps barware",
+    author: "Keeps Editorial",
     publishedAt: "2025-09-02",
     publishStatus: "published",
     category: "Home Bar",
@@ -420,7 +420,7 @@ export const journalArticlesSeed: JournalArticle[] = [
     ],
     coverImage: "/images/lifestyle-glass.svg",
     coverImageAlt: "A row of different glass styles catching the light",
-    author: "Clink & Co Editorial",
+    author: "Keeps Editorial",
     publishedAt: "2025-07-15",
     publishStatus: "published",
     category: "Home Bar",
@@ -440,7 +440,7 @@ export const journalArticlesSeed: JournalArticle[] = [
     ],
     coverImage: "/images/editorial-hosting.svg",
     coverImageAlt: "A small table set for an intimate dinner gathering",
-    author: "Clink & Co Editorial",
+    author: "Keeps Editorial",
     publishedAt: "2025-06-10",
     publishStatus: "published",
     category: "Entertaining",
@@ -456,7 +456,7 @@ export const policiesSeed: Record<PolicyPageKey, PolicyPageContent> = {
     title: "Privacy Policy",
     updatedAt: genericUpdatedAt,
     intro:
-      "This policy explains what personal information Clink & Co by HEIMSIGHT collects, how we use it, and the choices you have. By using our site, you agree to the practices described here.",
+      "This policy explains what personal information Keeps by HEIMSIGHT collects, how we use it, and the choices you have. By using our site, you agree to the practices described here.",
     sections: [
       {
         heading: "Information we collect",
@@ -476,7 +476,7 @@ export const policiesSeed: Record<PolicyPageKey, PolicyPageContent> = {
     title: "Terms of Service",
     updatedAt: genericUpdatedAt,
     intro:
-      "These terms govern your use of the Clink & Co by HEIMSIGHT website and your purchases from us. Please read them carefully before placing an order.",
+      "These terms govern your use of the Keeps by HEIMSIGHT website and your purchases from us. Please read them carefully before placing an order.",
     sections: [
       {
         heading: "Orders and pricing",
@@ -516,7 +516,7 @@ export const policiesSeed: Record<PolicyPageKey, PolicyPageContent> = {
     title: "Delivery Policy",
     updatedAt: genericUpdatedAt,
     intro:
-      "This delivery policy outlines the areas we deliver to, expected timeframes and fees for orders placed with Clink & Co by HEIMSIGHT. It should be read alongside our Delivery Information page.",
+      "This delivery policy outlines the areas we deliver to, expected timeframes and fees for orders placed with Keeps by HEIMSIGHT. It should be read alongside our Delivery Information page.",
     sections: [
       {
         heading: "Delivery areas and timeframes",
@@ -536,7 +536,7 @@ export const policiesSeed: Record<PolicyPageKey, PolicyPageContent> = {
     title: "Returns and Refund Policy",
     updatedAt: genericUpdatedAt,
     intro:
-      "This policy sets out the terms on which Clink & Co by HEIMSIGHT accepts returns and processes refunds, in addition to any statutory rights you have under South African consumer protection law.",
+      "This policy sets out the terms on which Keeps by HEIMSIGHT accepts returns and processes refunds, in addition to any statutory rights you have under South African consumer protection law.",
     sections: [
       {
         heading: "Return eligibility",
@@ -556,7 +556,7 @@ export const policiesSeed: Record<PolicyPageKey, PolicyPageContent> = {
     title: "Payment Policy",
     updatedAt: genericUpdatedAt,
     intro:
-      "This payment policy describes the payment methods we accept and how payment information is processed and secured when you shop with Clink & Co by HEIMSIGHT.",
+      "This payment policy describes the payment methods we accept and how payment information is processed and secured when you shop with Keeps by HEIMSIGHT.",
     sections: [
       {
         heading: "Accepted payment methods",
@@ -576,7 +576,7 @@ export const policiesSeed: Record<PolicyPageKey, PolicyPageContent> = {
     title: "Website Disclaimer",
     updatedAt: genericUpdatedAt,
     intro:
-      "The following disclaimer applies to your use of the Clink & Co by HEIMSIGHT website. By using this site, you accept this disclaimer in full.",
+      "The following disclaimer applies to your use of the Keeps by HEIMSIGHT website. By using this site, you accept this disclaimer in full.",
     sections: [
       {
         heading: "No professional advice",
@@ -588,7 +588,7 @@ export const policiesSeed: Record<PolicyPageKey, PolicyPageContent> = {
       },
       {
         heading: "Limitation of liability",
-        body: "To the fullest extent permitted by law, Clink & Co by HEIMSIGHT will not be liable for any indirect or consequential loss arising from the use of this website.",
+        body: "To the fullest extent permitted by law, Keeps by HEIMSIGHT will not be liable for any indirect or consequential loss arising from the use of this website.",
       },
     ],
   },

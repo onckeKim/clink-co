@@ -15,7 +15,7 @@ export async function NewArrivals() {
           <SectionHeading
             eyebrow="Just landed"
             title="New Arrivals"
-            description="Fresh off the workbench — the newest additions to the Clink & Co edit."
+            description="Fresh off the workbench — the newest additions to the Keeps edit."
             cta={{ label: "Shop New Arrivals", href: "/shop?new=1" }}
           />
         </Reveal>

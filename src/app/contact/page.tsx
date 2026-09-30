@@ -10,7 +10,7 @@ import { breadcrumbJsonLd, JsonLd } from "@/lib/seo/json-ld";
 
 export const metadata: Metadata = {
   title: "Contact Us",
-  description: "Get in touch with the Clink & Co by HEIMSIGHT team — order questions, product questions, returns and more.",
+  description: "Get in touch with the Keeps by HEIMSIGHT team — order questions, product questions, returns and more.",
   alternates: { canonical: "/contact" },
 };
 

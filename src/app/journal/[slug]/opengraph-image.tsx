@@ -12,7 +12,7 @@ export default async function Image({ params }: { params: Promise<{ slug: string
   return new ImageResponse(
     <SocialCard
       eyebrow={article ? `Journal · ${article.category}` : "Journal"}
-      title={article?.title ?? "Clink & Co by HEIMSIGHT"}
+      title={article?.title ?? "Keeps by HEIMSIGHT"}
       footer={article ? `By ${article.author}` : undefined}
     />,
     size,

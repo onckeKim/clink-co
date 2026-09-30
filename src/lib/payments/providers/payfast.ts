@@ -62,7 +62,7 @@ export const payfastProvider: PaymentProvider = {
       email_address: customerEmail,
       m_payment_id: orderNumber,
       amount: amount.toFixed(2),
-      item_name: `Clink & Co order ${orderNumber}`,
+      item_name: `Keeps order ${orderNumber}`,
     };
     const signature = sign(fields, process.env.PAYFAST_PASSPHRASE);
     const query = new URLSearchParams({ ...fields, signature }).toString();

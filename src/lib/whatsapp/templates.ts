@@ -17,7 +17,7 @@ export function orderConfirmationWhatsAppMessage(order: Order, phone: string): W
     to: { phone, name: order.customerName },
     templateName: "order_confirmation",
     templateParams: [firstName, order.orderNumber, formatPrice(order.total)],
-    body: `Hi ${firstName}, your Clink & Co order ${order.orderNumber} (${formatPrice(order.total)}) is confirmed. We'll message you again once it ships.`,
+    body: `Hi ${firstName}, your Keeps order ${order.orderNumber} (${formatPrice(order.total)}) is confirmed. We'll message you again once it ships.`,
   };
 }
 

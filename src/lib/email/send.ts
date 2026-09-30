@@ -51,7 +51,7 @@ export async function sendTransactionalEmail(input: SendTransactionalEmailInput)
     try {
       return new URL(siteConfig.url).hostname;
     } catch {
-      return "clinkandco.com";
+      return "keepsbyheimsight.com";
     }
   })();
 

@@ -39,8 +39,8 @@ function sampleOrder(overrides: Partial<Order> = {}): Order {
     phone: "+27 82 555 0134",
   };
   const lines = [
-    { productId: "prod-1", slug: "solstice-coupe-glasses", sku: "CC-GLS-001", name: "Solstice Coupe Glasses", image: "/images/products/solstice-coupe-glasses-1.svg", variantLabel: "Set of 4", unitPrice: 1450, quantity: 1, lineTotal: 1450 },
-    { productId: "prod-2", slug: "harbor-rocks-glasses", sku: "CC-GLS-002", name: "Harbor Rocks Glasses", image: "/images/products/harbor-rocks-glasses-1.svg", unitPrice: 1250, quantity: 1, lineTotal: 1250 },
+    { productId: "prod-1", slug: "the-stemmed-suite", sku: "KPS-GLS-008", name: "The Stemmed Suite", image: "/images/products/the-stemmed-suite-1.svg", unitPrice: 106, quantity: 1, lineTotal: 106 },
+    { productId: "prod-2", slug: "the-reserve", sku: "KPS-GLS-001", name: "The Reserve", image: "/images/products/the-reserve-1.svg", unitPrice: 75, quantity: 1, lineTotal: 75 },
   ];
   return {
     id: "order-preview",
@@ -72,7 +72,7 @@ function sampleOrder(overrides: Partial<Order> = {}): Order {
 }
 
 const sampleProduct = { name: "Aldine Decanter", image: "/images/products/aldine-decanter-1.svg", price: 2650, slug: "aldine-decanter" };
-const sampleUnsubscribeUrl = "https://clinkandco.com/unsubscribe?token=preview-token";
+const sampleUnsubscribeUrl = "https://keepsbyheimsight.com/unsubscribe?token=preview-token";
 
 export interface TemplateRegistryEntry {
   key: string;
@@ -90,14 +90,14 @@ export const templateRegistry: TemplateRegistryEntry[] = [
     label: "Email Verification",
     audience: "customer",
     emailCategory: "transactional",
-    render: (settings) => emailVerificationTemplate({ firstName: "Jane", verifyUrl: "https://clinkandco.com/auth/confirm?token=preview", expiresInHours: 24 }, settings),
+    render: (settings) => emailVerificationTemplate({ firstName: "Jane", verifyUrl: "https://keepsbyheimsight.com/auth/confirm?token=preview", expiresInHours: 24 }, settings),
   },
   {
     key: "password-reset",
     label: "Password Reset",
     audience: "customer",
     emailCategory: "transactional",
-    render: (settings) => passwordResetTemplate({ firstName: "Jane", resetUrl: "https://clinkandco.com/reset-password?token=preview", expiresInMinutes: 60 }, settings),
+    render: (settings) => passwordResetTemplate({ firstName: "Jane", resetUrl: "https://keepsbyheimsight.com/reset-password?token=preview", expiresInMinutes: 60 }, settings),
   },
   // Customer — order lifecycle
   { key: "order-confirmation", label: "Order Confirmation", audience: "customer", emailCategory: "transactional", render: (settings) => orderConfirmationTemplate(sampleOrder({ paymentMethod: "eft" }), settings) },
@@ -138,7 +138,7 @@ export const templateRegistry: TemplateRegistryEntry[] = [
     label: "Wishlist Reminder",
     audience: "customer",
     emailCategory: "marketing",
-    render: (settings) => wishlistReminderTemplate({ firstName: "Jane", products: [sampleProduct, { name: "Toast Champagne Flutes", image: "/images/products/toast-champagne-flutes-1.svg", price: 1380, slug: "toast-champagne-flutes" }], unsubscribeUrl: sampleUnsubscribeUrl }, settings),
+    render: (settings) => wishlistReminderTemplate({ firstName: "Jane", products: [sampleProduct, { name: "The Stemless Pair", image: "/images/products/the-stemless-pair-1.svg", price: 130, slug: "the-stemless-pair" }], unsubscribeUrl: sampleUnsubscribeUrl }, settings),
   },
   {
     key: "abandoned-cart",

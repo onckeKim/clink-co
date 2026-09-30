@@ -6,10 +6,10 @@
  * Supabase instead of hunting through components.
  */
 export const siteConfig = {
-  name: "Clink & Co",
-  fullName: "Clink & Co by HEIMSIGHT",
-  tagline: "Made for moments worth raising a glass to.",
-  url: process.env.NEXT_PUBLIC_SITE_URL ?? "https://clinkandco.com",
+  name: "Keeps",
+  fullName: "Keeps by HEIMSIGHT",
+  tagline: "Premium glassware made for gifting.",
+  url: process.env.NEXT_PUBLIC_SITE_URL ?? "https://keepsbyheimsight.com",
 
   currency: "ZAR" as const,
   locale: "en-ZA",
@@ -24,15 +24,15 @@ export const siteConfig = {
   returnWindowDays: 30,
 
   social: {
-    instagram: "https://instagram.com/clinkandco",
-    facebook: "https://facebook.com/clinkandco",
-    tiktok: "https://tiktok.com/@clinkandco",
-    pinterest: "https://pinterest.com/clinkandco",
+    instagram: "https://instagram.com/keepsbyheimsight",
+    facebook: "https://facebook.com/keepsbyheimsight",
+    tiktok: "https://tiktok.com/@keepsbyheimsight",
+    pinterest: "https://pinterest.com/keepsbyheimsight",
     // Placeholder South African number — replace with the real support line before go-live (overridable via Store Settings).
     whatsapp: "https://wa.me/27210000000",
   },
 
-  contactEmail: "hello@clinkandco.com",
+  contactEmail: "hello@keepsbyheimsight.com",
   /** Where new-order notifications are sent — see src/lib/email.ts. */
-  orderNotificationEmail: "orders@clinkandco.com",
+  orderNotificationEmail: "orders@keepsbyheimsight.com",
 } as const;

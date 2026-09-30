@@ -58,7 +58,7 @@ export function AdminQuestionsListView() {
   const openReply = (question: AdminQuestion) => {
     setReplyTarget(question);
     setReplyText(question.answerText ?? "");
-    setReplyName(question.answeredBy ?? "Clink & Co Team");
+    setReplyName(question.answeredBy ?? "Keeps Team");
     setReplyError(null);
   };
   const closeReply = () => setReplyTarget(null);

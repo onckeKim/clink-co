@@ -36,7 +36,7 @@ export function NewsletterForm({ className }: { className?: string }) {
   if (submitted) {
     return (
       <p className={cn("flex items-center gap-2 text-sm text-warm-white", className)}>
-        <Check className="h-4 w-4" /> You&apos;re on the list — welcome to Clink & Co.
+        <Check className="h-4 w-4" /> You&apos;re on the list — welcome to Keeps.
       </p>
     );
   }

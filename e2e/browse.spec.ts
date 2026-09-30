@@ -3,7 +3,7 @@ import { test, expect } from "./utils/fixtures";
 test.describe("Browse products", () => {
   test("homepage loads and links into the shop", async ({ page }) => {
     await page.goto("/");
-    await expect(page).toHaveTitle(/Clink & Co/i);
+    await expect(page).toHaveTitle(/Keeps/i);
 
     const desktopShopLink = page.getByRole("navigation", { name: "Primary" }).getByRole("link", { name: "Shop", exact: true });
     if (await desktopShopLink.isVisible().catch(() => false)) {

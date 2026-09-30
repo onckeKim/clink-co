@@ -40,10 +40,10 @@ export function SocialCard({
             justifyContent: "center",
           }}
         >
-          <span style={{ fontFamily: "serif", fontSize: 26, color: "#fcfbf8" }}>C</span>
+          <span style={{ fontFamily: "serif", fontSize: 26, color: "#fcfbf8" }}>K</span>
         </div>
         <span style={{ fontSize: 22, letterSpacing: 3, textTransform: "uppercase", color: "#1c1c1a" }}>
-          Clink &amp; Co
+          Keeps
         </span>
       </div>
 

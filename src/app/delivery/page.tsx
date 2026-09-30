@@ -9,7 +9,7 @@ import { breadcrumbJsonLd, JsonLd } from "@/lib/seo/json-ld";
 
 export const metadata: Metadata = {
   title: "Delivery Information",
-  description: "Delivery areas, processing times, fees and tracking for Clink & Co by HEIMSIGHT orders.",
+  description: "Delivery areas, processing times, fees and tracking for Keeps by HEIMSIGHT orders.",
   alternates: { canonical: "/delivery" },
 };
 

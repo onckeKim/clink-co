@@ -21,7 +21,7 @@ export function WishlistPageView() {
 
     if (typeof navigator !== "undefined" && navigator.share) {
       try {
-        await navigator.share({ title: "My Clink & Co wishlist", url });
+        await navigator.share({ title: "My Keeps wishlist", url });
       } catch {
         // Visitor cancelled the native share sheet — nothing to do.
       }

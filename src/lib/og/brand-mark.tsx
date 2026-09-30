@@ -26,7 +26,7 @@ export function BrandMark({ size, radius }: { size: number; radius?: number }) {
           lineHeight: 1,
         }}
       >
-        C
+        K
       </span>
     </div>
   );

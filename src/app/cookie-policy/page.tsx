@@ -4,7 +4,7 @@ import { getPolicyPage } from "@/lib/admin/content-store";
 
 export const metadata: Metadata = {
   title: "Cookie Policy",
-  description: "How Clink & Co by HEIMSIGHT uses cookies and how to manage your preferences.",
+  description: "How Keeps by HEIMSIGHT uses cookies and how to manage your preferences.",
   alternates: { canonical: "/cookie-policy" },
 };
 

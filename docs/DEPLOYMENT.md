@@ -1,6 +1,6 @@
 # Deployment guide — Vercel + Supabase
 
-This is the operational guide for taking Clink & Co from this repository to
+This is the operational guide for taking Keeps from this repository to
 a live, production URL. It assumes the reader has a Vercel account, a
 Supabase account, and access to whichever payment/email providers the
 business has chosen — it does not assume familiarity with this codebase.
@@ -71,8 +71,8 @@ Do these in order — later steps assume earlier ones are done:
    like a root password: server-only, never in a client bundle, never in a
    PR, never in a support ticket.
 4. **Authentication → URL Configuration**: set the **Site URL** to your
-   production domain (e.g. `https://clinkandco.com`) once you know it, and
-   add `https://clinkandco.com/**` (and the Vercel preview-deployment
+   production domain (e.g. `https://keepsbyheimsight.com`) once you know it, and
+   add `https://keepsbyheimsight.com/**` (and the Vercel preview-deployment
    pattern, `https://*.vercel.app/**`, while you're still testing) to
    **Redirect URLs** — this is what makes Supabase's verification/recovery
    email links land back on this app instead of erroring.
@@ -147,12 +147,12 @@ apply env var changes to an already-built deployment).
 ## 6 — Custom domain, DNS & HTTPS
 
 1. **Vercel → Project → Settings → Domains** → add your domain
-   (`clinkandco.com`) and, if you want it, `www.clinkandco.com`.
+   (`keepsbyheimsight.com`) and, if you want it, `www.keepsbyheimsight.com`.
 2. Vercel shows the exact DNS records to add. For an apex domain
-   (`clinkandco.com`), that's typically an **A record** to Vercel's anycast
+   (`keepsbyheimsight.com`), that's typically an **A record** to Vercel's anycast
    IP (`76.76.21.21`) or, if your DNS provider supports it, an **ALIAS/ANAME**
    record pointed at `cname.vercel-dns.com`. For a subdomain
-   (`www.clinkandco.com`), it's a **CNAME** to `cname.vercel-dns.com`.
+   (`www.keepsbyheimsight.com`), it's a **CNAME** to `cname.vercel-dns.com`.
    Add those records at whichever provider hosts your DNS (your domain
    registrar, or Cloudflare/Route53/etc. if you've delegated DNS there).
 3. Decide the canonical host and redirect the other: in the same Domains
@@ -202,7 +202,7 @@ rejected outright):
   `TXT`/`MX` record) and DKIM (`TXT` `resend._domainkey`) records at your
   DNS provider → wait for Resend to show the domain as **Verified**
   (usually minutes). Send from an address on that domain, e.g.
-  `orders@clinkandco.com`, matching `emailSenderLocalPart` /
+  `orders@keepsbyheimsight.com`, matching `emailSenderLocalPart` /
   `businessName` in store settings.
 - **SendGrid**: Settings → Sender Authentication → Authenticate Your
   Domain → add the shown `CNAME` records → verify. Also complete **Sender

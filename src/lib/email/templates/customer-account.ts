@@ -24,7 +24,7 @@ import type { EmailContent } from "../types";
  */
 
 export function welcomeEmailTemplate(data: { firstName: string }, settings: StoreSettings): EmailContent {
-  const subject = "Welcome to Clink & Co";
+  const subject = "Welcome to Keeps";
   const previewText = `You're in, ${data.firstName} — here's what's next.`;
   const bodyHtml = [
     heading(`Welcome, ${data.firstName}`),
@@ -51,13 +51,13 @@ export function emailVerificationTemplate(data: { firstName: string; verifyUrl: 
   const previewText = "One click and you're verified.";
   const bodyHtml = [
     heading(`Confirm your email, ${data.firstName}`),
-    paragraph("Please confirm this is your email address to finish setting up your Clink & Co account."),
+    paragraph("Please confirm this is your email address to finish setting up your Keeps account."),
     ctaButton("Confirm Email Address", data.verifyUrl),
     calloutBox(`This link expires in ${data.expiresInHours} hours. If you didn't create an account with us, you can safely ignore this email.`),
   ].join("");
   const bodyText = [
     `Confirm your email, ${data.firstName}`,
-    paragraphText("Please confirm this is your email address to finish setting up your Clink & Co account."),
+    paragraphText("Please confirm this is your email address to finish setting up your Keeps account."),
     ctaButtonText("Confirm Email Address", data.verifyUrl),
     calloutBoxText(`This link expires in ${data.expiresInHours} hours. If you didn't create an account with us, you can safely ignore this email.`),
   ].join("\n\n");
@@ -75,7 +75,7 @@ export function passwordResetTemplate(data: { firstName: string; resetUrl: strin
   const previewText = "Here's your password reset link.";
   const bodyHtml = [
     heading(`Reset your password, ${data.firstName}`),
-    paragraph("We received a request to reset the password on your Clink & Co account. Click below to choose a new one."),
+    paragraph("We received a request to reset the password on your Keeps account. Click below to choose a new one."),
     ctaButton("Reset Password", data.resetUrl),
     calloutBox(
       `This link expires in ${data.expiresInMinutes} minutes for your security. If you didn't request this, your password hasn't changed — no action is needed, but let us know if it keeps happening.`,
@@ -84,7 +84,7 @@ export function passwordResetTemplate(data: { firstName: string; resetUrl: strin
   ].join("");
   const bodyText = [
     `Reset your password, ${data.firstName}`,
-    paragraphText("We received a request to reset the password on your Clink & Co account. Click below to choose a new one."),
+    paragraphText("We received a request to reset the password on your Keeps account. Click below to choose a new one."),
     ctaButtonText("Reset Password", data.resetUrl),
     calloutBoxText(`This link expires in ${data.expiresInMinutes} minutes. If you didn't request this, your password hasn't changed — no action needed.`),
   ].join("\n\n");

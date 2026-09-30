@@ -13,10 +13,10 @@ export function BrandStory() {
         <Reveal>
           <p className="text-xs font-semibold uppercase tracking-[0.2em] text-stone">Our Story</p>
           <h2 className="font-display mt-4 text-display-lg text-charcoal">
-            Clink & Co by HEIMSIGHT
+            Keeps by HEIMSIGHT
           </h2>
           <p className="mt-6 text-base leading-relaxed text-stone">
-            We started Clink & Co with a simple frustration: most &ldquo;entertaining&rdquo; ranges are built
+            We started Keeps with a simple frustration: most &ldquo;entertaining&rdquo; ranges are built
             for a single dinner party, then relegated to the back of a cupboard. We wanted the
             opposite — glassware, barware and tableware considered enough for a Saturday dinner
             and sturdy enough for a Tuesday glass of wine on the couch.

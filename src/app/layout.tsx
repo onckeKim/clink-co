@@ -31,18 +31,18 @@ const fraunces = Fraunces({
   display: "swap",
 });
 
-const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://clinkandco.com";
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://keepsbyheimsight.com";
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
   title: {
-    default: "Clink & Co by HEIMSIGHT | Premium Drinkware & Barware",
-    template: "%s | Clink & Co",
+    default: "Keeps by HEIMSIGHT | Premium Drinkware & Barware",
+    template: "%s | Keeps",
   },
   description:
-    "Clink & Co by HEIMSIGHT — premium glassware, barware, tableware and gifting essentials made for moments worth raising a glass to.",
+    "Keeps by HEIMSIGHT — premium glassware, barware, tableware and gifting essentials made for moments worth raising a glass to.",
   keywords: [
-    "Clink & Co",
+    "Keeps",
     "HEIMSIGHT",
     "premium glassware",
     "barware",
@@ -54,17 +54,17 @@ export const metadata: Metadata = {
     canonical: "/",
   },
   openGraph: {
-    title: "Clink & Co by HEIMSIGHT",
+    title: "Keeps by HEIMSIGHT",
     description:
       "Premium glassware, barware and tableware for entertaining, gifting and everyday living.",
-    siteName: "Clink & Co",
+    siteName: "Keeps",
     type: "website",
     url: "/",
     locale: "en_ZA",
   },
   twitter: {
     card: "summary_large_image",
-    title: "Clink & Co by HEIMSIGHT",
+    title: "Keeps by HEIMSIGHT",
     description:
       "Premium glassware, barware and tableware for entertaining, gifting and everyday living.",
   },

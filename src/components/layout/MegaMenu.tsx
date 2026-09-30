@@ -110,7 +110,7 @@ function ShopMenu({ onNavigate }: { onNavigate: () => void }) {
         <div className="relative aspect-[4/3]">
           <Image
             src="/images/categories/gift-sets.svg"
-            alt="Clink & Co gift sets"
+            alt="Keeps gift sets"
             fill
             sizes="320px"
             className="object-cover transition-transform duration-500 ease-out group-hover:scale-105"

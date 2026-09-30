@@ -19,7 +19,7 @@ export function Logo({
         inverse ? "text-warm-white" : "text-charcoal",
         className,
       )}
-      aria-label="Clink & Co home"
+      aria-label="Keeps home"
     >
       <span
         className={cn(
@@ -27,7 +27,7 @@ export function Logo({
           compact ? "text-lg" : "text-xl sm:text-2xl",
         )}
       >
-        CLINK <span className="italic">&amp;</span> CO
+        KEEPS
       </span>
       {!compact && (
         <span

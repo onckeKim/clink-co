@@ -67,7 +67,7 @@ export function NewsletterSection() {
               className="mx-auto mt-8 flex max-w-sm items-center justify-center gap-2 rounded-full bg-warm-white/10 px-5 py-3 text-sm text-warm-white"
             >
               <CheckCircle2 className="h-4 w-4 shrink-0 text-success" />
-              You&apos;re on the list — welcome to Clink & Co.
+              You&apos;re on the list — welcome to Keeps.
             </div>
           ) : (
             <form
@@ -112,7 +112,7 @@ export function NewsletterSection() {
                     )}
                   />
                   <label htmlFor="newsletter-consent" className="text-xs leading-relaxed text-warm-white/70">
-                    I&apos;d like to receive emails from Clink & Co about new arrivals, restocks
+                    I&apos;d like to receive emails from Keeps about new arrivals, restocks
                     and offers. I can unsubscribe at any time.
                   </label>
                 </div>

@@ -6,7 +6,7 @@
  * show a customer.
  */
 export const eftBankDetails = {
-  accountName: "Clink & Co (Pty) Ltd",
+  accountName: "Keeps (Pty) Ltd",
   bank: "First National Bank",
   accountNumber: "62812345678",
   branchCode: "250655",

@@ -12,7 +12,7 @@ export default async function Image({ params }: { params: Promise<{ collection: 
   return new ImageResponse(
     <SocialCard
       eyebrow="Curated Collection"
-      title={collection?.name ?? "Clink & Co by HEIMSIGHT"}
+      title={collection?.name ?? "Keeps by HEIMSIGHT"}
       footer={collection?.description}
     />,
     size,

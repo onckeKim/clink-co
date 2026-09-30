@@ -152,8 +152,6 @@ for (const name of categories) {
 }
 
 const products = [
-  "solstice-coupe-glasses",
-  "harbor-rocks-glasses",
   "meridian-cocktail-shaker",
   "aldine-decanter",
   "wilder-linen-napkins",
@@ -162,15 +160,21 @@ const products = [
   "ember-taper-candles",
   "stonewell-marble-coasters",
   "tidewater-ice-bucket",
-  "lowland-wine-glasses",
   "almanac-brass-jigger",
   "gathering-serving-tray",
-  "toast-champagne-flutes",
+  "the-reserve",
+  "the-everyday",
+  "the-aura-collection",
+  "speckle-and-pearl",
+  "emerald-fade",
+  "the-cellar",
+  "tinted-aurelia",
+  "the-stemmed-suite",
+  "the-stemless-pair",
+  "the-hot-shot-collection",
 ];
 
 const productNames = {
-  "solstice-coupe-glasses": "Solstice Coupe Glasses",
-  "harbor-rocks-glasses": "Harbor Rocks Glasses",
   "meridian-cocktail-shaker": "Meridian Cocktail Shaker",
   "aldine-decanter": "Aldine Decanter",
   "wilder-linen-napkins": "Wilder Linen Napkins",
@@ -179,10 +183,18 @@ const productNames = {
   "ember-taper-candles": "Ember Taper Candles",
   "stonewell-marble-coasters": "Stonewell Marble Coasters",
   "tidewater-ice-bucket": "Tidewater Ice Bucket",
-  "lowland-wine-glasses": "Lowland Wine Glasses",
   "almanac-brass-jigger": "Almanac Brass Jigger",
   "gathering-serving-tray": "Gathering Serving Tray",
-  "toast-champagne-flutes": "Toast Champagne Flutes",
+  "the-reserve": "The Reserve",
+  "the-everyday": "The Everyday",
+  "the-aura-collection": "The Aura Collection",
+  "speckle-and-pearl": "Speckle & Pearl",
+  "emerald-fade": "Emerald Fade",
+  "the-cellar": "The Cellar",
+  "tinted-aurelia": "Tinted Aurelia",
+  "the-stemmed-suite": "The Stemmed Suite",
+  "the-stemless-pair": "The Stemless Pair",
+  "the-hot-shot-collection": "The Hot Shot Collection",
 };
 
 for (const slug of products) {

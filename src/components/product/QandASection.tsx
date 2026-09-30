@@ -152,7 +152,7 @@ export function QandASection({ product, entries: fetchedEntries }: { product: Pr
               </p>
               {entry.answer ? (
                 <p className="ml-6 rounded-xl bg-porcelain p-3 text-sm leading-relaxed text-stone">
-                  <span className="font-medium text-charcoal">{entry.answeredBy ?? "Clink & Co Team"}:</span>{" "}
+                  <span className="font-medium text-charcoal">{entry.answeredBy ?? "Keeps Team"}:</span>{" "}
                   {entry.answer}
                 </p>
               ) : (

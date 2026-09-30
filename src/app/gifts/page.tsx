@@ -11,7 +11,7 @@ import { breadcrumbJsonLd, JsonLd } from "@/lib/seo/json-ld";
 
 export const metadata: Metadata = {
   title: "Gift Guide",
-  description: "Find the right Clink & Co by HEIMSIGHT gift by occasion, budget or recipient — from wedding gifts to corporate gifting.",
+  description: "Find the right Keeps by HEIMSIGHT gift by occasion, budget or recipient — from wedding gifts to corporate gifting.",
   alternates: { canonical: "/gifts" },
 };
 

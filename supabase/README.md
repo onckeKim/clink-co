@@ -1,4 +1,4 @@
-# Clink & Co — Supabase database
+# Keeps — Supabase database
 
 This is the real, production-target database schema for the storefront and
 admin dashboard: 35 tables, full Row Level Security, storage buckets, seed

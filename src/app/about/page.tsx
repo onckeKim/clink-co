@@ -10,7 +10,7 @@ import { breadcrumbJsonLd, JsonLd } from "@/lib/seo/json-ld";
 
 export const metadata: Metadata = {
   title: "Our Story",
-  description: "The story behind Clink & Co by HEIMSIGHT — considered glassware, barware and tableware for the table.",
+  description: "The story behind Keeps by HEIMSIGHT — considered glassware, barware and tableware for the table.",
   alternates: { canonical: "/about" },
 };
 
