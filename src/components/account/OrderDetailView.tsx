@@ -27,7 +27,7 @@ import { Label } from "@/components/ui/Label";
 import { Textarea } from "@/components/ui/Textarea";
 import { useStoreSettings } from "@/components/providers/StoreSettingsProvider";
 import { useCatalog } from "@/components/providers/CatalogProvider";
-import { cn, formatPrice } from "@/lib/utils";
+import { cn, formatPersonalizationLine, formatPrice } from "@/lib/utils";
 
 const RETURN_REASONS: { value: ReturnReason; label: string }[] = [
   { value: "changed-mind", label: "Changed my mind" },
@@ -162,8 +162,14 @@ export function OrderDetailView({ orderNumber }: { orderNumber: string }) {
                 <p className="text-xs text-stone">
                   Qty {line.quantity} × {formatPrice(line.unitPrice)}
                 </p>
-                {line.personalizationText && (
-                  <p className="text-xs text-stone">Personalized: &ldquo;{line.personalizationText}&rdquo;</p>
+                {line.personalizationName && (
+                  <p className="text-xs text-stone">
+                    Etched: {formatPersonalizationLine({
+                      name: line.personalizationName,
+                      message: line.personalizationMessage,
+                      date: line.personalizationDate,
+                    })}
+                  </p>
                 )}
               </div>
               <p className="text-sm font-medium text-charcoal">{formatPrice(line.lineTotal)}</p>

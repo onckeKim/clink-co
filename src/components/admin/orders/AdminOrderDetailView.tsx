@@ -14,7 +14,7 @@ import { Label } from "@/components/ui/Label";
 import { Select } from "@/components/ui/Select";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { toast } from "@/components/ui/Toast";
-import { cn, formatPrice } from "@/lib/utils";
+import { cn, formatPersonalizationLine, formatPrice } from "@/lib/utils";
 
 const STATUS_OPTIONS: { value: OrderStatus; label: string }[] = [
   { value: "pending_payment", label: "Payment pending" },
@@ -278,22 +278,16 @@ export function AdminOrderDetailView({ orderNumber }: { orderNumber: string }) {
                     <p className="text-xs text-stone">
                       SKU {line.sku} · Qty {line.quantity}
                     </p>
-                    {(line.personalizationText || line.personalizationImageUrl) && (
-                      <div className="mt-2 flex items-start gap-2 rounded-lg bg-champagne/20 p-2">
-                        <div className="min-w-0">
-                          <p className="text-xs font-semibold uppercase tracking-wide text-charcoal">Personalization</p>
-                          {line.personalizationText && (
-                            <p className="text-xs text-charcoal">&ldquo;{line.personalizationText}&rdquo;</p>
-                          )}
-                        </div>
-                        {line.personalizationImageUrl && (
-                          // eslint-disable-next-line @next/next/no-img-element -- a customer-submitted data URL, not an optimizable remote asset
-                          <img
-                            src={line.personalizationImageUrl}
-                            alt="Customer's reference photo"
-                            className="h-12 w-12 shrink-0 rounded-md border border-sand object-cover"
-                          />
-                        )}
+                    {line.personalizationName && (
+                      <div className="mt-2 rounded-lg bg-champagne/20 p-2">
+                        <p className="text-xs font-semibold uppercase tracking-wide text-charcoal">Personalization</p>
+                        <p className="text-xs text-charcoal">
+                          {formatPersonalizationLine({
+                            name: line.personalizationName,
+                            message: line.personalizationMessage,
+                            date: line.personalizationDate,
+                          })}
+                        </p>
                       </div>
                     )}
                   </div>

@@ -25,7 +25,7 @@ function toCartLines(rows: CartItemRow[], products: Product[]): CartLine[] {
     const product = byId.get(row.product_id);
     if (!product) continue; // product since deleted/unpublished — drop silently, matches cart-validation's "not-found" handling
     const variant = row.variant_id ? product.variants?.find((v) => v.id === row.variant_id) : undefined;
-    const hasPersonalization = row.personalization_text || row.personalization_image_url;
+    const hasPersonalization = row.personalization_name || row.personalization_message || row.personalization_date;
     lines.push({
       lineId: row.variant_id ? `${row.product_id}::${row.variant_id}` : row.product_id,
       productId: row.product_id,
@@ -39,7 +39,11 @@ function toCartLines(rows: CartItemRow[], products: Product[]): CartLine[] {
       categorySlug: product.categorySlug,
       collectionSlugs: product.collectionSlugs,
       personalization: hasPersonalization
-        ? { text: row.personalization_text ?? undefined, imageDataUrl: row.personalization_image_url ?? undefined }
+        ? {
+            nameOrInitials: row.personalization_name ?? undefined,
+            message: row.personalization_message ?? undefined,
+            date: row.personalization_date ?? undefined,
+          }
         : undefined,
     });
   }
@@ -65,8 +69,9 @@ const putSchema = z.object({
       productId: z.string().trim().min(1),
       variantId: z.string().trim().min(1).optional(),
       quantity: z.number().int().positive().max(99),
-      personalizationText: z.string().trim().max(200).optional(),
-      personalizationImageUrl: z.string().max(3_000_000).optional(),
+      personalizationName: z.string().trim().max(40).optional(),
+      personalizationMessage: z.string().trim().max(60).optional(),
+      personalizationDate: z.string().trim().max(10).optional(),
     }),
   ),
 });
@@ -105,8 +110,9 @@ export async function PUT(request: Request) {
           variantId: line.variantId ?? null,
           quantity,
           unitPrice: product.price + (variant?.priceDelta ?? 0),
-          personalizationText: line.personalizationText ?? null,
-          personalizationImageUrl: line.personalizationImageUrl ?? null,
+          personalizationName: line.personalizationName ?? null,
+          personalizationMessage: line.personalizationMessage ?? null,
+          personalizationDate: line.personalizationDate ?? null,
         };
       })
       .filter((item): item is NonNullable<typeof item> => item !== null);

@@ -445,9 +445,10 @@ export interface Database {
           variant_id: string | null;
           quantity: number;
           unit_price_snapshot: number;
-          /** Reference-only, captured on add-to-cart — see supabase/migrations/20250101001400_glass_personalization.sql. */
-          personalization_text: string | null;
-          personalization_image_url: string | null;
+          /** Reference-only, captured on add-to-cart — see supabase/migrations/20250101001500_glass_personalization_fields.sql. */
+          personalization_name: string | null;
+          personalization_message: string | null;
+          personalization_date: string | null;
           created_at: string;
           updated_at: string;
         };
@@ -458,8 +459,9 @@ export interface Database {
           variant_id?: string | null;
           quantity: number;
           unit_price_snapshot: number;
-          personalization_text?: string | null;
-          personalization_image_url?: string | null;
+          personalization_name?: string | null;
+          personalization_message?: string | null;
+          personalization_date?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -591,9 +593,10 @@ export interface Database {
           unit_price: number;
           quantity: number;
           line_total: number;
-          /** Carried over from the cart line at checkout, reference-only for fulfillment — see supabase/migrations/20250101001400_glass_personalization.sql. */
-          personalization_text: string | null;
-          personalization_image_url: string | null;
+          /** Carried over from the cart line at checkout, reference-only for fulfillment — see supabase/migrations/20250101001500_glass_personalization_fields.sql. */
+          personalization_name: string | null;
+          personalization_message: string | null;
+          personalization_date: string | null;
           created_at: string;
         };
         /** Server-role only — never updated or deleted once written. */
@@ -609,8 +612,9 @@ export interface Database {
           unit_price: number;
           quantity: number;
           line_total: number;
-          personalization_text?: string | null;
-          personalization_image_url?: string | null;
+          personalization_name?: string | null;
+          personalization_message?: string | null;
+          personalization_date?: string | null;
           created_at?: string;
         };
         Update: never;

@@ -6,10 +6,12 @@ import { validateCoupon, getBestAutomaticDiscount, type PromotableLine } from "@
 import { track } from "@/lib/analytics/track";
 
 export interface CartLinePersonalization {
-  /** Custom wording the customer wants on the glass — short by design (it has to fit on glassware), capped at 60 chars in the UI. */
-  text?: string;
-  /** A reference photo, read client-side as a data URL — same pattern as WriteReviewForm's photo upload. Reference-only for fulfillment staff, never processed automatically. */
-  imageDataUrl?: string;
+  /** Name or initials to etch onto the glass — capped at 40 chars in the UI, short by design (it has to fit on glassware). */
+  nameOrInitials?: string;
+  /** Optional short title or message to etch alongside the name — capped at 60 chars, only a few products (e.g. The Reserve) offer this. */
+  message?: string;
+  /** Optional date to etch, as an ISO date string (YYYY-MM-DD) from a date input. */
+  date?: string;
 }
 
 export interface CartLine {

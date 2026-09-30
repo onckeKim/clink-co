@@ -36,6 +36,27 @@ export function formatPrice(amount: number, currency: string = siteConfig.curren
   return `${symbol} ${grouped.replace(/,/g, " ")}`;
 }
 
+/**
+ * Format an ISO date string ("YYYY-MM-DD") as the DD.MM.YY style the real
+ * KEEPS catalogue etches dates in (e.g. "12.09.26"). Parses the parts
+ * directly rather than going through `Date`, so there's no UTC/local
+ * timezone shift to worry about for a string that's purely decorative.
+ */
+export function formatEtchDate(isoDate: string) {
+  const [year, month, day] = isoDate.split("-");
+  if (!year || !month || !day) return isoDate;
+  return `${day}.${month}.${year.slice(-2)}`;
+}
+
+/** Joins the etched name/message/date into one display line, e.g. `SARAH — Private Reserve — 12.09.26`. Omits any part that's absent. */
+export function formatPersonalizationLine(parts: {
+  name?: string | null;
+  message?: string | null;
+  date?: string | null;
+}) {
+  return [parts.name, parts.message, parts.date ? formatEtchDate(parts.date) : null].filter(Boolean).join(" — ");
+}
+
 export function slugify(value: string) {
   return value
     .toLowerCase()

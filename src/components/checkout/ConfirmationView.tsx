@@ -8,7 +8,7 @@ import { useCartStore } from "@/store/cart-store";
 import type { Order } from "@/lib/orders/types";
 import { buttonVariants } from "@/components/ui/Button";
 import { CreateAccountPrompt } from "@/components/checkout/CreateAccountPrompt";
-import { cn, formatPrice } from "@/lib/utils";
+import { cn, formatPersonalizationLine, formatPrice } from "@/lib/utils";
 import { track } from "@/lib/analytics/track";
 
 function formatDate(iso: string): string {
@@ -135,8 +135,14 @@ export function ConfirmationView({ orderNumber }: { orderNumber: string }) {
                   {line.variantLabel ? ` — ${line.variantLabel}` : ""}
                 </p>
                 <p className="text-xs text-stone">Qty {line.quantity}</p>
-                {line.personalizationText && (
-                  <p className="text-xs text-stone">Personalized: &ldquo;{line.personalizationText}&rdquo;</p>
+                {line.personalizationName && (
+                  <p className="text-xs text-stone">
+                    Etched: {formatPersonalizationLine({
+                      name: line.personalizationName,
+                      message: line.personalizationMessage,
+                      date: line.personalizationDate,
+                    })}
+                  </p>
                 )}
               </div>
               <p className="text-sm font-medium text-charcoal">{formatPrice(line.lineTotal)}</p>

@@ -40,8 +40,9 @@ function pushCartToAccount(lines: CartLine[]) {
         productId: line.productId,
         variantId: line.variant?.id,
         quantity: line.quantity,
-        personalizationText: line.personalization?.text,
-        personalizationImageUrl: line.personalization?.imageDataUrl,
+        personalizationName: line.personalization?.nameOrInitials,
+        personalizationMessage: line.personalization?.message,
+        personalizationDate: line.personalization?.date,
       })),
     }),
   }).catch(() => {});

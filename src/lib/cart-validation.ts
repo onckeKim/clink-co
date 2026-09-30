@@ -13,8 +13,9 @@ export interface CartLineInput {
   variantId?: string;
   quantity: number;
   /** Reference-only, carried straight through to the order line — never validated or priced. */
-  personalizationText?: string;
-  personalizationImageUrl?: string;
+  personalizationName?: string;
+  personalizationMessage?: string;
+  personalizationDate?: string;
 }
 
 export type CartLineIssueType =
@@ -45,8 +46,9 @@ export interface ValidatedCartLine {
   quantity: number;
   lineTotal: number;
   stockQuantity: number;
-  personalizationText?: string;
-  personalizationImageUrl?: string;
+  personalizationName?: string;
+  personalizationMessage?: string;
+  personalizationDate?: string;
 }
 
 export interface CartValidationResult {
@@ -118,8 +120,9 @@ export async function validateCartLines(input: CartLineInput[]): Promise<CartVal
       quantity,
       lineTotal: unitPrice * quantity,
       stockQuantity: product.stockQuantity,
-      personalizationText: item.personalizationText,
-      personalizationImageUrl: item.personalizationImageUrl,
+      personalizationName: item.personalizationName,
+      personalizationMessage: item.personalizationMessage,
+      personalizationDate: item.personalizationDate,
     });
   }
 

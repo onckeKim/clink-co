@@ -4,6 +4,7 @@ import { Printer } from "lucide-react";
 import type { Order } from "@/lib/orders/types";
 import { Button } from "@/components/ui/Button";
 import { Logo } from "@/components/layout/Logo";
+import { formatPersonalizationLine } from "@/lib/utils";
 
 /** Prices are deliberately omitted — a packing slip travels with the physical shipment, not the customer's payment details. */
 export function PackingSlipView({ order, businessName }: { order: Order; businessName: string }) {
@@ -69,18 +70,12 @@ export function PackingSlipView({ order, businessName }: { order: Order; busines
                   {line.variantLabel ? ` — ${line.variantLabel}` : ""}
                 </td>
                 <td className="py-2 text-charcoal">
-                  {line.personalizationText && <span>&ldquo;{line.personalizationText}&rdquo;</span>}
-                  {line.personalizationImageUrl && (
-                    <span className="ml-1 text-stone">{line.personalizationText ? "+ photo" : "See photo"}</span>
-                  )}
-                  {line.personalizationImageUrl && (
-                    // eslint-disable-next-line @next/next/no-img-element -- a customer-submitted data URL, not an optimizable remote asset
-                    <img
-                      src={line.personalizationImageUrl}
-                      alt="Customer's reference photo"
-                      className="mt-1 h-10 w-10 rounded-md border border-sand object-cover"
-                    />
-                  )}
+                  {line.personalizationName &&
+                    formatPersonalizationLine({
+                      name: line.personalizationName,
+                      message: line.personalizationMessage,
+                      date: line.personalizationDate,
+                    })}
                 </td>
                 <td className="py-2 text-right text-charcoal">{line.quantity}</td>
               </tr>

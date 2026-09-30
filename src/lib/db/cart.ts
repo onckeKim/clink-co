@@ -101,8 +101,9 @@ export async function replaceCartItems(
     variantId?: string | null;
     quantity: number;
     unitPrice: number;
-    personalizationText?: string | null;
-    personalizationImageUrl?: string | null;
+    personalizationName?: string | null;
+    personalizationMessage?: string | null;
+    personalizationDate?: string | null;
   }[],
 ): Promise<void> {
   const db = await getDb();
@@ -115,8 +116,9 @@ export async function replaceCartItems(
     variant_id: i.variantId ?? null,
     quantity: i.quantity,
     unit_price_snapshot: i.unitPrice,
-    personalization_text: i.personalizationText ?? null,
-    personalization_image_url: i.personalizationImageUrl ?? null,
+    personalization_name: i.personalizationName ?? null,
+    personalization_message: i.personalizationMessage ?? null,
+    personalization_date: i.personalizationDate ?? null,
   }));
   const ins = await db.from("cart_items").insert(rows);
   if (ins.error) throw mapPostgrestError(ins.error);
