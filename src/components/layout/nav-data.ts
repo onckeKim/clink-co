@@ -1,0 +1,72 @@
+export interface NavLink {
+  label: string;
+  href: string;
+}
+
+/** Primary desktop + mobile navigation. "Shop" and "Collections" also open a mega menu. */
+export const primaryNav: NavLink[] = [
+  { label: "Home", href: "/" },
+  { label: "Shop", href: "/shop" },
+  { label: "Collections", href: "/collections" },
+  { label: "New Arrivals", href: "/shop?new=1" },
+  { label: "Gifts", href: "/gifts" },
+  { label: "About", href: "/about" },
+  { label: "Journal", href: "/journal" },
+];
+
+export const accountLinks: NavLink[] = [
+  { label: "My Account", href: "/account" },
+  { label: "Order History", href: "/account/orders" },
+  { label: "Wishlist", href: "/wishlist" },
+];
+
+export const helpLinks: NavLink[] = [
+  { label: "Contact Us", href: "/contact" },
+  { label: "Delivery Information", href: "/delivery" },
+  { label: "Returns", href: "/returns" },
+  { label: "Care Guide", href: "/care-guide" },
+  { label: "FAQ", href: "/faq" },
+];
+
+export const aboutLinks: NavLink[] = [
+  { label: "Our Story", href: "/about" },
+  { label: "Journal", href: "/journal" },
+  { label: "Sustainability", href: "/sustainability" },
+  { label: "Trade & Wholesale", href: "/trade" },
+];
+
+export const policyLinks: NavLink[] = [
+  { label: "Privacy Policy", href: "/privacy" },
+  { label: "Terms of Service", href: "/terms" },
+  { label: "Cookie Policy", href: "/cookie-policy" },
+  { label: "Delivery Policy", href: "/delivery-policy" },
+  { label: "Returns & Refund Policy", href: "/returns-policy" },
+  { label: "Payment Policy", href: "/payment-policy" },
+  { label: "Website Disclaimer", href: "/disclaimer" },
+  { label: "Accessibility", href: "/accessibility" },
+];
+
+import type { StoreSettings } from "@/types/settings";
+
+export interface SocialLink {
+  label: string;
+  href: string;
+}
+
+/** Reads live from the store settings (Store Settings → Social media profiles) so an admin edit shows up without a redeploy. Takes settings explicitly so both server callers (await getStoreSettings()) and client callers (useStoreSettings()) can supply it. */
+export function getSocialLinks(settings: StoreSettings): SocialLink[] {
+  const { social } = settings;
+  return [
+    { label: "Instagram", href: social.instagram },
+    { label: "Facebook", href: social.facebook },
+    { label: "TikTok", href: social.tiktok },
+    { label: "Pinterest", href: social.pinterest },
+  ];
+}
+
+export function getContactInfo(settings: StoreSettings) {
+  return {
+    email: settings.contactEmail,
+    whatsappHref: settings.social.whatsapp,
+  };
+}

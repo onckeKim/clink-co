@@ -28,10 +28,10 @@ export function CategoryCard({
         sizes="(min-width: 1024px) 24vw, (min-width: 640px) 45vw, 90vw"
         className="object-cover transition-transform duration-700 ease-out group-hover:scale-105"
       />
-      <div className="absolute inset-0 bg-gradient-to-t from-ink/70 via-ink/0 to-ink/0" />
+      <div className="absolute inset-0 bg-gradient-to-t from-charcoal/70 via-charcoal/0 to-charcoal/0" />
       <div className="absolute inset-x-0 bottom-0 p-5">
-        <p className="font-display text-lg text-ivory">{category.name}</p>
-        <p className="text-xs uppercase tracking-wide text-ivory/70">
+        <p className="font-display text-lg text-warm-white">{category.name}</p>
+        <p className="text-xs uppercase tracking-wide text-warm-white/70">
           {category.itemCount} items
         </p>
       </div>

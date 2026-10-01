@@ -1,0 +1,62 @@
+/**
+ * In-memory return-request store — a development/demo substitute for a
+ * real `return_requests` table, same rationale as the other account
+ * stores. One active request per order is enough for this demo; a real
+ * implementation would support a status lifecycle (requested → approved →
+ * received → refunded) driven by an admin/support workflow, which doesn't
+ * exist yet in this build.
+ */
+
+export type ReturnReason = "changed-mind" | "damaged" | "wrong-item" | "not-as-described" | "other";
+
+export interface ReturnRequest {
+  id: string;
+  orderNumber: string;
+  userId: string;
+  reason: ReturnReason;
+  notes: string | null;
+  /** Data-URI images the customer attached as evidence (typically for a "damaged" or "not-as-described" reason) — same base64-data-URI approach as the admin media library (see src/lib/admin/media-constants.ts), since this is customer-submitted evidence on the request itself rather than a shared media asset. */
+  evidenceImages: string[];
+  status: "requested";
+  createdAt: string;
+}
+
+const returnsByOrderNumber = new Map<string, ReturnRequest>();
+
+export function getReturnRequest(orderNumber: string): ReturnRequest | undefined {
+  return returnsByOrderNumber.get(orderNumber);
+}
+
+/** Every return request, most recent first — every entry is "pending" today since there's no approve/receive/refund lifecycle yet (see the module comment above). Used by the admin dashboard's "Pending returns" stat. */
+export function listReturnRequests(): ReturnRequest[] {
+  return [...returnsByOrderNumber.values()].sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+}
+
+/** A customer's own return requests, most recent first — backs the "return status tracking" section of the public /returns page. */
+export function listReturnRequestsForUser(userId: string): ReturnRequest[] {
+  return listReturnRequests().filter((r) => r.userId === userId);
+}
+
+export function createReturnRequest(input: {
+  orderNumber: string;
+  userId: string;
+  reason: ReturnReason;
+  notes?: string;
+  evidenceImages?: string[];
+}): ReturnRequest {
+  const existing = returnsByOrderNumber.get(input.orderNumber);
+  if (existing) return existing;
+
+  const request: ReturnRequest = {
+    id: crypto.randomUUID(),
+    orderNumber: input.orderNumber,
+    userId: input.userId,
+    reason: input.reason,
+    notes: input.notes?.trim() || null,
+    evidenceImages: input.evidenceImages ?? [],
+    status: "requested",
+    createdAt: new Date().toISOString(),
+  };
+  returnsByOrderNumber.set(input.orderNumber, request);
+  return request;
+}

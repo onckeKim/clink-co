@@ -7,12 +7,12 @@ const buttonVariants = cva(
   {
     variants: {
       variant: {
-        primary: "bg-ink text-ivory hover:bg-ink-soft active:scale-[0.98]",
+        primary: "bg-charcoal text-warm-white hover:bg-charcoal-soft active:scale-[0.98]",
         secondary:
-          "bg-transparent text-ink border border-ink/70 hover:bg-ink hover:text-ivory active:scale-[0.98]",
-        inverse: "bg-ivory text-ink hover:bg-white active:scale-[0.98]",
-        ghost: "bg-transparent text-ink hover:bg-sand/70",
-        link: "bg-transparent p-0 text-ink underline-offset-4 hover:underline",
+          "bg-transparent text-charcoal border border-charcoal/70 hover:bg-charcoal hover:text-warm-white active:scale-[0.98]",
+        inverse: "bg-warm-white text-charcoal hover:bg-white active:scale-[0.98]",
+        ghost: "bg-transparent text-charcoal hover:bg-sand/70",
+        link: "bg-transparent p-0 text-charcoal underline-offset-4 hover:underline",
       },
       size: {
         sm: "h-9 px-4 text-sm",

@@ -1,0 +1,38 @@
+/**
+ * Site-wide configuration. Values here are the kind of thing an admin
+ * dashboard would eventually expose as editable settings (free delivery
+ * threshold, social links, currency) — centralising them now means wiring
+ * up that dashboard later is a matter of reading/writing this shape from
+ * Supabase instead of hunting through components.
+ */
+export const siteConfig = {
+  name: "Keeps",
+  fullName: "Keeps by HEIMSIGHT",
+  tagline: "Premium glassware made for gifting.",
+  url: process.env.NEXT_PUBLIC_SITE_URL ?? "https://keepsbyheimsight.com",
+
+  currency: "ZAR" as const,
+  locale: "en-ZA",
+
+  /** South African VAT rate, as a whole percent. All displayed prices are VAT-inclusive, per local retail convention. */
+  taxRatePercent: 15,
+
+  /** Free delivery threshold, in the site currency's minor-free units (Rand). */
+  freeDeliveryThreshold: 950,
+
+  /** Return window, in days — surfaced in the benefit strip and footer. */
+  returnWindowDays: 30,
+
+  social: {
+    instagram: "https://instagram.com/keepsbyheimsight",
+    facebook: "https://facebook.com/keepsbyheimsight",
+    tiktok: "https://tiktok.com/@keepsbyheimsight",
+    pinterest: "https://pinterest.com/keepsbyheimsight",
+    // Placeholder South African number — replace with the real support line before go-live (overridable via Store Settings).
+    whatsapp: "https://wa.me/27210000000",
+  },
+
+  contactEmail: "hello@keepsbyheimsight.com",
+  /** Where new-order notifications are sent — see src/lib/email.ts. */
+  orderNotificationEmail: "orders@keepsbyheimsight.com",
+} as const;

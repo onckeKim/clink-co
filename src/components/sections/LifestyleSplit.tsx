@@ -30,13 +30,13 @@ export function LifestyleSplit({
         )}
       >
         <Reveal>
-          <p className="mb-3 text-xs font-semibold uppercase tracking-[0.2em] text-clay">
+          <p className="mb-3 text-xs font-semibold uppercase tracking-[0.2em] text-stone">
             {eyebrow}
           </p>
-          <h2 className="font-display max-w-md text-3xl leading-tight text-ink sm:text-4xl">
+          <h2 className="font-display max-w-md text-display-xl text-charcoal">
             {title}
           </h2>
-          <p className="mt-5 max-w-md text-sm leading-relaxed text-clay">{description}</p>
+          <p className="mt-5 max-w-md text-sm leading-relaxed text-stone">{description}</p>
           <Link href={cta.href} className={cn(buttonVariants({ size: "lg" }), "mt-8")}>
             {cta.label}
           </Link>

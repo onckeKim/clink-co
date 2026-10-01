@@ -1,13 +1,72 @@
 import { type NextRequest, NextResponse } from "next/server";
 import { createServerClient } from "@supabase/ssr";
+import { getStoreSettings } from "@/lib/admin/settings-store";
+
+const PROTECTED_PREFIXES = ["/account", "/admin"];
+const AUTH_ONLY_PATHS = ["/login", "/signup"];
+/** Always reachable even while maintenance mode is on — store staff need /login and /admin to turn it back off, and the maintenance page itself must not redirect to itself. */
+const MAINTENANCE_MODE_EXEMPT_PREFIXES = ["/admin", "/api/admin", "/api/auth", "/login", "/maintenance", "/dev"];
+
+/**
+ * Maintenance mode runs on every single request (including every asset the
+ * matcher doesn't already exclude), so this can't be a fresh Supabase round
+ * trip each time — it caches the flag for MAINTENANCE_CACHE_MS and only
+ * re-fetches once that's stale. Next.js 16's proxy runs on the Node.js
+ * runtime by default (see the comment below), which is what makes sharing
+ * this module-level cache across requests reliable, unlike the old Edge
+ * runtime. A fetch failure (env vars unset, Supabase unreachable) falls
+ * back to "not in maintenance" rather than risking the whole site behind a
+ * false positive — same resilience posture as the rest of this file.
+ */
+const MAINTENANCE_CACHE_MS = 30_000;
+let maintenanceCache: { value: boolean; expiresAt: number } | null = null;
+
+async function isMaintenanceModeOn(): Promise<boolean> {
+  if (maintenanceCache && maintenanceCache.expiresAt > Date.now()) {
+    return maintenanceCache.value;
+  }
+  try {
+    const settings = await getStoreSettings();
+    maintenanceCache = { value: settings.maintenanceMode, expiresAt: Date.now() + MAINTENANCE_CACHE_MS };
+    return settings.maintenanceMode;
+  } catch {
+    return maintenanceCache?.value ?? false;
+  }
+}
 
 /**
  * Refreshes the Supabase auth session on every request so server components
- * always see a valid session. Requires NEXT_PUBLIC_SUPABASE_URL and
- * NEXT_PUBLIC_SUPABASE_ANON_KEY — see .env.local.example. Safe to run even
- * before those are configured; Supabase calls will simply be skipped.
+ * always see a valid session, and performs *optimistic* route protection —
+ * redirecting a signed-out visitor away from /account/** and /admin/**, and
+ * a signed-in one away from /login and /signup. This is a fast, cookie-based
+ * check, not the last line of defense.
+ *
+ * Deliberately does NOT check the /admin role here, even though — as of
+ * Next.js 16, proxy defaults to the Node.js runtime (see
+ * node_modules/next/dist/docs/01-app/03-api-reference/03-file-conventions/proxy.md#runtime)
+ * and so *can* now reliably share in-memory module state (like the store
+ * settings check below) with the rest of the server process, unlike the
+ * old Edge runtime this project's comments used to assume. The role check
+ * still stays server-component-side in src/app/admin/layout.tsx via
+ * requireAdmin() rather than moving here, per Next.js's own guidance that
+ * proxy checks alone aren't sufficient defense —
+ * https://nextjs.org/docs/app/guides/authentication#authorization — and to
+ * keep exactly one place owning that authorization decision.
+ *
+ * Requires NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY — see
+ * .env.local.example. Safe to run even before those are configured;
+ * Supabase calls (and the redirects that depend on them) are simply
+ * skipped, so the site still works without auth configured.
  */
 export async function proxy(request: NextRequest) {
+  const { pathname: maintenancePathname } = request.nextUrl;
+  if (
+    (await isMaintenanceModeOn()) &&
+    !MAINTENANCE_MODE_EXEMPT_PREFIXES.some((prefix) => maintenancePathname.startsWith(prefix))
+  ) {
+    return NextResponse.rewrite(new URL("/maintenance", request.url));
+  }
+
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
@@ -34,7 +93,21 @@ export async function proxy(request: NextRequest) {
     },
   });
 
-  await supabase.auth.getUser();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  const { pathname, search } = request.nextUrl;
+
+  if (PROTECTED_PREFIXES.some((prefix) => pathname.startsWith(prefix)) && !user) {
+    const loginUrl = new URL("/login", request.url);
+    loginUrl.searchParams.set("redirect", `${pathname}${search}`);
+    return NextResponse.redirect(loginUrl);
+  }
+
+  if (AUTH_ONLY_PATHS.includes(pathname) && user) {
+    return NextResponse.redirect(new URL("/account", request.url));
+  }
 
   return response;
 }

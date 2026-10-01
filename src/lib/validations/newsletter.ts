@@ -5,3 +5,12 @@ export const newsletterSchema = z.object({
 });
 
 export type NewsletterInput = z.infer<typeof newsletterSchema>;
+
+/** Used by the full homepage newsletter section, which also asks for consent. */
+export const newsletterSectionSchema = newsletterSchema.extend({
+  consent: z.boolean().refine((val) => val === true, {
+    message: "Please confirm you'd like to receive emails from us.",
+  }),
+});
+
+export type NewsletterSectionInput = z.infer<typeof newsletterSectionSchema>;

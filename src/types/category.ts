@@ -5,4 +5,8 @@ export interface Category {
   description: string;
   image: string;
   itemCount: number;
+  /** Admin-controlled display order — ascending, lower shows first. */
+  sortOrder: number;
+  seoTitle?: string;
+  seoDescription?: string;
 }
